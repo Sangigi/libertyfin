@@ -1,0 +1,6 @@
+codigo,nombre,descripcion,marca,precio,subprecio,costo,descuento,stock,unidad_medida,peso_kg,permite_fracciones,categoria,proveedor,sucursal,fecha_caducidad
+PROD0045,Teclado Mecánico RGB,Teclado mecánico con switches azules,Logitech,850.5,950,450,10.5,25,pieza,1,no,Electrónica,Logitech,Matriz,31/12/2026
+PROD0025,Monitor 24 pulgadas,Monitor Full HD 75Hz,Samsung,3200,3500,2100,8.57,10,pieza,3.5,no,Electrónica,Samsung,Matriz,30/06/2026
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,

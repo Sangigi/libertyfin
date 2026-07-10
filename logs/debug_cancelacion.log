@@ -1,0 +1,1059 @@
+2026-06-26 17:03:17 - === INICIO DE PROCESO ===
+2026-06-26 17:03:17 - Input recibido - {"clabe":"646180633000001640","fecha":"2026-06-26T13:33:07Z","monto":100.5,"transaccion":"00900050","autorizacion":"83628835"}
+2026-06-26 17:03:17 - Datos procesados - {"clabe":"646180633000001640","transaccion":"00900050","autorizacion":"83628835","fecha":"2026-06-26T13:33:07Z","monto":100.5}
+2026-06-26 17:03:17 - CLABE encontrada - {"id":23,"account":"178249825634840"}
+2026-06-26 17:03:17 - Buscando por transacción y autorización - {"transaccion":"00900050","autorizacion":"83628835"}
+2026-06-26 17:03:17 - Buscando solo por transacción - "00900050"
+2026-06-26 17:03:17 - Buscando solo por autorización - "83628835"
+2026-06-26 17:03:17 - Pago encontrado por autorización - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 17:03:17 - Pago seleccionado para cancelación - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 17:03:17 - Monto no coincide - {"monto_bd":107.5,"monto_request":100.5}
+2026-06-26 17:03:48 - === INICIO DE PROCESO ===
+2026-06-26 17:03:48 - Input recibido - {"clabe":"646180633000001640","fecha":"2026-06-21T13:33:07Z","monto":100.5,"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:03:48 - Datos procesados - {"clabe":"646180633000001640","transaccion":"00357050","autorizacion":"83628835","fecha":"2026-06-21T13:33:07Z","monto":100.5}
+2026-06-26 17:03:48 - CLABE encontrada - {"id":23,"account":"178249825634840"}
+2026-06-26 17:03:48 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:03:48 - Pago encontrado por transacción y autorización - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 17:03:48 - Pago seleccionado para cancelación - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 17:03:48 - Monto no coincide - {"monto_bd":107.5,"monto_request":100.5}
+2026-06-26 17:04:10 - === INICIO DE PROCESO ===
+2026-06-26 17:04:10 - Input recibido - {"clabe":"646180633000001640","fecha":"2026-06-21T13:33:07Z","monto":107.5,"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:04:10 - Datos procesados - {"clabe":"646180633000001640","transaccion":"00357050","autorizacion":"83628835","fecha":"2026-06-21T13:33:07Z","monto":107.5}
+2026-06-26 17:04:10 - CLABE encontrada - {"id":23,"account":"178249825634840"}
+2026-06-26 17:04:10 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:04:10 - Pago encontrado por transacción y autorización - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 17:04:10 - Pago seleccionado para cancelación - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 23:04:10 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-21T13:33:07Z","fecha_request_utc":"2026-06-21 13:33:07","fecha_recibido_original":"2026-06-26 17:00:35","fecha_recibido_utc":"2026-06-26 17:00:35","diferencia_segundos":-444448,"diferencia_horas":-123.4599999999999937472239253111183643341064453125,"diferencia_minutos":-7407.4700000000002546585164964199066162109375}
+2026-06-26 23:04:10 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-06-21 13:33:07","fecha_recibido":"2026-06-26 17:00:35","diferencia":-444448}
+2026-06-26 17:04:28 - === INICIO DE PROCESO ===
+2026-06-26 17:04:28 - Input recibido - {"clabe":"646180633000001640","fecha":"2026-06-22T17:33:07Z","monto":107.5,"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:04:28 - Datos procesados - {"clabe":"646180633000001640","transaccion":"00357050","autorizacion":"83628835","fecha":"2026-06-22T17:33:07Z","monto":107.5}
+2026-06-26 17:04:28 - CLABE encontrada - {"id":23,"account":"178249825634840"}
+2026-06-26 17:04:28 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:04:28 - Pago encontrado por transacción y autorización - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 17:04:28 - Pago seleccionado para cancelación - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 23:04:28 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-22T17:33:07Z","fecha_request_utc":"2026-06-22 17:33:07","fecha_recibido_original":"2026-06-26 17:00:35","fecha_recibido_utc":"2026-06-26 17:00:35","diferencia_segundos":-343648,"diferencia_horas":-95.4599999999999937472239253111183643341064453125,"diferencia_minutos":-5727.4700000000002546585164964199066162109375}
+2026-06-26 23:04:28 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-06-22 17:33:07","fecha_recibido":"2026-06-26 17:00:35","diferencia":-343648}
+2026-06-26 17:04:38 - === INICIO DE PROCESO ===
+2026-06-26 17:04:38 - Input recibido - {"clabe":"646180633000001640","fecha":"2026-06-22T17:02:07Z","monto":107.5,"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:04:38 - Datos procesados - {"clabe":"646180633000001640","transaccion":"00357050","autorizacion":"83628835","fecha":"2026-06-22T17:02:07Z","monto":107.5}
+2026-06-26 17:04:38 - CLABE encontrada - {"id":23,"account":"178249825634840"}
+2026-06-26 17:04:38 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:04:38 - Pago encontrado por transacción y autorización - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 17:04:38 - Pago seleccionado para cancelación - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 23:04:38 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-22T17:02:07Z","fecha_request_utc":"2026-06-22 17:02:07","fecha_recibido_original":"2026-06-26 17:00:35","fecha_recibido_utc":"2026-06-26 17:00:35","diferencia_segundos":-345508,"diferencia_horas":-95.969999999999998863131622783839702606201171875,"diferencia_minutos":-5758.4700000000002546585164964199066162109375}
+2026-06-26 23:04:38 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-06-22 17:02:07","fecha_recibido":"2026-06-26 17:00:35","diferencia":-345508}
+2026-06-26 17:06:03 - === INICIO DE PROCESO ===
+2026-06-26 17:06:03 - Input recibido - {"clabe":"646180633000001640","fecha":"2026-06-22T17:00:57Z","monto":107.5,"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:06:03 - Datos procesados - {"clabe":"646180633000001640","transaccion":"00357050","autorizacion":"83628835","fecha":"2026-06-22T17:00:57Z","monto":107.5}
+2026-06-26 17:06:03 - CLABE encontrada - {"id":23,"account":"178249825634840"}
+2026-06-26 17:06:03 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:06:03 - Pago encontrado por transacción y autorización - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 17:06:03 - Pago seleccionado para cancelación - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 23:06:03 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-22T17:00:57Z","fecha_request_utc":"2026-06-22 17:00:57","fecha_recibido_original":"2026-06-26 17:00:35","fecha_recibido_utc":"2026-06-26 17:00:35","diferencia_segundos":-345578,"diferencia_horas":-95.9899999999999948840923025272786617279052734375,"diferencia_minutos":-5759.6300000000001091393642127513885498046875}
+2026-06-26 23:06:03 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-06-22 17:00:57","fecha_recibido":"2026-06-26 17:00:35","diferencia":-345578}
+2026-06-26 17:06:10 - === INICIO DE PROCESO ===
+2026-06-26 17:06:10 - Input recibido - {"clabe":"646180633000001640","fecha":"2026-06-22T17:00:05Z","monto":107.5,"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:06:10 - Datos procesados - {"clabe":"646180633000001640","transaccion":"00357050","autorizacion":"83628835","fecha":"2026-06-22T17:00:05Z","monto":107.5}
+2026-06-26 17:06:10 - CLABE encontrada - {"id":23,"account":"178249825634840"}
+2026-06-26 17:06:10 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:06:10 - Pago encontrado por transacción y autorización - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 17:06:10 - Pago seleccionado para cancelación - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 23:06:10 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-22T17:00:05Z","fecha_request_utc":"2026-06-22 17:00:05","fecha_recibido_original":"2026-06-26 17:00:35","fecha_recibido_utc":"2026-06-26 17:00:35","diferencia_segundos":-345630,"diferencia_horas":-96.0100000000000051159076974727213382720947265625,"diferencia_minutos":-5760.5}
+2026-06-26 23:06:10 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-06-22 17:00:05","fecha_recibido":"2026-06-26 17:00:35","diferencia":-345630}
+2026-06-26 17:06:31 - === INICIO DE PROCESO ===
+2026-06-26 17:06:31 - Input recibido - {"clabe":"646180633000001640","fecha":"2026-06-27T17:00:15Z","monto":107.5,"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:06:31 - Datos procesados - {"clabe":"646180633000001640","transaccion":"00357050","autorizacion":"83628835","fecha":"2026-06-27T17:00:15Z","monto":107.5}
+2026-06-26 17:06:31 - CLABE encontrada - {"id":23,"account":"178249825634840"}
+2026-06-26 17:06:31 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-26 17:06:31 - Pago encontrado por transacción y autorización - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 17:06:31 - Pago seleccionado para cancelación - {"id":49,"monto_recibido":"107.50","fecha_recibido":"2026-06-26 17:00:35","transaccion":"00357050","numero_autorizacion":"83628835"}
+2026-06-26 23:06:31 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-27T17:00:15Z","fecha_request_utc":"2026-06-27 17:00:15","fecha_recibido_original":"2026-06-26 17:00:35","fecha_recibido_utc":"2026-06-26 17:00:35","diferencia_segundos":86380,"diferencia_horas":23.989999999999998436805981327779591083526611328125,"diferencia_minutos":1439.670000000000072759576141834259033203125}
+2026-06-26 23:06:31 - Validación de fecha exitosa
+2026-06-26 23:06:31 - Pago marcado como rechazado - {"id":49}
+2026-06-26 23:06:31 - Montos calculados - {"monto_a_cancelar":107.5,"monto_pendiente_actual":"11492.50","nuevo_monto_pendiente":11600}
+2026-06-26 23:06:31 - CLABE actualizada
+2026-06-26 23:06:31 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-06-29 13:13:55 - === INICIO DE PROCESO ===
+2026-06-29 13:13:55 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T17:14:15Z","monto":107.5,"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-29 13:13:55 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00357050","autorizacion":"83628835","fecha":"2026-06-29T17:14:15Z","monto":107.5}
+2026-06-29 13:13:55 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:13:55 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-29 13:13:55 - Buscando solo por transacción - "00357050"
+2026-06-29 13:13:55 - Buscando solo por autorización - "83628835"
+2026-06-29 13:13:55 - Buscando último pago
+2026-06-29 13:13:55 - Último pago encontrado - {"id":50,"monto_recibido":"107.50","fecha_recibido":"2026-06-29 13:12:53","transaccion":"00307000","numero_autorizacion":"17232036"}
+2026-06-29 13:13:55 - Pago seleccionado para cancelación - {"id":50,"monto_recibido":"107.50","fecha_recibido":"2026-06-29 13:12:53","transaccion":"00307000","numero_autorizacion":"17232036"}
+2026-06-29 19:13:55 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-29T17:14:15Z","fecha_request_utc":"2026-06-29 17:14:15","fecha_recibido_original":"2026-06-29 13:12:53","fecha_recibido_utc":"2026-06-29 13:12:53","diferencia_segundos":14482,"diferencia_horas":4.019999999999999573674358543939888477325439453125,"diferencia_minutos":241.3700000000000045474735088646411895751953125}
+2026-06-29 19:13:55 - Validación de fecha exitosa
+2026-06-29 19:13:55 - Pago marcado como rechazado - {"id":50}
+2026-06-29 19:13:55 - Montos calculados - {"monto_a_cancelar":107.5,"monto_pendiente_actual":"17292.50","nuevo_monto_pendiente":17400}
+2026-06-29 19:13:55 - CLABE actualizada
+2026-06-29 19:13:55 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-06-29 13:17:19 - === INICIO DE PROCESO ===
+2026-06-29 13:17:19 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T17:14:15Z","monto":107.5,"transaccion":"00300000","autorizacion":"83628835"}
+2026-06-29 13:17:19 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00300000","autorizacion":"83628835","fecha":"2026-06-29T17:14:15Z","monto":107.5}
+2026-06-29 13:17:19 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:17:19 - Buscando por transacción y autorización - {"transaccion":"00300000","autorizacion":"83628835"}
+2026-06-29 13:17:19 - Buscando solo por transacción - "00300000"
+2026-06-29 13:17:19 - Pago encontrado por transacción - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:17:19 - Pago seleccionado para cancelación - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:17:19 - Monto no coincide - {"monto_bd":187.5,"monto_request":107.5}
+2026-06-29 13:17:39 - === INICIO DE PROCESO ===
+2026-06-29 13:17:39 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T17:14:15Z","monto":107.5,"transaccion":"00300000","autorizacion":"83628835"}
+2026-06-29 13:17:39 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00300000","autorizacion":"83628835","fecha":"2026-06-29T17:14:15Z","monto":107.5}
+2026-06-29 13:17:39 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:17:39 - Buscando por transacción y autorización - {"transaccion":"00300000","autorizacion":"83628835"}
+2026-06-29 13:17:39 - Buscando solo por transacción - "00300000"
+2026-06-29 13:17:39 - Pago encontrado por transacción - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:17:39 - Pago seleccionado para cancelación - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:17:39 - Monto no coincide - {"monto_bd":187.5,"monto_request":107.5}
+2026-06-29 13:17:52 - === INICIO DE PROCESO ===
+2026-06-29 13:17:52 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T17:14:15Z","monto":107.5,"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-29 13:17:52 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00357050","autorizacion":"83628835","fecha":"2026-06-29T17:14:15Z","monto":107.5}
+2026-06-29 13:17:52 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:17:52 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"83628835"}
+2026-06-29 13:17:52 - Buscando solo por transacción - "00357050"
+2026-06-29 13:17:52 - Buscando solo por autorización - "83628835"
+2026-06-29 13:17:52 - Buscando último pago
+2026-06-29 13:17:52 - Último pago encontrado - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:17:52 - Pago seleccionado para cancelación - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:17:52 - Monto no coincide - {"monto_bd":187.5,"monto_request":107.5}
+2026-06-29 13:18:25 - === INICIO DE PROCESO ===
+2026-06-29 13:18:25 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T17:14:15Z","monto":17.5,"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:18:25 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00357050","autorizacion":"99740844","fecha":"2026-06-29T17:14:15Z","monto":17.5}
+2026-06-29 13:18:25 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:18:25 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:18:25 - Buscando solo por transacción - "00357050"
+2026-06-29 13:18:25 - Buscando solo por autorización - "99740844"
+2026-06-29 13:18:25 - Pago encontrado por autorización - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:18:25 - Pago seleccionado para cancelación - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:18:25 - Monto no coincide - {"monto_bd":187.5,"monto_request":17.5}
+2026-06-29 13:18:38 - === INICIO DE PROCESO ===
+2026-06-29 13:18:38 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-30T18:14:15Z","monto":17.5,"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:18:38 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00357050","autorizacion":"99740844","fecha":"2026-06-30T18:14:15Z","monto":17.5}
+2026-06-29 13:18:38 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:18:38 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:18:38 - Buscando solo por transacción - "00357050"
+2026-06-29 13:18:38 - Buscando solo por autorización - "99740844"
+2026-06-29 13:18:38 - Pago encontrado por autorización - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:18:38 - Pago seleccionado para cancelación - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:18:38 - Monto no coincide - {"monto_bd":187.5,"monto_request":17.5}
+2026-06-29 13:18:55 - === INICIO DE PROCESO ===
+2026-06-29 13:18:55 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-30T18:14:15Z","monto":187.5,"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:18:55 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00357050","autorizacion":"99740844","fecha":"2026-06-30T18:14:15Z","monto":187.5}
+2026-06-29 13:18:55 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:18:55 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:18:55 - Buscando solo por transacción - "00357050"
+2026-06-29 13:18:55 - Buscando solo por autorización - "99740844"
+2026-06-29 13:18:55 - Pago encontrado por autorización - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:18:55 - Pago seleccionado para cancelación - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 19:18:55 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-30T18:14:15Z","fecha_request_utc":"2026-06-30 18:14:15","fecha_recibido_original":"2026-06-29 13:16:49","fecha_recibido_utc":"2026-06-29 13:16:49","diferencia_segundos":104246,"diferencia_horas":28.96000000000000085265128291212022304534912109375,"diferencia_minutos":1737.430000000000063664629124104976654052734375}
+2026-06-29 19:18:55 - Error: Han pasado más de 24 horas - {"diferencia_horas":28.96000000000000085265128291212022304534912109375}
+2026-06-29 13:19:10 - === INICIO DE PROCESO ===
+2026-06-29 13:19:10 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T13:19:15Z","monto":187.5,"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:19:10 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00357050","autorizacion":"99740844","fecha":"2026-06-29T13:19:15Z","monto":187.5}
+2026-06-29 13:19:10 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:19:10 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:19:10 - Buscando solo por transacción - "00357050"
+2026-06-29 13:19:10 - Buscando solo por autorización - "99740844"
+2026-06-29 13:19:10 - Pago encontrado por autorización - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 13:19:10 - Pago seleccionado para cancelación - {"id":51,"monto_recibido":"187.50","fecha_recibido":"2026-06-29 13:16:49","transaccion":"00300000","numero_autorizacion":"99740844"}
+2026-06-29 19:19:10 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-29T13:19:15Z","fecha_request_utc":"2026-06-29 13:19:15","fecha_recibido_original":"2026-06-29 13:16:49","fecha_recibido_utc":"2026-06-29 13:16:49","diferencia_segundos":146,"diferencia_horas":0.040000000000000000832667268468867405317723751068115234375,"diferencia_minutos":2.430000000000000159872115546022541821002960205078125}
+2026-06-29 19:19:10 - Validación de fecha exitosa
+2026-06-29 19:19:10 - Pago marcado como rechazado - {"id":51}
+2026-06-29 19:19:10 - Montos calculados - {"monto_a_cancelar":187.5,"monto_pendiente_actual":"17212.50","nuevo_monto_pendiente":17400}
+2026-06-29 19:19:10 - CLABE actualizada
+2026-06-29 19:19:10 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-06-29 13:19:25 - === INICIO DE PROCESO ===
+2026-06-29 13:19:25 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T13:19:15Z","monto":187.5,"transaccion":"0035700","autorizacion":"99740844"}
+2026-06-29 13:19:25 - Datos procesados - {"clabe":"646180633000001653","transaccion":"0035700","autorizacion":"99740844","fecha":"2026-06-29T13:19:15Z","monto":187.5}
+2026-06-29 13:19:25 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:19:25 - Buscando por transacción y autorización - {"transaccion":"0035700","autorizacion":"99740844"}
+2026-06-29 13:19:25 - Buscando solo por transacción - "0035700"
+2026-06-29 13:19:25 - Buscando solo por autorización - "99740844"
+2026-06-29 13:19:25 - Buscando último pago
+2026-06-29 13:19:25 - No se encontró ningún pago
+2026-06-29 13:23:17 - === INICIO DE PROCESO ===
+2026-06-29 13:23:17 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T13:19:15Z","monto":187.5,"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:23:17 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00357050","autorizacion":"99740844","fecha":"2026-06-29T13:19:15Z","monto":187.5}
+2026-06-29 13:23:17 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:23:17 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:23:17 - Buscando solo por transacción - "00357050"
+2026-06-29 13:23:17 - Buscando solo por autorización - "99740844"
+2026-06-29 13:23:17 - Buscando último pago
+2026-06-29 13:23:17 - No se encontró ningún pago
+2026-06-29 13:24:18 - === INICIO DE PROCESO ===
+2026-06-29 13:24:18 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T13:19:15Z","monto":187.5,"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:24:18 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00357050","autorizacion":"99740844","fecha":"2026-06-29T13:19:15Z","monto":187.5}
+2026-06-29 13:24:18 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:24:18 - Buscando por transacción y autorización - {"transaccion":"00357050","autorizacion":"99740844"}
+2026-06-29 13:24:18 - Buscando solo por transacción - "00357050"
+2026-06-29 13:24:18 - Buscando solo por autorización - "99740844"
+2026-06-29 13:24:18 - Buscando último pago
+2026-06-29 13:24:18 - Último pago encontrado - {"id":53,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:24:11","transaccion":"00310000","numero_autorizacion":"33904036"}
+2026-06-29 13:24:18 - Pago seleccionado para cancelación - {"id":53,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:24:11","transaccion":"00310000","numero_autorizacion":"33904036"}
+2026-06-29 13:24:18 - Monto no coincide - {"monto_bd":1.5,"monto_request":187.5}
+2026-06-29 13:24:52 - === INICIO DE PROCESO ===
+2026-06-29 13:24:52 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T13:19:15Z","monto":187.5,"transaccion":"00310000","autorizacion":"99740844"}
+2026-06-29 13:24:52 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00310000","autorizacion":"99740844","fecha":"2026-06-29T13:19:15Z","monto":187.5}
+2026-06-29 13:24:52 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:24:52 - Buscando por transacción y autorización - {"transaccion":"00310000","autorizacion":"99740844"}
+2026-06-29 13:24:52 - Buscando solo por transacción - "00310000"
+2026-06-29 13:24:52 - Pago encontrado por transacción - {"id":52,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:23:55","transaccion":"00310000","numero_autorizacion":"72791404"}
+2026-06-29 13:24:52 - Pago seleccionado para cancelación - {"id":52,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:23:55","transaccion":"00310000","numero_autorizacion":"72791404"}
+2026-06-29 13:24:52 - Monto no coincide - {"monto_bd":1.5,"monto_request":187.5}
+2026-06-29 13:25:25 - === INICIO DE PROCESO ===
+2026-06-29 13:25:25 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-30T19:19:15Z","monto":187.5,"transaccion":"00310000","autorizacion":"99740844"}
+2026-06-29 13:25:25 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00310000","autorizacion":"99740844","fecha":"2026-06-30T19:19:15Z","monto":187.5}
+2026-06-29 13:25:25 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:25:25 - Buscando por transacción y autorización - {"transaccion":"00310000","autorizacion":"99740844"}
+2026-06-29 13:25:25 - Buscando solo por transacción - "00310000"
+2026-06-29 13:25:25 - Pago encontrado por transacción - {"id":52,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:23:55","transaccion":"00310000","numero_autorizacion":"72791404"}
+2026-06-29 13:25:25 - Pago seleccionado para cancelación - {"id":52,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:23:55","transaccion":"00310000","numero_autorizacion":"72791404"}
+2026-06-29 13:25:25 - Monto no coincide - {"monto_bd":1.5,"monto_request":187.5}
+2026-06-29 13:29:16 - === INICIO DE PROCESO ===
+2026-06-29 13:29:16 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-30T19:19:15Z","monto":187.5,"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:29:16 - Datos procesados - {"clabe":"646180633000001653","transaccion":"3390403","autorizacion":"99740844","fecha":"2026-06-30T19:19:15Z","monto":187.5}
+2026-06-29 13:29:16 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:29:16 - Buscando por transacción y autorización - {"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:29:16 - Buscando solo por transacción - "3390403"
+2026-06-29 13:29:16 - Buscando solo por autorización - "99740844"
+2026-06-29 13:29:16 - Buscando último pago
+2026-06-29 13:29:16 - Último pago encontrado - {"id":53,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:24:11","transaccion":"00310000","numero_autorizacion":"33904036"}
+2026-06-29 13:29:16 - Pago seleccionado para cancelación - {"id":53,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:24:11","transaccion":"00310000","numero_autorizacion":"33904036"}
+2026-06-29 13:29:16 - Monto no coincide - {"monto_bd":1.5,"monto_request":187.5}
+2026-06-29 13:29:26 - === INICIO DE PROCESO ===
+2026-06-29 13:29:26 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-30T19:19:15Z","monto":1.5,"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:29:26 - Datos procesados - {"clabe":"646180633000001653","transaccion":"3390403","autorizacion":"99740844","fecha":"2026-06-30T19:19:15Z","monto":1.5}
+2026-06-29 13:29:26 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:29:26 - Buscando por transacción y autorización - {"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:29:26 - Buscando solo por transacción - "3390403"
+2026-06-29 13:29:26 - Buscando solo por autorización - "99740844"
+2026-06-29 13:29:26 - Buscando último pago
+2026-06-29 13:29:26 - Último pago encontrado - {"id":53,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:24:11","transaccion":"00310000","numero_autorizacion":"33904036"}
+2026-06-29 13:29:26 - Pago seleccionado para cancelación - {"id":53,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:24:11","transaccion":"00310000","numero_autorizacion":"33904036"}
+2026-06-29 19:29:26 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-30T19:19:15Z","fecha_request_utc":"2026-06-30 19:19:15","fecha_recibido_original":"2026-06-29 13:24:11","fecha_recibido_utc":"2026-06-29 13:24:11","diferencia_segundos":107704,"diferencia_horas":29.9200000000000017053025658242404460906982421875,"diferencia_minutos":1795.069999999999936335370875895023345947265625}
+2026-06-29 19:29:26 - Error: Han pasado más de 24 horas - {"diferencia_horas":29.9200000000000017053025658242404460906982421875}
+2026-06-29 13:30:30 - === INICIO DE PROCESO ===
+2026-06-29 13:30:30 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T13:30:15Z","monto":1.5,"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:30:30 - Datos procesados - {"clabe":"646180633000001653","transaccion":"3390403","autorizacion":"99740844","fecha":"2026-06-29T13:30:15Z","monto":1.5}
+2026-06-29 13:30:30 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:30:30 - Buscando por transacción y autorización - {"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:30:30 - Buscando solo por transacción - "3390403"
+2026-06-29 13:30:30 - Buscando solo por autorización - "99740844"
+2026-06-29 13:30:30 - Buscando último pago
+2026-06-29 13:30:30 - Último pago encontrado - {"id":53,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:24:11","transaccion":"00310000","numero_autorizacion":"33904036"}
+2026-06-29 13:30:30 - Pago seleccionado para cancelación - {"id":53,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:24:11","transaccion":"00310000","numero_autorizacion":"33904036"}
+2026-06-29 19:30:30 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-29T13:30:15Z","fecha_request_utc":"2026-06-29 13:30:15","fecha_recibido_original":"2026-06-29 13:24:11","fecha_recibido_utc":"2026-06-29 13:24:11","diferencia_segundos":364,"diferencia_horas":0.1000000000000000055511151231257827021181583404541015625,"diferencia_minutos":6.07000000000000028421709430404007434844970703125}
+2026-06-29 19:30:30 - Validación de fecha exitosa
+2026-06-29 19:30:30 - Pago marcado como rechazado - {"id":53}
+2026-06-29 19:30:30 - Montos calculados - {"monto_a_cancelar":1.5,"monto_pendiente_actual":"17397.00","nuevo_monto_pendiente":17398.5}
+2026-06-29 19:30:30 - CLABE actualizada
+2026-06-29 19:30:30 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-06-29 13:30:35 - === INICIO DE PROCESO ===
+2026-06-29 13:30:35 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T13:30:15Z","monto":1.5,"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:30:35 - Datos procesados - {"clabe":"646180633000001653","transaccion":"3390403","autorizacion":"99740844","fecha":"2026-06-29T13:30:15Z","monto":1.5}
+2026-06-29 13:30:35 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:30:35 - Buscando por transacción y autorización - {"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:30:35 - Buscando solo por transacción - "3390403"
+2026-06-29 13:30:35 - Buscando solo por autorización - "99740844"
+2026-06-29 13:30:35 - Buscando último pago
+2026-06-29 13:30:35 - Último pago encontrado - {"id":52,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:23:55","transaccion":"00310000","numero_autorizacion":"72791404"}
+2026-06-29 13:30:35 - Pago seleccionado para cancelación - {"id":52,"monto_recibido":"1.50","fecha_recibido":"2026-06-29 13:23:55","transaccion":"00310000","numero_autorizacion":"72791404"}
+2026-06-29 19:30:35 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-29T13:30:15Z","fecha_request_utc":"2026-06-29 13:30:15","fecha_recibido_original":"2026-06-29 13:23:55","fecha_recibido_utc":"2026-06-29 13:23:55","diferencia_segundos":380,"diferencia_horas":0.11000000000000000055511151231257827021181583404541015625,"diferencia_minutos":6.3300000000000000710542735760100185871124267578125}
+2026-06-29 19:30:35 - Validación de fecha exitosa
+2026-06-29 19:30:35 - Pago marcado como rechazado - {"id":52}
+2026-06-29 19:30:35 - Montos calculados - {"monto_a_cancelar":1.5,"monto_pendiente_actual":"17398.50","nuevo_monto_pendiente":17400}
+2026-06-29 19:30:35 - CLABE actualizada
+2026-06-29 19:30:35 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-06-29 13:30:38 - === INICIO DE PROCESO ===
+2026-06-29 13:30:38 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T13:30:15Z","monto":1.5,"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:30:38 - Datos procesados - {"clabe":"646180633000001653","transaccion":"3390403","autorizacion":"99740844","fecha":"2026-06-29T13:30:15Z","monto":1.5}
+2026-06-29 13:30:38 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:30:38 - Buscando por transacción y autorización - {"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:30:38 - Buscando solo por transacción - "3390403"
+2026-06-29 13:30:38 - Buscando solo por autorización - "99740844"
+2026-06-29 13:30:38 - Buscando último pago
+2026-06-29 13:30:38 - No se encontró ningún pago
+2026-06-29 13:31:56 - === INICIO DE PROCESO ===
+2026-06-29 13:31:56 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T13:30:15Z","monto":1.5,"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:31:56 - Datos procesados - {"clabe":"646180633000001653","transaccion":"3390403","autorizacion":"99740844","fecha":"2026-06-29T13:30:15Z","monto":1.5}
+2026-06-29 13:31:56 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:31:56 - Buscando por transacción y autorización - {"transaccion":"3390403","autorizacion":"99740844"}
+2026-06-29 13:31:56 - Buscando solo por transacción - "3390403"
+2026-06-29 13:31:56 - Buscando solo por autorización - "99740844"
+2026-06-29 13:31:56 - Buscando último pago
+2026-06-29 13:31:56 - No se encontró ningún pago
+2026-06-29 13:32:09 - === INICIO DE PROCESO ===
+2026-06-29 13:32:09 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T13:30:15Z","monto":1.5,"transaccion":"39687934","autorizacion":"39687934"}
+2026-06-29 13:32:09 - Datos procesados - {"clabe":"646180633000001653","transaccion":"39687934","autorizacion":"39687934","fecha":"2026-06-29T13:30:15Z","monto":1.5}
+2026-06-29 13:32:09 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:32:09 - Buscando por transacción y autorización - {"transaccion":"39687934","autorizacion":"39687934"}
+2026-06-29 13:32:09 - Buscando solo por transacción - "39687934"
+2026-06-29 13:32:09 - Buscando solo por autorización - "39687934"
+2026-06-29 13:32:09 - Buscando último pago
+2026-06-29 13:32:09 - No se encontró ningún pago
+2026-06-29 13:32:25 - === INICIO DE PROCESO ===
+2026-06-29 13:32:25 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-29T13:30:15Z","monto":1.5,"transaccion":"00310010","autorizacion":"39687934"}
+2026-06-29 13:32:25 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00310010","autorizacion":"39687934","fecha":"2026-06-29T13:30:15Z","monto":1.5}
+2026-06-29 13:32:25 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:32:25 - Buscando por transacción y autorización - {"transaccion":"00310010","autorizacion":"39687934"}
+2026-06-29 13:32:25 - Buscando solo por transacción - "00310010"
+2026-06-29 13:32:25 - Buscando solo por autorización - "39687934"
+2026-06-29 13:32:25 - Buscando último pago
+2026-06-29 13:32:25 - No se encontró ningún pago
+2026-06-29 13:33:03 - === INICIO DE PROCESO ===
+2026-06-29 13:33:03 - Input recibido - {"clabe":"646180633000001653","fecha":"2026-06-30T13:30:15Z","monto":11600,"transaccion":"00310010","autorizacion":"39687934"}
+2026-06-29 13:33:03 - Datos procesados - {"clabe":"646180633000001653","transaccion":"00310010","autorizacion":"39687934","fecha":"2026-06-30T13:30:15Z","monto":11600}
+2026-06-29 13:33:03 - CLABE encontrada - {"id":24,"account":"178276019696831"}
+2026-06-29 13:33:03 - Buscando por transacción y autorización - {"transaccion":"00310010","autorizacion":"39687934"}
+2026-06-29 13:33:03 - Buscando solo por transacción - "00310010"
+2026-06-29 13:33:03 - Buscando solo por autorización - "39687934"
+2026-06-29 13:33:03 - Buscando último pago
+2026-06-29 13:33:03 - No se encontró ningún pago
+2026-06-29 13:33:13 - === INICIO DE PROCESO ===
+2026-06-29 13:33:13 - Input recibido - {"clabe":"646180633000001666","fecha":"2026-06-30T13:30:15Z","monto":11600,"transaccion":"00310010","autorizacion":"39687934"}
+2026-06-29 13:33:13 - Datos procesados - {"clabe":"646180633000001666","transaccion":"00310010","autorizacion":"39687934","fecha":"2026-06-30T13:30:15Z","monto":11600}
+2026-06-29 13:33:13 - CLABE encontrada - {"id":25,"account":"178276146351687"}
+2026-06-29 13:33:13 - Buscando por transacción y autorización - {"transaccion":"00310010","autorizacion":"39687934"}
+2026-06-29 13:33:13 - Pago encontrado por transacción y autorización - {"id":54,"monto_recibido":"11600.00","fecha_recibido":"2026-06-29 13:31:41","transaccion":"00310010","numero_autorizacion":"39687934"}
+2026-06-29 13:33:13 - Pago seleccionado para cancelación - {"id":54,"monto_recibido":"11600.00","fecha_recibido":"2026-06-29 13:31:41","transaccion":"00310010","numero_autorizacion":"39687934"}
+2026-06-29 19:33:13 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-30T13:30:15Z","fecha_request_utc":"2026-06-30 13:30:15","fecha_recibido_original":"2026-06-29 13:31:41","fecha_recibido_utc":"2026-06-29 13:31:41","diferencia_segundos":86314,"diferencia_horas":23.980000000000000426325641456060111522674560546875,"diferencia_minutos":1438.569999999999936335370875895023345947265625}
+2026-06-29 19:33:13 - Validación de fecha exitosa
+2026-06-29 19:33:13 - Pago marcado como rechazado - {"id":54}
+2026-06-29 19:33:13 - Montos calculados - {"monto_a_cancelar":11600,"monto_pendiente_actual":"0.00","nuevo_monto_pendiente":11600}
+2026-06-29 19:33:13 - CLABE actualizada
+2026-06-29 19:33:13 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-06-29 13:34:26 - === INICIO DE PROCESO ===
+2026-06-29 13:34:26 - Input recibido - {"clabe":"646180633000001666","fecha":"2026-06-30T13:30:15Z","monto":11600,"transaccion":"00310010","autorizacion":"97233627"}
+2026-06-29 13:34:26 - Datos procesados - {"clabe":"646180633000001666","transaccion":"00310010","autorizacion":"97233627","fecha":"2026-06-30T13:30:15Z","monto":11600}
+2026-06-29 13:34:26 - CLABE encontrada - {"id":25,"account":"178276146351687"}
+2026-06-29 13:34:26 - Buscando por transacción y autorización - {"transaccion":"00310010","autorizacion":"97233627"}
+2026-06-29 13:34:26 - Pago encontrado por transacción y autorización - {"id":55,"monto_recibido":"11600.00","fecha_recibido":"2026-06-29 13:33:31","transaccion":"00310010","numero_autorizacion":"97233627"}
+2026-06-29 13:34:26 - Pago seleccionado para cancelación - {"id":55,"monto_recibido":"11600.00","fecha_recibido":"2026-06-29 13:33:31","transaccion":"00310010","numero_autorizacion":"97233627"}
+2026-06-29 19:34:26 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-30T13:30:15Z","fecha_request_utc":"2026-06-30 13:30:15","fecha_recibido_original":"2026-06-29 13:33:31","fecha_recibido_utc":"2026-06-29 13:33:31","diferencia_segundos":86204,"diferencia_horas":23.949999999999999289457264239899814128875732421875,"diferencia_minutos":1436.73000000000001818989403545856475830078125}
+2026-06-29 19:34:26 - Validación de fecha exitosa
+2026-06-29 19:34:26 - Pago marcado como rechazado - {"id":55}
+2026-06-29 19:34:26 - Montos calculados - {"monto_a_cancelar":11600,"monto_pendiente_actual":"0.00","nuevo_monto_pendiente":11600}
+2026-06-29 19:34:26 - CLABE actualizada
+2026-06-29 19:34:26 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-06-29 13:34:58 - === INICIO DE PROCESO ===
+2026-06-29 13:34:58 - Input recibido - {"clabe":"646180633000001666","fecha":"2026-06-30T13:30:15Z","monto":11600,"transaccion":"00310010","autorizacion":"97233627"}
+2026-06-29 13:34:58 - Datos procesados - {"clabe":"646180633000001666","transaccion":"00310010","autorizacion":"97233627","fecha":"2026-06-30T13:30:15Z","monto":11600}
+2026-06-29 13:34:58 - CLABE encontrada - {"id":25,"account":"178276146351687"}
+2026-06-29 13:34:58 - Buscando por transacción y autorización - {"transaccion":"00310010","autorizacion":"97233627"}
+2026-06-29 13:34:58 - Buscando solo por transacción - "00310010"
+2026-06-29 13:34:58 - Buscando solo por autorización - "97233627"
+2026-06-29 13:34:58 - Buscando último pago
+2026-06-29 13:34:58 - No se encontró ningún pago
+2026-06-29 13:38:59 - === INICIO DE PROCESO ===
+2026-06-29 13:38:59 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-30T13:30:15Z","monto":11600,"transaccion":"00380110","autorizacion":"06251019"}
+2026-06-29 13:38:59 - Datos procesados - {"clabe":"646180633000001679","transaccion":"00380110","autorizacion":"06251019","fecha":"2026-06-30T13:30:15Z","monto":11600}
+2026-06-29 13:38:59 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:38:59 - Buscando por transacción y autorización - {"transaccion":"00380110","autorizacion":"06251019"}
+2026-06-29 13:38:59 - Pago encontrado por transacción y autorización - {"id":56,"monto_recibido":"100.00","fecha_recibido":"2026-06-29 13:38:00","transaccion":"00380110","numero_autorizacion":"06251019"}
+2026-06-29 13:38:59 - Pago seleccionado para cancelación - {"id":56,"monto_recibido":"100.00","fecha_recibido":"2026-06-29 13:38:00","transaccion":"00380110","numero_autorizacion":"06251019"}
+2026-06-29 13:38:59 - Monto no coincide - {"monto_bd":100,"monto_request":11600}
+2026-06-29 13:39:22 - === INICIO DE PROCESO ===
+2026-06-29 13:39:22 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-30T13:30:15Z","monto":1100,"transaccion":"00380110","autorizacion":"06251019"}
+2026-06-29 13:39:22 - Datos procesados - {"clabe":"646180633000001679","transaccion":"00380110","autorizacion":"06251019","fecha":"2026-06-30T13:30:15Z","monto":1100}
+2026-06-29 13:39:22 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:39:22 - Buscando por transacción y autorización - {"transaccion":"00380110","autorizacion":"06251019"}
+2026-06-29 13:39:22 - Pago encontrado por transacción y autorización - {"id":56,"monto_recibido":"100.00","fecha_recibido":"2026-06-29 13:38:00","transaccion":"00380110","numero_autorizacion":"06251019"}
+2026-06-29 13:39:22 - Pago seleccionado para cancelación - {"id":56,"monto_recibido":"100.00","fecha_recibido":"2026-06-29 13:38:00","transaccion":"00380110","numero_autorizacion":"06251019"}
+2026-06-29 13:39:22 - Monto no coincide - {"monto_bd":100,"monto_request":1100}
+2026-06-29 13:40:21 - === INICIO DE PROCESO ===
+2026-06-29 13:40:21 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-30T13:30:15Z","monto":1100,"transaccion":"00380110","autorizacion":"06251019"}
+2026-06-29 13:40:21 - Datos procesados - {"clabe":"646180633000001679","transaccion":"00380110","autorizacion":"06251019","fecha":"2026-06-30T13:30:15Z","monto":1100}
+2026-06-29 13:40:21 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:40:21 - Buscando por transacción y autorización - {"transaccion":"00380110","autorizacion":"06251019"}
+2026-06-29 13:40:21 - Pago encontrado por transacción y autorización - {"id":56,"monto_recibido":"100.00","fecha_recibido":"2026-06-29 13:38:00","transaccion":"00380110","numero_autorizacion":"06251019"}
+2026-06-29 13:40:21 - Pago seleccionado para cancelación - {"id":56,"monto_recibido":"100.00","fecha_recibido":"2026-06-29 13:38:00","transaccion":"00380110","numero_autorizacion":"06251019"}
+2026-06-29 13:40:21 - Monto no coincide - {"monto_bd":100,"monto_request":1100}
+2026-06-29 13:40:27 - === INICIO DE PROCESO ===
+2026-06-29 13:40:27 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-30T13:30:15Z","monto":100,"transaccion":"00380110","autorizacion":"06251019"}
+2026-06-29 13:40:27 - Datos procesados - {"clabe":"646180633000001679","transaccion":"00380110","autorizacion":"06251019","fecha":"2026-06-30T13:30:15Z","monto":100}
+2026-06-29 13:40:27 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:40:27 - Buscando por transacción y autorización - {"transaccion":"00380110","autorizacion":"06251019"}
+2026-06-29 13:40:27 - Pago encontrado por transacción y autorización - {"id":56,"monto_recibido":"100.00","fecha_recibido":"2026-06-29 13:38:00","transaccion":"00380110","numero_autorizacion":"06251019"}
+2026-06-29 13:40:27 - Pago seleccionado para cancelación - {"id":56,"monto_recibido":"100.00","fecha_recibido":"2026-06-29 13:38:00","transaccion":"00380110","numero_autorizacion":"06251019"}
+2026-06-29 19:40:27 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-30T13:30:15Z","fecha_request_utc":"2026-06-30 13:30:15","fecha_recibido_original":"2026-06-29 13:38:00","fecha_recibido_utc":"2026-06-29 13:38:00","diferencia_segundos":85935,"diferencia_horas":23.870000000000000994759830064140260219573974609375,"diferencia_minutos":1432.25}
+2026-06-29 19:40:27 - Validación de fecha exitosa
+2026-06-29 19:40:27 - Pago marcado como rechazado - {"id":56}
+2026-06-29 19:40:27 - Montos calculados - {"monto_a_cancelar":100,"monto_pendiente_actual":"5600.00","nuevo_monto_pendiente":5700}
+2026-06-29 19:40:27 - CLABE actualizada
+2026-06-29 19:40:27 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-06-29 13:40:44 - === INICIO DE PROCESO ===
+2026-06-29 13:40:44 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-30T13:30:15Z","monto":100,"transaccion":"00380119","autorizacion":"06251019"}
+2026-06-29 13:40:44 - Datos procesados - {"clabe":"646180633000001679","transaccion":"00380119","autorizacion":"06251019","fecha":"2026-06-30T13:30:15Z","monto":100}
+2026-06-29 13:40:44 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:40:44 - Buscando por transacción y autorización - {"transaccion":"00380119","autorizacion":"06251019"}
+2026-06-29 13:40:44 - Buscando solo por transacción - "00380119"
+2026-06-29 13:40:44 - Pago encontrado por transacción - {"id":57,"monto_recibido":"100.00","fecha_recibido":"2026-06-29 13:38:46","transaccion":"00380119","numero_autorizacion":"72009402"}
+2026-06-29 13:40:44 - Pago seleccionado para cancelación - {"id":57,"monto_recibido":"100.00","fecha_recibido":"2026-06-29 13:38:46","transaccion":"00380119","numero_autorizacion":"72009402"}
+2026-06-29 19:40:44 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-30T13:30:15Z","fecha_request_utc":"2026-06-30 13:30:15","fecha_recibido_original":"2026-06-29 13:38:46","fecha_recibido_utc":"2026-06-29 13:38:46","diferencia_segundos":85889,"diferencia_horas":23.8599999999999994315658113919198513031005859375,"diferencia_minutos":1431.48000000000001818989403545856475830078125}
+2026-06-29 19:40:44 - Validación de fecha exitosa
+2026-06-29 19:40:44 - Pago marcado como rechazado - {"id":57}
+2026-06-29 19:40:44 - Montos calculados - {"monto_a_cancelar":100,"monto_pendiente_actual":"5700.00","nuevo_monto_pendiente":5800}
+2026-06-29 19:40:44 - CLABE actualizada
+2026-06-29 19:40:44 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-06-29 13:42:15 - === INICIO DE PROCESO ===
+2026-06-29 13:42:15 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-30T13:30:15Z","monto":100,"transaccion":"01380119","autorizacion":"09099938"}
+2026-06-29 13:42:15 - Datos procesados - {"clabe":"646180633000001679","transaccion":"01380119","autorizacion":"09099938","fecha":"2026-06-30T13:30:15Z","monto":100}
+2026-06-29 13:42:15 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:42:15 - Buscando por transacción y autorización - {"transaccion":"01380119","autorizacion":"09099938"}
+2026-06-29 13:42:15 - Buscando solo por transacción - "01380119"
+2026-06-29 13:42:15 - Buscando solo por autorización - "09099938"
+2026-06-29 13:42:15 - Pago encontrado por autorización - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 13:42:15 - Pago seleccionado para cancelación - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 13:42:15 - Monto no coincide - {"monto_bd":5800,"monto_request":100}
+2026-06-29 13:42:20 - === INICIO DE PROCESO ===
+2026-06-29 13:42:20 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-30T13:30:15Z","monto":100,"transaccion":"01380119","autorizacion":"09099939"}
+2026-06-29 13:42:20 - Datos procesados - {"clabe":"646180633000001679","transaccion":"01380119","autorizacion":"09099939","fecha":"2026-06-30T13:30:15Z","monto":100}
+2026-06-29 13:42:20 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:42:20 - Buscando por transacción y autorización - {"transaccion":"01380119","autorizacion":"09099939"}
+2026-06-29 13:42:20 - Buscando solo por transacción - "01380119"
+2026-06-29 13:42:20 - Buscando solo por autorización - "09099939"
+2026-06-29 13:42:20 - Buscando último pago
+2026-06-29 13:42:20 - Último pago encontrado - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 13:42:20 - Pago seleccionado para cancelación - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 13:42:20 - Monto no coincide - {"monto_bd":5800,"monto_request":100}
+2026-06-29 13:42:28 - === INICIO DE PROCESO ===
+2026-06-29 13:42:28 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-30T13:30:15Z","monto":100,"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-29 13:42:28 - Datos procesados - {"clabe":"646180633000001679","transaccion":"01380110","autorizacion":"09099938","fecha":"2026-06-30T13:30:15Z","monto":100}
+2026-06-29 13:42:28 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:42:28 - Buscando por transacción y autorización - {"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-29 13:42:28 - Pago encontrado por transacción y autorización - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 13:42:28 - Pago seleccionado para cancelación - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 13:42:28 - Monto no coincide - {"monto_bd":5800,"monto_request":100}
+2026-06-29 13:42:35 - === INICIO DE PROCESO ===
+2026-06-29 13:42:35 - Input recibido - {"clabe":"646180633000001670","fecha":"2026-06-30T13:30:15Z","monto":100,"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-29 13:42:35 - Datos procesados - {"clabe":"646180633000001670","transaccion":"01380110","autorizacion":"09099938","fecha":"2026-06-30T13:30:15Z","monto":100}
+2026-06-29 13:42:46 - === INICIO DE PROCESO ===
+2026-06-29 13:42:46 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-31T13:30:15Z","monto":100,"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-29 13:42:46 - Datos procesados - {"clabe":"646180633000001679","transaccion":"01380110","autorizacion":"09099938","fecha":"2026-06-31T13:30:15Z","monto":100}
+2026-06-29 13:42:46 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:42:46 - Buscando por transacción y autorización - {"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-29 13:42:46 - Pago encontrado por transacción y autorización - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 13:42:46 - Pago seleccionado para cancelación - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 13:42:46 - Monto no coincide - {"monto_bd":5800,"monto_request":100}
+2026-06-29 13:42:56 - === INICIO DE PROCESO ===
+2026-06-29 13:42:56 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-31T13:30:15Z","monto":5800,"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-29 13:42:56 - Datos procesados - {"clabe":"646180633000001679","transaccion":"01380110","autorizacion":"09099938","fecha":"2026-06-31T13:30:15Z","monto":5800}
+2026-06-29 13:42:56 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:42:56 - Buscando por transacción y autorización - {"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-29 13:42:56 - Pago encontrado por transacción y autorización - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 13:42:56 - Pago seleccionado para cancelación - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 19:42:56 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-31T13:30:15Z","fecha_request_utc":"2026-07-01 13:30:15","fecha_recibido_original":"2026-06-29 13:41:18","fecha_recibido_utc":"2026-06-29 13:41:18","diferencia_segundos":172137,"diferencia_horas":47.82000000000000028421709430404007434844970703125,"diferencia_minutos":2868.9499999999998181010596454143524169921875}
+2026-06-29 19:42:56 - Error: Han pasado más de 24 horas - {"diferencia_horas":47.82000000000000028421709430404007434844970703125}
+2026-06-29 13:43:09 - === INICIO DE PROCESO ===
+2026-06-29 13:43:09 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-30T13:42:15Z","monto":5800,"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-29 13:43:09 - Datos procesados - {"clabe":"646180633000001679","transaccion":"01380110","autorizacion":"09099938","fecha":"2026-06-30T13:42:15Z","monto":5800}
+2026-06-29 13:43:09 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:43:09 - Buscando por transacción y autorización - {"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-29 13:43:09 - Pago encontrado por transacción y autorización - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 13:43:09 - Pago seleccionado para cancelación - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 19:43:09 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-30T13:42:15Z","fecha_request_utc":"2026-06-30 13:42:15","fecha_recibido_original":"2026-06-29 13:41:18","fecha_recibido_utc":"2026-06-29 13:41:18","diferencia_segundos":86457,"diferencia_horas":24.019999999999999573674358543939888477325439453125,"diferencia_minutos":1440.950000000000045474735088646411895751953125}
+2026-06-29 19:43:09 - Error: Han pasado más de 24 horas - {"diferencia_horas":24.019999999999999573674358543939888477325439453125}
+2026-06-29 13:43:18 - === INICIO DE PROCESO ===
+2026-06-29 13:43:18 - Input recibido - {"clabe":"646180633000001679","fecha":"2026-06-29T13:42:15Z","monto":5800,"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-29 13:43:18 - Datos procesados - {"clabe":"646180633000001679","transaccion":"01380110","autorizacion":"09099938","fecha":"2026-06-29T13:42:15Z","monto":5800}
+2026-06-29 13:43:18 - CLABE encontrada - {"id":26,"account":"178276178320952"}
+2026-06-29 13:43:18 - Buscando por transacción y autorización - {"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-29 13:43:18 - Pago encontrado por transacción y autorización - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 13:43:18 - Pago seleccionado para cancelación - {"id":58,"monto_recibido":"5800.00","fecha_recibido":"2026-06-29 13:41:18","transaccion":"01380110","numero_autorizacion":"09099938"}
+2026-06-29 19:43:18 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-06-29T13:42:15Z","fecha_request_utc":"2026-06-29 13:42:15","fecha_recibido_original":"2026-06-29 13:41:18","fecha_recibido_utc":"2026-06-29 13:41:18","diferencia_segundos":57,"diferencia_horas":0.0200000000000000004163336342344337026588618755340576171875,"diferencia_minutos":0.9499999999999999555910790149937383830547332763671875}
+2026-06-29 19:43:18 - Validación de fecha exitosa
+2026-06-29 19:43:18 - Pago marcado como rechazado - {"id":58}
+2026-06-29 19:43:18 - Montos calculados - {"monto_a_cancelar":5800,"monto_pendiente_actual":"0.00","nuevo_monto_pendiente":5800}
+2026-06-29 19:43:18 - CLABE actualizada
+2026-06-29 19:43:18 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-06-30 11:34:08 - === INICIO DE PROCESO ===
+2026-06-30 11:34:08 - Input recibido - {"clabe":"646180633000001569","fecha":"2026-06-29T13:42:15Z","monto":5800,"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-30 11:34:08 - Datos procesados - {"clabe":"646180633000001569","transaccion":"01380110","autorizacion":"09099938","fecha":"2026-06-29T13:42:15Z","monto":5800}
+2026-06-30 11:34:08 - CLABE encontrada - {"id":16,"account":"178216587106923"}
+2026-06-30 11:34:08 - Buscando por transacción y autorización - {"transaccion":"01380110","autorizacion":"09099938"}
+2026-06-30 11:34:08 - Buscando solo por transacción - "01380110"
+2026-06-30 11:34:08 - Buscando solo por autorización - "09099938"
+2026-06-30 11:34:08 - Buscando último pago
+2026-06-30 11:34:08 - Último pago encontrado - {"id":59,"monto_recibido":"100.01","fecha_recibido":"2026-06-30 11:33:44","transaccion":"1301","numero_autorizacion":"18226978"}
+2026-06-30 11:34:08 - Pago seleccionado para cancelación - {"id":59,"monto_recibido":"100.01","fecha_recibido":"2026-06-30 11:33:44","transaccion":"1301","numero_autorizacion":"18226978"}
+2026-06-30 11:34:08 - Monto no coincide - {"monto_bd":100.0100000000000051159076974727213382720947265625,"monto_request":5800}
+2026-07-03 09:03:36 - === INICIO DE PROCESO ===
+2026-07-03 09:03:36 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 09:03:36 - Datos procesados - {"clabe":"646180633000001682","transaccion":"112","autorizacion":"69291817","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 09:03:36 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 09:03:36 - Buscando por transacción y autorización - {"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 09:03:36 - Buscando solo por transacción - "112"
+2026-07-03 09:03:36 - Buscando solo por autorización - "69291817"
+2026-07-03 09:03:36 - Buscando último pago
+2026-07-03 09:03:36 - Último pago encontrado - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 09:03:36 - Pago seleccionado para cancelación - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 15:03:36 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-07-03T08:58:07Z","fecha_request_utc":"2026-07-03 08:58:07","fecha_recibido_original":"2026-07-03 08:58:42","fecha_recibido_utc":"2026-07-03 08:58:42","diferencia_segundos":-35,"diferencia_horas":-0.01000000000000000020816681711721685132943093776702880859375,"diferencia_minutos":-0.57999999999999996003197111349436454474925994873046875}
+2026-07-03 15:03:36 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-07-03 08:58:07","fecha_recibido":"2026-07-03 08:58:42","diferencia":-35}
+2026-07-03 09:05:32 - === INICIO DE PROCESO ===
+2026-07-03 09:05:32 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"13002","autorizacion":"69291817"}
+2026-07-03 09:05:32 - Datos procesados - {"clabe":"646180633000001682","transaccion":"13002","autorizacion":"69291817","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 09:05:32 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 09:05:32 - Buscando por transacción y autorización - {"transaccion":"13002","autorizacion":"69291817"}
+2026-07-03 09:05:32 - Buscando solo por transacción - "13002"
+2026-07-03 09:05:32 - Pago encontrado por transacción - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 09:05:32 - Pago seleccionado para cancelación - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 15:05:32 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-07-03T08:58:07Z","fecha_request_utc":"2026-07-03 08:58:07","fecha_recibido_original":"2026-07-03 08:58:42","fecha_recibido_utc":"2026-07-03 08:58:42","diferencia_segundos":-35,"diferencia_horas":-0.01000000000000000020816681711721685132943093776702880859375,"diferencia_minutos":-0.57999999999999996003197111349436454474925994873046875}
+2026-07-03 15:05:32 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-07-03 08:58:07","fecha_recibido":"2026-07-03 08:58:42","diferencia":-35}
+2026-07-03 09:06:01 - === INICIO DE PROCESO ===
+2026-07-03 09:06:01 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"13002","autorizacion":"69291817"}
+2026-07-03 09:06:01 - Datos procesados - {"clabe":"646180633000001682","transaccion":"13002","autorizacion":"69291817","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 09:06:01 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 09:06:01 - Buscando por transacción y autorización - {"transaccion":"13002","autorizacion":"69291817"}
+2026-07-03 09:06:01 - Buscando solo por transacción - "13002"
+2026-07-03 09:06:01 - Pago encontrado por transacción - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 09:06:01 - Pago seleccionado para cancelación - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 15:06:01 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-07-03T08:58:07Z","fecha_request_utc":"2026-07-03 08:58:07","fecha_recibido_original":"2026-07-03 08:58:42","fecha_recibido_utc":"2026-07-03 08:58:42","diferencia_segundos":-35,"diferencia_horas":-0.01000000000000000020816681711721685132943093776702880859375,"diferencia_minutos":-0.57999999999999996003197111349436454474925994873046875}
+2026-07-03 15:06:01 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-07-03 08:58:07","fecha_recibido":"2026-07-03 08:58:42","diferencia":-35}
+2026-07-03 09:06:27 - === INICIO DE PROCESO ===
+2026-07-03 09:06:27 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"13002","autorizacion":"33195978"}
+2026-07-03 09:06:27 - Datos procesados - {"clabe":"646180633000001682","transaccion":"13002","autorizacion":"33195978","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 09:06:27 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 09:06:27 - Buscando por transacción y autorización - {"transaccion":"13002","autorizacion":"33195978"}
+2026-07-03 09:06:27 - Pago encontrado por transacción y autorización - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 09:06:27 - Pago seleccionado para cancelación - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 15:06:27 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-07-03T08:58:07Z","fecha_request_utc":"2026-07-03 08:58:07","fecha_recibido_original":"2026-07-03 08:58:42","fecha_recibido_utc":"2026-07-03 08:58:42","diferencia_segundos":-35,"diferencia_horas":-0.01000000000000000020816681711721685132943093776702880859375,"diferencia_minutos":-0.57999999999999996003197111349436454474925994873046875}
+2026-07-03 15:06:27 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-07-03 08:58:07","fecha_recibido":"2026-07-03 08:58:42","diferencia":-35}
+2026-07-03 09:59:24 - === INICIO DE PROCESO ===
+2026-07-03 09:59:24 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 09:59:24 - Datos procesados - {"clabe":"646180633000001682","transaccion":"112","autorizacion":"69291817","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 09:59:24 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 09:59:24 - Buscando por transacción y autorización - {"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 09:59:24 - Buscando solo por transacción - "112"
+2026-07-03 09:59:24 - Buscando solo por autorización - "69291817"
+2026-07-03 09:59:24 - Buscando último pago
+2026-07-03 09:59:24 - Último pago encontrado - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 09:59:24 - Pago seleccionado para cancelación - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 15:59:24 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-07-03T08:58:07Z","fecha_request_utc":"2026-07-03 08:58:07","fecha_recibido_original":"2026-07-03 08:58:42","fecha_recibido_utc":"2026-07-03 08:58:42","diferencia_segundos":-35,"diferencia_horas":-0.01000000000000000020816681711721685132943093776702880859375,"diferencia_minutos":-0.57999999999999996003197111349436454474925994873046875}
+2026-07-03 15:59:24 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-07-03 08:58:07","fecha_recibido":"2026-07-03 08:58:42","diferencia":-35}
+2026-07-03 10:09:50 - === INICIO DE PROCESO ===
+2026-07-03 10:09:50 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 10:09:50 - Datos procesados - {"clabe":"646180633000001682","transaccion":"112","autorizacion":"69291817","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 10:09:50 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 10:09:50 - Buscando por transacción y autorización - {"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 10:09:50 - Buscando solo por transacción - "112"
+2026-07-03 10:09:50 - Buscando solo por autorización - "69291817"
+2026-07-03 10:09:50 - Buscando último pago
+2026-07-03 10:09:50 - Último pago encontrado - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 10:09:50 - Pago seleccionado para cancelación - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 16:09:50 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-07-03T08:58:07Z","fecha_request_utc":"2026-07-03 08:58:07","fecha_recibido_original":"2026-07-03 08:58:42","fecha_recibido_utc":"2026-07-03 08:58:42","diferencia_segundos":-35,"diferencia_horas":-0.01000000000000000020816681711721685132943093776702880859375,"diferencia_minutos":-0.57999999999999996003197111349436454474925994873046875}
+2026-07-03 16:09:50 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-07-03 08:58:07","fecha_recibido":"2026-07-03 08:58:42","diferencia":-35}
+2026-07-03 10:22:33 - === INICIO DE PROCESO ===
+2026-07-03 10:22:33 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 10:22:33 - Datos procesados - {"clabe":"646180633000001682","transaccion":"112","autorizacion":"69291817","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 10:22:33 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 10:22:33 - Buscando por transacción y autorización - {"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 10:22:33 - Buscando solo por transacción - "112"
+2026-07-03 10:22:33 - Buscando solo por autorización - "69291817"
+2026-07-03 10:22:33 - Buscando último pago
+2026-07-03 10:22:33 - Último pago encontrado - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 10:22:33 - Pago seleccionado para cancelación - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 16:22:33 - Comparación de fechas (UTC) - {"fecha_request_original":"2026-07-03T08:58:07Z","fecha_request_utc":"2026-07-03 08:58:07","fecha_recibido_original":"2026-07-03 08:58:42","fecha_recibido_utc":"2026-07-03 08:58:42","diferencia_segundos":-35,"diferencia_horas":-0.01000000000000000020816681711721685132943093776702880859375,"diferencia_minutos":-0.57999999999999996003197111349436454474925994873046875}
+2026-07-03 16:22:33 - Error: Fecha request es anterior a fecha recibido - {"fecha_request":"2026-07-03 08:58:07","fecha_recibido":"2026-07-03 08:58:42","diferencia":-35}
+2026-07-03 10:26:17 - === INICIO DE PROCESO ===
+2026-07-03 10:26:17 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 10:26:17 - Datos procesados - {"clabe":"646180633000001682","transaccion":"112","autorizacion":"69291817","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 10:26:17 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 10:26:17 - Buscando por transacción y autorización - {"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 10:26:17 - Buscando solo por transacción - "112"
+2026-07-03 10:26:17 - Buscando solo por autorización - "69291817"
+2026-07-03 10:26:17 - Buscando último pago
+2026-07-03 10:26:17 - Último pago encontrado - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 10:26:17 - Pago seleccionado para cancelación - {"id":62,"monto_recibido":"1302.99","fecha_recibido":"2026-07-03 08:58:42","transaccion":"13002","numero_autorizacion":"33195978"}
+2026-07-03 10:26:17 - Validación de fecha exitosa - mismo día - {"fecha_request":"2026-07-03 08:58:07","fecha_recibido":"2026-07-03 08:58:42","mismo_dia":"SI"}
+2026-07-03 10:26:17 - Pago marcado como rechazado - {"id":62}
+2026-07-03 10:26:17 - Montos calculados - {"monto_a_cancelar":1302.990000000000009094947017729282379150390625,"monto_pendiente_actual":"21897.01","nuevo_monto_pendiente":23200}
+2026-07-03 10:26:17 - CLABE actualizada
+2026-07-03 10:26:17 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-07-03 10:26:24 - === INICIO DE PROCESO ===
+2026-07-03 10:26:24 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"112444","autorizacion":"69291817"}
+2026-07-03 10:26:24 - Datos procesados - {"clabe":"646180633000001682","transaccion":"112444","autorizacion":"69291817","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 10:26:24 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 10:26:24 - Buscando por transacción y autorización - {"transaccion":"112444","autorizacion":"69291817"}
+2026-07-03 10:26:24 - Buscando solo por transacción - "112444"
+2026-07-03 10:26:24 - Buscando solo por autorización - "69291817"
+2026-07-03 10:26:24 - Buscando último pago
+2026-07-03 10:26:24 - No se encontró ningún pago
+2026-07-03 10:27:39 - === INICIO DE PROCESO ===
+2026-07-03 10:27:39 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 10:27:39 - Datos procesados - {"clabe":"646180633000001682","transaccion":"112","autorizacion":"69291817","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 10:27:39 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 10:27:39 - Buscando por transacción y autorización - {"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 10:27:39 - Buscando solo por transacción - "112"
+2026-07-03 10:27:39 - Buscando solo por autorización - "69291817"
+2026-07-03 10:27:39 - Buscando último pago
+2026-07-03 10:27:39 - No se encontró ningún pago
+2026-07-03 10:40:31 - === INICIO DE PROCESO ===
+2026-07-03 10:40:31 - Input recibido - {"clabe":"646180633000001695","fecha":"2026-07-03T10:40:15Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 10:40:31 - Datos procesados - {"clabe":"646180633000001695","transaccion":"112","autorizacion":"69291817","fecha":"2026-07-03T10:40:15Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 10:40:31 - CLABE encontrada - {"id":28,"account":"178309665704732"}
+2026-07-03 10:40:31 - Buscando por transacción y autorización - {"transaccion":"112","autorizacion":"69291817"}
+2026-07-03 10:40:31 - Buscando solo por transacción - "112"
+2026-07-03 10:40:31 - Buscando solo por autorización - "69291817"
+2026-07-03 10:40:31 - Buscando último pago
+2026-07-03 10:40:32 - Último pago encontrado - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:40:32 - Pago seleccionado para cancelación - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:40:32 - Monto no coincide - {"monto_bd":10.03999999999999914734871708787977695465087890625,"monto_request":1302.990000000000009094947017729282379150390625}
+2026-07-03 10:43:46 - === INICIO DE PROCESO ===
+2026-07-03 10:43:46 - Input recibido - {"clabe":"646180633000001695","fecha":"2026-07-03T10:40:15Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:43:46 - Datos procesados - {"clabe":"646180633000001695","transaccion":"00078301","autorizacion":"75555201","fecha":"2026-07-03T10:40:15Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 10:43:46 - CLABE encontrada - {"id":28,"account":"178309665704732"}
+2026-07-03 10:43:46 - Buscando por transacción y autorización - {"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:43:46 - Pago encontrado por transacción y autorización - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:43:46 - Pago seleccionado para cancelación - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:43:46 - Monto no coincide - {"monto_bd":10.03999999999999914734871708787977695465087890625,"monto_request":1302.990000000000009094947017729282379150390625}
+2026-07-03 10:43:54 - === INICIO DE PROCESO ===
+2026-07-03 10:43:54 - Input recibido - {"clabe":"646180633000001695","fecha":"2026-07-03T10:40:15Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:43:54 - Datos procesados - {"clabe":"646180633000001695","transaccion":"00078301","autorizacion":"75555201","fecha":"2026-07-03T10:40:15Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 10:43:54 - CLABE encontrada - {"id":28,"account":"178309665704732"}
+2026-07-03 10:43:54 - Buscando por transacción y autorización - {"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:43:54 - Pago encontrado por transacción y autorización - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:43:54 - Pago seleccionado para cancelación - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:43:54 - Monto no coincide - {"monto_bd":10.03999999999999914734871708787977695465087890625,"monto_request":1302.990000000000009094947017729282379150390625}
+2026-07-03 10:44:28 - === INICIO DE PROCESO ===
+2026-07-03 10:44:28 - Input recibido - {"clabe":"646180633000001695","fecha":"2026-07-04T10:40:15Z","monto":10.03999999999999914734871708787977695465087890625,"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:44:28 - Datos procesados - {"clabe":"646180633000001695","transaccion":"00078301","autorizacion":"75555201","fecha":"2026-07-04T10:40:15Z","monto":10.03999999999999914734871708787977695465087890625}
+2026-07-03 10:44:28 - CLABE encontrada - {"id":28,"account":"178309665704732"}
+2026-07-03 10:44:28 - Buscando por transacción y autorización - {"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:44:28 - Pago encontrado por transacción y autorización - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:44:28 - Pago seleccionado para cancelación - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:44:28 - Error: Día diferente - {"request":"2026-07-04","recibido":"2026-07-03"}
+2026-07-03 10:45:32 - === INICIO DE PROCESO ===
+2026-07-03 10:45:32 - Input recibido - {"clabe":"646180633000001695","fecha":"2026-07-01T10:40:15Z","monto":10.03999999999999914734871708787977695465087890625,"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:45:32 - Datos procesados - {"clabe":"646180633000001695","transaccion":"00078301","autorizacion":"75555201","fecha":"2026-07-01T10:40:15Z","monto":10.03999999999999914734871708787977695465087890625}
+2026-07-03 10:45:32 - CLABE encontrada - {"id":28,"account":"178309665704732"}
+2026-07-03 10:45:32 - Buscando por transacción y autorización - {"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:45:32 - Pago encontrado por transacción y autorización - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:45:32 - Pago seleccionado para cancelación - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:45:32 - Error: Día diferente - {"request":"2026-07-01","recibido":"2026-07-03"}
+2026-07-03 10:45:46 - === INICIO DE PROCESO ===
+2026-07-03 10:45:46 - Input recibido - {"clabe":"646180633000001695","fecha":"2026-07-01T10:40:15Z","monto":10.03999999999999914734871708787977695465087890625,"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:45:46 - Datos procesados - {"clabe":"646180633000001695","transaccion":"00078301","autorizacion":"75555201","fecha":"2026-07-01T10:40:15Z","monto":10.03999999999999914734871708787977695465087890625}
+2026-07-03 10:45:46 - CLABE encontrada - {"id":28,"account":"178309665704732"}
+2026-07-03 10:45:46 - Buscando por transacción y autorización - {"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:45:46 - Pago encontrado por transacción y autorización - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:45:46 - Pago seleccionado para cancelación - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:45:46 - Error: Día diferente - {"request":"2026-07-01","recibido":"2026-07-03"}
+2026-07-03 10:45:55 - === INICIO DE PROCESO ===
+2026-07-03 10:45:55 - Input recibido - {"clabe":"646180633000001695","fecha":"2026-07-03T10:40:15Z","monto":10.03999999999999914734871708787977695465087890625,"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:45:55 - Datos procesados - {"clabe":"646180633000001695","transaccion":"00078301","autorizacion":"75555201","fecha":"2026-07-03T10:40:15Z","monto":10.03999999999999914734871708787977695465087890625}
+2026-07-03 10:45:55 - CLABE encontrada - {"id":28,"account":"178309665704732"}
+2026-07-03 10:45:55 - Buscando por transacción y autorización - {"transaccion":"00078301","autorizacion":"75555201"}
+2026-07-03 10:45:55 - Pago encontrado por transacción y autorización - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:45:55 - Pago seleccionado para cancelación - {"id":63,"monto_recibido":"10.04","fecha_recibido":"2026-07-03 10:38:20","transaccion":"00078301","numero_autorizacion":"75555201"}
+2026-07-03 10:45:55 - Validación de fecha exitosa - mismo día - {"fecha_request":"2026-07-03 10:40:15","fecha_recibido":"2026-07-03 10:38:20","mismo_dia":"SI"}
+2026-07-03 10:45:55 - Pago marcado como rechazado - {"id":63}
+2026-07-03 10:45:55 - Montos calculados - {"monto_a_cancelar":10.03999999999999914734871708787977695465087890625,"monto_pendiente_actual":"5789.96","nuevo_monto_pendiente":5800}
+2026-07-03 10:45:55 - CLABE actualizada
+2026-07-03 10:45:55 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-07-03 11:19:52 - === INICIO DE PROCESO ===
+2026-07-03 11:19:52 - Input recibido - {"clabe":"646180633000001695","fecha":"2026-07-03T11:19:15Z","monto":10.03999999999999914734871708787977695465087890625,"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:19:52 - Datos procesados - {"clabe":"646180633000001695","transaccion":"037831","autorizacion":"18148406","fecha":"2026-07-03T11:19:15Z","monto":10.03999999999999914734871708787977695465087890625}
+2026-07-03 11:19:52 - CLABE encontrada - {"id":28,"account":"178309665704732"}
+2026-07-03 11:19:52 - Buscando por transacción y autorización - {"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:19:52 - Buscando solo por transacción - "037831"
+2026-07-03 11:19:52 - Buscando solo por autorización - "18148406"
+2026-07-03 11:19:52 - Pago seleccionado para cancelación - false
+2026-07-03 11:19:52 - Monto no coincide - {"monto_bd":0,"monto_request":10.03999999999999914734871708787977695465087890625}
+2026-07-03 11:20:07 - === INICIO DE PROCESO ===
+2026-07-03 11:20:07 - Input recibido - {"clabe":"646180633000001695","fecha":"2026-07-03T11:19:15Z","monto":180.039999999999992041921359486877918243408203125,"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:20:07 - Datos procesados - {"clabe":"646180633000001695","transaccion":"037831","autorizacion":"18148406","fecha":"2026-07-03T11:19:15Z","monto":180.039999999999992041921359486877918243408203125}
+2026-07-03 11:20:07 - CLABE encontrada - {"id":28,"account":"178309665704732"}
+2026-07-03 11:20:07 - Buscando por transacción y autorización - {"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:20:07 - Buscando solo por transacción - "037831"
+2026-07-03 11:20:07 - Buscando solo por autorización - "18148406"
+2026-07-03 11:20:07 - Pago seleccionado para cancelación - false
+2026-07-03 11:20:07 - Monto no coincide - {"monto_bd":0,"monto_request":180.039999999999992041921359486877918243408203125}
+2026-07-03 11:20:32 - === INICIO DE PROCESO ===
+2026-07-03 11:20:32 - Input recibido - {"clabe":"646180633000001695","fecha":"2026-07-03T11:19:15Z","monto":180.039999999999992041921359486877918243408203125,"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:20:32 - Datos procesados - {"clabe":"646180633000001695","transaccion":"037831","autorizacion":"18148406","fecha":"2026-07-03T11:19:15Z","monto":180.039999999999992041921359486877918243408203125}
+2026-07-03 11:20:32 - CLABE encontrada - {"id":28,"account":"178309665704732"}
+2026-07-03 11:20:32 - Buscando por transacción y autorización - {"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:20:32 - Buscando solo por transacción - "037831"
+2026-07-03 11:20:32 - Buscando solo por autorización - "18148406"
+2026-07-03 11:20:32 - Pago seleccionado para cancelación - false
+2026-07-03 11:20:32 - Monto no coincide - {"monto_bd":0,"monto_request":180.039999999999992041921359486877918243408203125}
+2026-07-03 11:20:49 - === INICIO DE PROCESO ===
+2026-07-03 11:20:49 - Input recibido - {"clabe":"646180633000001718","fecha":"2026-07-03T11:19:15Z","monto":10.03999999999999914734871708787977695465087890625,"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:20:49 - Datos procesados - {"clabe":"646180633000001718","transaccion":"037831","autorizacion":"18148406","fecha":"2026-07-03T11:19:15Z","monto":10.03999999999999914734871708787977695465087890625}
+2026-07-03 11:20:49 - CLABE encontrada - {"id":30,"account":"178309790964971"}
+2026-07-03 11:20:49 - Buscando por transacción y autorización - {"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:20:49 - Pago encontrado por transacción y autorización - {"id":65,"monto_recibido":"180.04","fecha_recibido":"2026-07-03 10:58:49","transaccion":"037831","numero_autorizacion":"18148406"}
+2026-07-03 11:20:49 - Pago seleccionado para cancelación - {"id":65,"monto_recibido":"180.04","fecha_recibido":"2026-07-03 10:58:49","transaccion":"037831","numero_autorizacion":"18148406"}
+2026-07-03 11:20:49 - Monto no coincide - {"monto_bd":180.039999999999992041921359486877918243408203125,"monto_request":10.03999999999999914734871708787977695465087890625}
+2026-07-03 11:20:53 - === INICIO DE PROCESO ===
+2026-07-03 11:20:53 - Input recibido - {"clabe":"646180633000001718","fecha":"2026-07-03T11:19:15Z","monto":180.039999999999992041921359486877918243408203125,"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:20:53 - Datos procesados - {"clabe":"646180633000001718","transaccion":"037831","autorizacion":"18148406","fecha":"2026-07-03T11:19:15Z","monto":180.039999999999992041921359486877918243408203125}
+2026-07-03 11:20:53 - CLABE encontrada - {"id":30,"account":"178309790964971"}
+2026-07-03 11:20:53 - Buscando por transacción y autorización - {"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:20:53 - Pago encontrado por transacción y autorización - {"id":65,"monto_recibido":"180.04","fecha_recibido":"2026-07-03 10:58:49","transaccion":"037831","numero_autorizacion":"18148406"}
+2026-07-03 11:20:53 - Pago seleccionado para cancelación - {"id":65,"monto_recibido":"180.04","fecha_recibido":"2026-07-03 10:58:49","transaccion":"037831","numero_autorizacion":"18148406"}
+2026-07-03 11:20:53 - Validación de fecha exitosa - mismo día - {"fecha_request":"2026-07-03 11:19:15","fecha_recibido":"2026-07-03 10:58:49","mismo_dia":"SI"}
+2026-07-03 11:20:53 - Pago marcado como rechazado - {"id":65}
+2026-07-03 11:20:53 - Montos calculados - {"monto_a_cancelar":180.039999999999992041921359486877918243408203125,"monto_pendiente_actual":"17020.92","nuevo_monto_pendiente":17200.9599999999991268850862979888916015625}
+2026-07-03 11:20:53 - CLABE actualizada
+2026-07-03 11:20:53 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-07-03 11:23:12 - === INICIO DE PROCESO ===
+2026-07-03 11:23:12 - Input recibido - {"clabe":"646180633000001718","fecha":"2026-07-03T11:23:15Z","monto":180.039999999999992041921359486877918243408203125,"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:23:12 - Datos procesados - {"clabe":"646180633000001718","transaccion":"037831","autorizacion":"18148406","fecha":"2026-07-03T11:23:15Z","monto":180.039999999999992041921359486877918243408203125}
+2026-07-03 11:23:12 - CLABE encontrada - {"id":30,"account":"178309790964971"}
+2026-07-03 11:23:12 - Buscando por transacción y autorización - {"transaccion":"037831","autorizacion":"18148406"}
+2026-07-03 11:23:12 - Buscando solo por transacción - "037831"
+2026-07-03 11:23:12 - Buscando solo por autorización - "18148406"
+2026-07-03 11:23:12 - Pago seleccionado para cancelación - false
+2026-07-03 11:23:12 - Monto no coincide - {"monto_bd":0,"monto_request":180.039999999999992041921359486877918243408203125}
+2026-07-03 11:23:33 - === INICIO DE PROCESO ===
+2026-07-03 11:23:33 - Input recibido - {"clabe":"646180633000001718","fecha":"2026-07-03T11:23:15Z","monto":180.039999999999992041921359486877918243408203125,"transaccion":"037832","autorizacion":"75530388"}
+2026-07-03 11:23:33 - Datos procesados - {"clabe":"646180633000001718","transaccion":"037832","autorizacion":"75530388","fecha":"2026-07-03T11:23:15Z","monto":180.039999999999992041921359486877918243408203125}
+2026-07-03 11:23:33 - CLABE encontrada - {"id":30,"account":"178309790964971"}
+2026-07-03 11:23:33 - Buscando por transacción y autorización - {"transaccion":"037832","autorizacion":"75530388"}
+2026-07-03 11:23:33 - Pago encontrado por transacción y autorización - {"id":66,"monto_recibido":"199.04","fecha_recibido":"2026-07-03 11:03:02","transaccion":"037832","numero_autorizacion":"75530388"}
+2026-07-03 11:23:33 - Pago seleccionado para cancelación - {"id":66,"monto_recibido":"199.04","fecha_recibido":"2026-07-03 11:03:02","transaccion":"037832","numero_autorizacion":"75530388"}
+2026-07-03 11:23:33 - Monto no coincide - {"monto_bd":199.039999999999992041921359486877918243408203125,"monto_request":180.039999999999992041921359486877918243408203125}
+2026-07-03 11:23:47 - === INICIO DE PROCESO ===
+2026-07-03 11:23:47 - Input recibido - {"clabe":"646180633000001718","fecha":"2026-07-03T11:23:15Z","monto":199.039999999999992041921359486877918243408203125,"transaccion":"037832","autorizacion":"75530388"}
+2026-07-03 11:23:47 - Datos procesados - {"clabe":"646180633000001718","transaccion":"037832","autorizacion":"75530388","fecha":"2026-07-03T11:23:15Z","monto":199.039999999999992041921359486877918243408203125}
+2026-07-03 11:23:47 - CLABE encontrada - {"id":30,"account":"178309790964971"}
+2026-07-03 11:23:47 - Buscando por transacción y autorización - {"transaccion":"037832","autorizacion":"75530388"}
+2026-07-03 11:23:47 - Pago encontrado por transacción y autorización - {"id":66,"monto_recibido":"199.04","fecha_recibido":"2026-07-03 11:03:02","transaccion":"037832","numero_autorizacion":"75530388"}
+2026-07-03 11:23:47 - Pago seleccionado para cancelación - {"id":66,"monto_recibido":"199.04","fecha_recibido":"2026-07-03 11:03:02","transaccion":"037832","numero_autorizacion":"75530388"}
+2026-07-03 11:23:47 - Validación de fecha exitosa - mismo día - {"fecha_request":"2026-07-03 11:23:15","fecha_recibido":"2026-07-03 11:03:02","mismo_dia":"SI"}
+2026-07-03 11:23:47 - Pago marcado como rechazado - {"id":66}
+2026-07-03 11:23:47 - Montos calculados - {"monto_a_cancelar":199.039999999999992041921359486877918243408203125,"monto_pendiente_actual":"17200.96","nuevo_monto_pendiente":17400}
+2026-07-03 11:23:47 - CLABE actualizada
+2026-07-03 11:23:47 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-07-03 11:29:12 - === INICIO DE PROCESO ===
+2026-07-03 11:29:12 - Input recibido - {"clabe":"646180633000001721","fecha":"2026-07-03T11:23:15Z","monto":199.039999999999992041921359486877918243408203125,"transaccion":"037832","autorizacion":"75530388"}
+2026-07-03 11:29:12 - Datos procesados - {"clabe":"646180633000001721","transaccion":"037832","autorizacion":"75530388","fecha":"2026-07-03T11:23:15Z","monto":199.039999999999992041921359486877918243408203125}
+2026-07-03 11:29:12 - CLABE encontrada - {"id":31,"account":"178309948578450"}
+2026-07-03 11:29:12 - Buscando por transacción y autorización - {"transaccion":"037832","autorizacion":"75530388"}
+2026-07-03 11:29:12 - Buscando solo por transacción - "037832"
+2026-07-03 11:29:12 - Buscando solo por autorización - "75530388"
+2026-07-03 11:29:12 - Pago seleccionado para cancelación - false
+2026-07-03 11:29:12 - Monto no coincide - {"monto_bd":0,"monto_request":199.039999999999992041921359486877918243408203125}
+2026-07-03 11:30:11 - === INICIO DE PROCESO ===
+2026-07-03 11:30:11 - Input recibido - {"clabe":"646180633000001721","fecha":"2026-07-03T11:30:15Z","monto":199.039999999999992041921359486877918243408203125,"transaccion":"037833","autorizacion":"80200034"}
+2026-07-03 11:30:11 - Datos procesados - {"clabe":"646180633000001721","transaccion":"037833","autorizacion":"80200034","fecha":"2026-07-03T11:30:15Z","monto":199.039999999999992041921359486877918243408203125}
+2026-07-03 11:30:11 - CLABE encontrada - {"id":31,"account":"178309948578450"}
+2026-07-03 11:30:11 - Buscando por transacción y autorización - {"transaccion":"037833","autorizacion":"80200034"}
+2026-07-03 11:30:11 - Pago encontrado por transacción y autorización - {"id":67,"monto_recibido":"197.04","fecha_recibido":"2026-07-03 11:25:02","transaccion":"037833","numero_autorizacion":"80200034"}
+2026-07-03 11:30:11 - Pago seleccionado para cancelación - {"id":67,"monto_recibido":"197.04","fecha_recibido":"2026-07-03 11:25:02","transaccion":"037833","numero_autorizacion":"80200034"}
+2026-07-03 11:30:11 - Monto no coincide - {"monto_bd":197.039999999999992041921359486877918243408203125,"monto_request":199.039999999999992041921359486877918243408203125}
+2026-07-03 11:30:22 - === INICIO DE PROCESO ===
+2026-07-03 11:30:22 - Input recibido - {"clabe":"646180633000001721","fecha":"2026-07-03T11:30:15Z","monto":197.039999999999992041921359486877918243408203125,"transaccion":"037833","autorizacion":"80200034"}
+2026-07-03 11:30:22 - Datos procesados - {"clabe":"646180633000001721","transaccion":"037833","autorizacion":"80200034","fecha":"2026-07-03T11:30:15Z","monto":197.039999999999992041921359486877918243408203125}
+2026-07-03 11:30:22 - CLABE encontrada - {"id":31,"account":"178309948578450"}
+2026-07-03 11:30:22 - Buscando por transacción y autorización - {"transaccion":"037833","autorizacion":"80200034"}
+2026-07-03 11:30:22 - Pago encontrado por transacción y autorización - {"id":67,"monto_recibido":"197.04","fecha_recibido":"2026-07-03 11:25:02","transaccion":"037833","numero_autorizacion":"80200034"}
+2026-07-03 11:30:22 - Pago seleccionado para cancelación - {"id":67,"monto_recibido":"197.04","fecha_recibido":"2026-07-03 11:25:02","transaccion":"037833","numero_autorizacion":"80200034"}
+2026-07-03 11:30:22 - Validación de fecha exitosa - mismo día - {"fecha_request":"2026-07-03 11:30:15","fecha_recibido":"2026-07-03 11:25:02","mismo_dia":"SI"}
+2026-07-03 11:30:22 - Pago marcado como rechazado - {"id":67}
+2026-07-03 11:30:22 - Montos calculados - {"monto_a_cancelar":197.039999999999992041921359486877918243408203125,"monto_pendiente_actual":"69032.92","nuevo_monto_pendiente":69229.95999999999185092747211456298828125}
+2026-07-03 11:30:22 - CLABE actualizada
+2026-07-03 11:30:22 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-07-03 11:31:28 - === INICIO DE PROCESO ===
+2026-07-03 11:31:28 - Input recibido - {"clabe":"646180633000001721","fecha":"2026-07-03T11:30:15Z","monto":197.039999999999992041921359486877918243408203125,"transaccion":"037834","autorizacion":"19159985"}
+2026-07-03 11:31:28 - Datos procesados - {"clabe":"646180633000001721","transaccion":"037834","autorizacion":"19159985","fecha":"2026-07-03T11:30:15Z","monto":197.039999999999992041921359486877918243408203125}
+2026-07-03 11:31:28 - CLABE encontrada - {"id":31,"account":"178309948578450"}
+2026-07-03 11:31:28 - Buscando por transacción y autorización - {"transaccion":"037834","autorizacion":"19159985"}
+2026-07-03 11:31:28 - Pago encontrado por transacción y autorización - {"id":68,"monto_recibido":"254.04","fecha_recibido":"2026-07-03 11:27:12","transaccion":"037834","numero_autorizacion":"19159985"}
+2026-07-03 11:31:28 - Pago seleccionado para cancelación - {"id":68,"monto_recibido":"254.04","fecha_recibido":"2026-07-03 11:27:12","transaccion":"037834","numero_autorizacion":"19159985"}
+2026-07-03 11:31:28 - Monto no coincide - {"monto_bd":254.039999999999992041921359486877918243408203125,"monto_request":197.039999999999992041921359486877918243408203125}
+2026-07-03 11:31:51 - === INICIO DE PROCESO ===
+2026-07-03 11:31:51 - Input recibido - {"clabe":"646180633000001721","fecha":"2026-07-03T11:30:15Z","monto":254.039999999999992041921359486877918243408203125,"transaccion":"037834","autorizacion":"19159985"}
+2026-07-03 11:31:51 - Datos procesados - {"clabe":"646180633000001721","transaccion":"037834","autorizacion":"19159985","fecha":"2026-07-03T11:30:15Z","monto":254.039999999999992041921359486877918243408203125}
+2026-07-03 11:31:51 - CLABE encontrada - {"id":31,"account":"178309948578450"}
+2026-07-03 11:31:51 - Buscando por transacción y autorización - {"transaccion":"037834","autorizacion":"19159985"}
+2026-07-03 11:31:51 - Pago encontrado por transacción y autorización - {"id":68,"monto_recibido":"254.04","fecha_recibido":"2026-07-03 11:27:12","transaccion":"037834","numero_autorizacion":"19159985"}
+2026-07-03 11:31:51 - Pago seleccionado para cancelación - {"id":68,"monto_recibido":"254.04","fecha_recibido":"2026-07-03 11:27:12","transaccion":"037834","numero_autorizacion":"19159985"}
+2026-07-03 11:31:51 - Validación de fecha exitosa - mismo día - {"fecha_request":"2026-07-03 11:30:15","fecha_recibido":"2026-07-03 11:27:12","mismo_dia":"SI"}
+2026-07-03 11:31:51 - Pago marcado como rechazado - {"id":68}
+2026-07-03 11:31:51 - Montos calculados - {"monto_a_cancelar":254.039999999999992041921359486877918243408203125,"monto_pendiente_actual":"69229.96","nuevo_monto_pendiente":69484}
+2026-07-03 11:31:51 - CLABE actualizada
+2026-07-03 11:31:51 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-07-03 11:36:09 - === INICIO DE PROCESO ===
+2026-07-03 11:36:09 - Input recibido - {"clabe":"646180633000001721","fecha":"2026-07-03T11:30:15Z","monto":254.039999999999992041921359486877918243408203125,"transaccion":"037835","autorizacion":"52155261"}
+2026-07-03 11:36:09 - Datos procesados - {"clabe":"646180633000001721","transaccion":"037835","autorizacion":"52155261","fecha":"2026-07-03T11:30:15Z","monto":254.039999999999992041921359486877918243408203125}
+2026-07-03 11:36:09 - CLABE encontrada - {"id":31,"account":"178309948578450"}
+2026-07-03 11:36:09 - Buscando por transacción y autorización - {"transaccion":"037835","autorizacion":"52155261"}
+2026-07-03 11:36:09 - Pago encontrado por transacción y autorización - {"id":69,"monto_recibido":"54.04","fecha_recibido":"2026-07-03 11:35:12","transaccion":"037835","numero_autorizacion":"52155261"}
+2026-07-03 11:36:09 - Pago seleccionado para cancelación - {"id":69,"monto_recibido":"54.04","fecha_recibido":"2026-07-03 11:35:12","transaccion":"037835","numero_autorizacion":"52155261"}
+2026-07-03 11:36:09 - Monto no coincide - {"monto_bd":54.03999999999999914734871708787977695465087890625,"monto_request":254.039999999999992041921359486877918243408203125}
+2026-07-03 11:36:24 - === INICIO DE PROCESO ===
+2026-07-03 11:36:24 - Input recibido - {"clabe":"646180633000001721","fecha":"2026-07-03T11:30:15Z","monto":54.03999999999999914734871708787977695465087890625,"transaccion":"037835","autorizacion":"52155261"}
+2026-07-03 11:36:24 - Datos procesados - {"clabe":"646180633000001721","transaccion":"037835","autorizacion":"52155261","fecha":"2026-07-03T11:30:15Z","monto":54.03999999999999914734871708787977695465087890625}
+2026-07-03 11:36:24 - CLABE encontrada - {"id":31,"account":"178309948578450"}
+2026-07-03 11:36:24 - Buscando por transacción y autorización - {"transaccion":"037835","autorizacion":"52155261"}
+2026-07-03 11:36:24 - Pago encontrado por transacción y autorización - {"id":69,"monto_recibido":"54.04","fecha_recibido":"2026-07-03 11:35:12","transaccion":"037835","numero_autorizacion":"52155261"}
+2026-07-03 11:36:24 - Pago seleccionado para cancelación - {"id":69,"monto_recibido":"54.04","fecha_recibido":"2026-07-03 11:35:12","transaccion":"037835","numero_autorizacion":"52155261"}
+2026-07-03 11:36:24 - Validación de fecha exitosa - mismo día - {"fecha_request":"2026-07-03 11:30:15","fecha_recibido":"2026-07-03 11:35:12","mismo_dia":"SI"}
+2026-07-03 11:36:24 - Pago marcado como rechazado - {"id":69}
+2026-07-03 11:36:24 - Montos calculados - {"monto_a_cancelar":54.03999999999999914734871708787977695465087890625,"monto_pendiente_actual":"69429.96","nuevo_monto_pendiente":69484}
+2026-07-03 11:36:24 - CLABE actualizada
+2026-07-03 11:36:24 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-07-03 11:38:28 - === INICIO DE PROCESO ===
+2026-07-03 11:38:28 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625,"transaccion":"13002","autorizacion":"33195978"}
+2026-07-03 11:38:28 - Datos procesados - {"clabe":"646180633000001682","transaccion":"13002","autorizacion":"33195978","fecha":"2026-07-03T08:58:07Z","monto":1302.990000000000009094947017729282379150390625}
+2026-07-03 11:38:28 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 11:38:28 - Buscando por transacción y autorización - {"transaccion":"13002","autorizacion":"33195978"}
+2026-07-03 11:38:28 - Buscando solo por transacción - "13002"
+2026-07-03 11:38:28 - Buscando solo por autorización - "33195978"
+2026-07-03 11:38:28 - Pago seleccionado para cancelación - false
+2026-07-03 11:38:28 - Monto no coincide - {"monto_bd":0,"monto_request":1302.990000000000009094947017729282379150390625}
+2026-07-03 13:05:11 - === INICIO DE PROCESO ===
+2026-07-03 13:05:11 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T13:05:15Z","monto":1.04000000000000003552713678800500929355621337890625,"transaccion":"037836","autorizacion":"1068694"}
+2026-07-03 13:05:11 - Datos procesados - {"clabe":"646180633000001682","transaccion":"037836","autorizacion":"1068694","fecha":"2026-07-03T13:05:15Z","monto":1.04000000000000003552713678800500929355621337890625}
+2026-07-03 13:05:11 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 13:05:11 - Buscando por transacción y autorización - {"transaccion":"037836","autorizacion":"1068694"}
+2026-07-03 13:05:11 - Buscando solo por transacción - "037836"
+2026-07-03 13:05:11 - Pago encontrado por transacción - {"id":70,"monto_recibido":"1.04","fecha_recibido":"2026-07-03 13:02:12","transaccion":"037836","numero_autorizacion":"10686941"}
+2026-07-03 13:05:11 - Pago seleccionado para cancelación - {"id":70,"monto_recibido":"1.04","fecha_recibido":"2026-07-03 13:02:12","transaccion":"037836","numero_autorizacion":"10686941"}
+2026-07-03 13:05:11 - Validación de fecha exitosa - mismo día - {"fecha_request":"2026-07-03 13:05:15","fecha_recibido":"2026-07-03 13:02:12","mismo_dia":"SI"}
+2026-07-03 13:05:11 - Pago marcado como rechazado - {"id":70}
+2026-07-03 13:05:11 - Montos calculados - {"monto_a_cancelar":1.04000000000000003552713678800500929355621337890625,"monto_pendiente_actual":"23198.96","nuevo_monto_pendiente":23200}
+2026-07-03 13:05:11 - CLABE actualizada
+2026-07-03 13:05:11 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-07-03 13:05:58 - === INICIO DE PROCESO ===
+2026-07-03 13:05:58 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T13:05:15Z","monto":1.04000000000000003552713678800500929355621337890625,"transaccion":"037836","autorizacion":"1068694"}
+2026-07-03 13:05:58 - Datos procesados - {"clabe":"646180633000001682","transaccion":"037836","autorizacion":"1068694","fecha":"2026-07-03T13:05:15Z","monto":1.04000000000000003552713678800500929355621337890625}
+2026-07-03 13:05:58 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 13:05:58 - Buscando por transacción y autorización - {"transaccion":"037836","autorizacion":"1068694"}
+2026-07-03 13:05:58 - Buscando solo por transacción - "037836"
+2026-07-03 13:05:58 - Buscando solo por autorización - "1068694"
+2026-07-03 13:05:58 - Pago seleccionado para cancelación - false
+2026-07-03 13:05:58 - Monto no coincide - {"monto_bd":0,"monto_request":1.04000000000000003552713678800500929355621337890625}
+2026-07-03 13:09:11 - === INICIO DE PROCESO ===
+2026-07-03 13:09:11 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T13:08:15Z","monto":11.03999999999999914734871708787977695465087890625,"transaccion":"037836","autorizacion":"1068694"}
+2026-07-03 13:09:11 - Datos procesados - {"clabe":"646180633000001682","transaccion":"037836","autorizacion":"1068694","fecha":"2026-07-03T13:08:15Z","monto":11.03999999999999914734871708787977695465087890625}
+2026-07-03 13:09:11 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 13:09:11 - Buscando por transacción y autorización - {"transaccion":"037836","autorizacion":"1068694"}
+2026-07-03 13:09:11 - Buscando solo por transacción - "037836"
+2026-07-03 13:09:11 - Buscando solo por autorización - "1068694"
+2026-07-03 13:09:11 - Pago seleccionado para cancelación - false
+2026-07-03 13:09:11 - Monto no coincide - {"monto_bd":0,"monto_request":11.03999999999999914734871708787977695465087890625}
+2026-07-03 13:10:00 - === INICIO DE PROCESO ===
+2026-07-03 13:10:00 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T13:08:15Z","monto":11.03999999999999914734871708787977695465087890625,"transaccion":"037837","autorizacion":"1068694"}
+2026-07-03 13:10:00 - Datos procesados - {"clabe":"646180633000001682","transaccion":"037837","autorizacion":"1068694","fecha":"2026-07-03T13:08:15Z","monto":11.03999999999999914734871708787977695465087890625}
+2026-07-03 13:10:00 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 13:10:00 - Buscando por transacción y autorización - {"transaccion":"037837","autorizacion":"1068694"}
+2026-07-03 13:10:00 - Buscando solo por transacción - "037837"
+2026-07-03 13:10:00 - Pago encontrado por transacción - {"id":71,"monto_recibido":"11.04","fecha_recibido":"2026-07-03 13:02:12","transaccion":"037837","numero_autorizacion":"41165062"}
+2026-07-03 13:10:00 - Pago seleccionado para cancelación - {"id":71,"monto_recibido":"11.04","fecha_recibido":"2026-07-03 13:02:12","transaccion":"037837","numero_autorizacion":"41165062"}
+2026-07-03 13:10:00 - Validación de fecha exitosa - mismo día - {"fecha_request":"2026-07-03 13:08:15","fecha_recibido":"2026-07-03 13:02:12","mismo_dia":"SI"}
+2026-07-03 13:10:00 - Pago marcado como rechazado - {"id":71}
+2026-07-03 13:10:00 - Montos calculados - {"monto_a_cancelar":11.03999999999999914734871708787977695465087890625,"monto_pendiente_actual":"23188.96","nuevo_monto_pendiente":23200}
+2026-07-03 13:10:00 - CLABE actualizada
+2026-07-03 13:10:00 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-07-03 13:19:37 - === INICIO DE PROCESO ===
+2026-07-03 13:19:37 - Input recibido - {"clabe":"646180633000001682","fecha":"2026-07-03T13:18:15Z","monto":111.0400000000000062527760746888816356658935546875,"transaccion":"037839","autorizacion":"1068694"}
+2026-07-03 13:19:37 - Datos procesados - {"clabe":"646180633000001682","transaccion":"037839","autorizacion":"1068694","fecha":"2026-07-03T13:18:15Z","monto":111.0400000000000062527760746888816356658935546875}
+2026-07-03 13:19:37 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 13:19:37 - Buscando por transacción y autorización - {"transaccion":"037839","autorizacion":"1068694"}
+2026-07-03 13:19:37 - Buscando solo por transacción - "037839"
+2026-07-03 13:19:37 - Pago encontrado por transacción - {"id":72,"monto_recibido":"111.04","fecha_recibido":"2026-07-03 13:18:12","transaccion":"037839","numero_autorizacion":"12503252"}
+2026-07-03 13:19:37 - Pago seleccionado para cancelación - {"id":72,"monto_recibido":"111.04","fecha_recibido":"2026-07-03 13:18:12","transaccion":"037839","numero_autorizacion":"12503252"}
+2026-07-03 13:19:37 - Validación de fecha exitosa - mismo día - {"fecha_request":"2026-07-03 13:18:15","fecha_recibido":"2026-07-03 13:18:12","mismo_dia":"SI"}
+2026-07-03 13:19:37 - Pago marcado como rechazado - {"id":72}
+2026-07-03 13:19:37 - Montos calculados - {"monto_a_cancelar":111.0400000000000062527760746888816356658935546875,"monto_pendiente_actual":"23088.96","nuevo_monto_pendiente":23200}
+2026-07-03 13:19:37 - CLABE actualizada
+2026-07-03 13:19:37 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelaci\u00f3n exitosa"}
+2026-07-03 13:22:48 - Datos procesados - {"clabe":"646180633000001682","transaccion":"137839","autorizacion":"1068694","referencia":"","fecha":"2026-07-03T13:21:15Z","monto":181.039999999999992041921359486877918243408203125}
+2026-07-03 13:22:48 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 13:22:48 - Buscando por transacción - "137839"
+2026-07-03 13:22:48 - Pago encontrado por transacción - {"id":73,"monto_recibido":"181.04","fecha_recibido":"2026-07-03 13:20:12","transaccion":"137839","numero_autorizacion":"30324820","referencia":"SPEI-20260703132107-328"}
+2026-07-03 13:22:48 - Pago seleccionado para cancelación - {"id":73,"monto_recibido":"181.04","fecha_recibido":"2026-07-03 13:20:12","transaccion":"137839","numero_autorizacion":"30324820","referencia":"SPEI-20260703132107-328"}
+2026-07-03 13:22:48 - Validación de fecha exitosa - mismo día
+2026-07-03 13:22:48 - Pago marcado como cancelado - {"id":73}
+2026-07-03 13:22:48 - Montos calculados - {"monto_a_cancelar":181.039999999999992041921359486877918243408203125,"monto_pendiente_actual":"23018.96","nuevo_monto_pendiente":23200}
+2026-07-03 13:22:48 - CLABE actualizada
+2026-07-03 13:22:48 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelación exitosa"}
+2026-07-03 13:25:12 - Datos procesados - {"clabe":"646180633000001682","transaccion":"137839","autorizacion":"1068694","referencia":"","fecha":"2026-07-03T13:21:15Z","monto":181.039999999999992041921359486877918243408203125}
+2026-07-03 13:25:12 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 13:25:12 - Buscando por transacción - "137839"
+2026-07-03 13:25:12 - Buscando por autorización - "1068694"
+2026-07-03 13:25:12 - Buscando por transacción y autorización - {"transaccion":"137839","autorizacion":"1068694"}
+2026-07-03 13:25:12 - No se encontró ningún pago confirmado con los criterios proporcionados
+2026-07-03 13:25:48 - Datos procesados - {"clabe":"646180633000001682","transaccion":"137839","autorizacion":"1068694","referencia":"","fecha":"2026-07-03T13:21:15Z","monto":81.0400000000000062527760746888816356658935546875}
+2026-07-03 13:25:48 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 13:25:48 - Buscando por transacción - "137839"
+2026-07-03 13:25:48 - Buscando por autorización - "1068694"
+2026-07-03 13:25:48 - Buscando por transacción y autorización - {"transaccion":"137839","autorizacion":"1068694"}
+2026-07-03 13:25:48 - No se encontró ningún pago confirmado con los criterios proporcionados
+2026-07-03 13:26:41 - Datos procesados - {"clabe":"646180633000001682","transaccion":"137800","autorizacion":"1068694","referencia":"","fecha":"2026-07-03T13:21:15Z","monto":81.0400000000000062527760746888816356658935546875}
+2026-07-03 13:26:41 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 13:26:41 - Buscando por transacción - "137800"
+2026-07-03 13:26:41 - Buscando por autorización - "1068694"
+2026-07-03 13:26:41 - Buscando por transacción y autorización - {"transaccion":"137800","autorizacion":"1068694"}
+2026-07-03 13:26:41 - No se encontró ningún pago confirmado con los criterios proporcionados
+2026-07-03 14:22:29 - Datos procesados - {"clabe":"646180633000001682","transaccion":"13004","autorizacion":"33195978","referencia":"","fecha":"0001-01-01T00:00:00","monto":302.009999999999990905052982270717620849609375}
+2026-07-03 14:22:29 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 14:22:29 - Buscando por transacción - "13004"
+2026-07-03 14:22:29 - Pago encontrado por transacción - {"id":76,"monto_recibido":"302.01","fecha_recibido":"2026-07-03 15:18:07","transaccion":"13004","numero_autorizacion":"54929495","referencia":"SPEI-20260703142108-936"}
+2026-07-03 14:22:29 - Pago seleccionado para cancelación - {"id":76,"monto_recibido":"302.01","fecha_recibido":"2026-07-03 15:18:07","transaccion":"13004","numero_autorizacion":"54929495","referencia":"SPEI-20260703142108-936"}
+2026-07-03 14:22:29 - Error: Día diferente - {"request":"0001-01-01","recibido":"2026-07-03"}
+2026-07-03 14:22:42 - Datos procesados - {"clabe":"646180633000001682","transaccion":"13004","autorizacion":"54929495","referencia":"","fecha":"0001-01-01T00:00:00","monto":302.009999999999990905052982270717620849609375}
+2026-07-03 14:22:42 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 14:22:42 - Buscando por transacción - "13004"
+2026-07-03 14:22:42 - Pago encontrado por transacción - {"id":76,"monto_recibido":"302.01","fecha_recibido":"2026-07-03 15:18:07","transaccion":"13004","numero_autorizacion":"54929495","referencia":"SPEI-20260703142108-936"}
+2026-07-03 14:22:42 - Pago seleccionado para cancelación - {"id":76,"monto_recibido":"302.01","fecha_recibido":"2026-07-03 15:18:07","transaccion":"13004","numero_autorizacion":"54929495","referencia":"SPEI-20260703142108-936"}
+2026-07-03 14:22:42 - Error: Día diferente - {"request":"0001-01-01","recibido":"2026-07-03"}
+2026-07-03 15:38:04 - Datos procesados - {"clabe":"646180633000001750","transaccion":"1548545","autorizacion":"95095256","referencia":"","fecha":"2026-07-03T15:36:15Z","monto":18.03999999999999914734871708787977695465087890625}
+2026-07-03 15:38:04 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 15:38:04 - Pago confirmado encontrado - {"condicion":"transaccion = ?","pago":{"id":77,"monto_recibido":"18.04","fecha_recibido":"2026-07-03 15:34:12","transaccion":"1548545","numero_autorizacion":"95095256","referencia":"SPEI-20260703153504-633","estado":"confirmado"}}
+2026-07-03 15:38:04 - Pago seleccionado para cancelación - {"id":77,"monto_recibido":"18.04","fecha_recibido":"2026-07-03 15:34:12","transaccion":"1548545","numero_autorizacion":"95095256","referencia":"SPEI-20260703153504-633","estado":"confirmado"}
+2026-07-03 15:38:04 - Validación de fecha exitosa - mismo día
+2026-07-03 15:38:04 - Pago marcado como cancelado - {"id":77}
+2026-07-03 15:38:04 - Montos calculados - {"monto_a_cancelar":18.03999999999999914734871708787977695465087890625,"monto_pendiente_actual":"5781.96","nuevo_monto_pendiente":5800}
+2026-07-03 15:38:04 - CLABE actualizada
+2026-07-03 15:38:04 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelación exitosa"}
+2026-07-03 15:42:45 - Datos procesados - {"clabe":"646180633000001750","transaccion":"1548545","autorizacion":"95095256","referencia":"","fecha":"2026-07-03T15:36:15Z","monto":18.03999999999999914734871708787977695465087890625}
+2026-07-03 15:42:45 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 15:42:45 - Pago ya estaba cancelado previamente - {"condicion":"transaccion = ?","pago":{"id":77,"monto_recibido":"18.04","fecha_recibido":"2026-07-03 15:34:12","transaccion":"1548545","numero_autorizacion":"95095256","referencia":"SPEI-20260703153504-633","estado":"cancelado"}}
+2026-07-03 15:42:55 - Datos procesados - {"clabe":"646180633000001750","transaccion":"1548545","autorizacion":"95095256","referencia":"","fecha":"2026-07-03T15:36:15Z","monto":188.039999999999992041921359486877918243408203125}
+2026-07-03 15:42:55 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 15:42:55 - Pago ya estaba cancelado previamente - {"condicion":"transaccion = ?","pago":{"id":77,"monto_recibido":"18.04","fecha_recibido":"2026-07-03 15:34:12","transaccion":"1548545","numero_autorizacion":"95095256","referencia":"SPEI-20260703153504-633","estado":"cancelado"}}
+2026-07-03 15:47:36 - Datos procesados - {"clabe":"646180633000001750","transaccion":"1548545","autorizacion":"95095256","referencia":"","fecha":"2026-07-03T15:36:15Z","monto":188.039999999999992041921359486877918243408203125}
+2026-07-03 15:47:36 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 15:47:36 - Pago ya estaba cancelado previamente (match exacto) - {"id":77,"monto_recibido":"18.04","fecha_recibido":"2026-07-03 15:34:12","transaccion":"1548545","numero_autorizacion":"95095256","referencia":"SPEI-20260703153504-633","estado":"cancelado"}
+2026-07-03 15:47:46 - Datos procesados - {"clabe":"646180633000001750","transaccion":"154845","autorizacion":"95095256","referencia":"","fecha":"2026-07-03T15:36:15Z","monto":188.039999999999992041921359486877918243408203125}
+2026-07-03 15:47:46 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 15:47:46 - No se encontró ningún pago confirmado ni cancelado con los criterios proporcionados
+2026-07-03 15:47:50 - Datos procesados - {"clabe":"646180633000001750","transaccion":"154845","autorizacion":"9509256","referencia":"","fecha":"2026-07-03T15:36:15Z","monto":188.039999999999992041921359486877918243408203125}
+2026-07-03 15:47:50 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 15:47:50 - No se encontró ningún pago confirmado ni cancelado con los criterios proporcionados
+2026-07-03 15:48:39 - Datos procesados - {"clabe":"646180633000001750","transaccion":"15445","autorizacion":"9509256","referencia":"","fecha":"2026-07-03T15:36:15Z","monto":1.04000000000000003552713678800500929355621337890625}
+2026-07-03 15:48:39 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 15:48:39 - No se encontró ningún pago confirmado ni cancelado con los criterios proporcionados
+2026-07-03 15:49:13 - Datos procesados - {"clabe":"646180633000001750","transaccion":"15445","autorizacion":"05404933","referencia":"","fecha":"2026-07-03T15:36:15Z","monto":1.04000000000000003552713678800500929355621337890625}
+2026-07-03 15:49:13 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 15:49:13 - No se encontró ningún pago confirmado ni cancelado con los criterios proporcionados
+2026-07-03 15:49:29 - Datos procesados - {"clabe":"646180633000001750","transaccion":"21474","autorizacion":"05404933","referencia":"","fecha":"2026-07-03T15:36:15Z","monto":104}
+2026-07-03 15:49:29 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 15:49:29 - Pago confirmado encontrado (match exacto) - {"id":79,"monto_recibido":"1.04","fecha_recibido":"2026-07-03 15:47:12","transaccion":"21474","numero_autorizacion":"05404933","referencia":"SPEI-20260703154820-703","estado":"confirmado"}
+2026-07-03 15:49:29 - Pago seleccionado para cancelación - {"id":79,"monto_recibido":"1.04","fecha_recibido":"2026-07-03 15:47:12","transaccion":"21474","numero_autorizacion":"05404933","referencia":"SPEI-20260703154820-703","estado":"confirmado"}
+2026-07-03 15:49:29 - Monto no coincide - {"monto_bd":1.04000000000000003552713678800500929355621337890625,"monto_request":104}
+2026-07-03 15:49:54 - Datos procesados - {"clabe":"646180633000001750","transaccion":"21474","autorizacion":"05404933","referencia":"","fecha":"2026-07-03T15:36:15Z","monto":1.04000000000000003552713678800500929355621337890625}
+2026-07-03 15:49:54 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 15:49:54 - Pago confirmado encontrado (match exacto) - {"id":79,"monto_recibido":"1.04","fecha_recibido":"2026-07-03 15:47:12","transaccion":"21474","numero_autorizacion":"05404933","referencia":"SPEI-20260703154820-703","estado":"confirmado"}
+2026-07-03 15:49:54 - Pago seleccionado para cancelación - {"id":79,"monto_recibido":"1.04","fecha_recibido":"2026-07-03 15:47:12","transaccion":"21474","numero_autorizacion":"05404933","referencia":"SPEI-20260703154820-703","estado":"confirmado"}
+2026-07-03 15:49:54 - Validación de fecha exitosa - mismo día
+2026-07-03 15:49:54 - Pago marcado como cancelado - {"id":79}
+2026-07-03 15:49:54 - Montos calculados - {"monto_a_cancelar":1.04000000000000003552713678800500929355621337890625,"monto_pendiente_actual":"5610.92","nuevo_monto_pendiente":5611.9600000000000363797880709171295166015625}
+2026-07-03 15:49:54 - CLABE actualizada
+2026-07-03 15:49:54 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelación exitosa"}
+2026-07-03 15:50:14 - Datos procesados - {"clabe":"646180633000001750","transaccion":"21474","autorizacion":"05404933","referencia":"","fecha":"0001-01-01T00:00:00","monto":1.04000000000000003552713678800500929355621337890625}
+2026-07-03 15:50:14 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 15:50:14 - Pago ya estaba cancelado previamente (match exacto) - {"id":79,"monto_recibido":"1.04","fecha_recibido":"2026-07-03 15:47:12","transaccion":"21474","numero_autorizacion":"05404933","referencia":"SPEI-20260703154820-703","estado":"cancelado"}
+2026-07-03 15:57:54 - Datos procesados - {"clabe":"646180633000001682","transaccion":"13004","autorizacion":"54929495","referencia":"","fecha":"0001-01-01T00:00:00","monto":302.009999999999990905052982270717620849609375}
+2026-07-03 15:57:54 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 15:57:54 - Pago confirmado encontrado (match exacto) - {"id":76,"monto_recibido":"302.01","fecha_recibido":"2026-07-03 15:18:07","transaccion":"13004","numero_autorizacion":"54929495","referencia":"SPEI-20260703142108-936","estado":"confirmado"}
+2026-07-03 15:57:54 - Pago seleccionado para cancelación - {"id":76,"monto_recibido":"302.01","fecha_recibido":"2026-07-03 15:18:07","transaccion":"13004","numero_autorizacion":"54929495","referencia":"SPEI-20260703142108-936","estado":"confirmado"}
+2026-07-03 15:57:54 - Error: Día diferente - {"request":"0001-01-01 00:00:00","recibido":"2026-07-03 15:18:07"}
+2026-07-03 16:01:05 - Datos procesados - {"clabe":"646180633000001750","transaccion":"44784","autorizacion":"79025592","referencia":"","fecha":"0001-01-01T00:00:00","monto":302.009999999999990905052982270717620849609375}
+2026-07-03 16:01:05 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:01:05 - Pago confirmado encontrado (match exacto) - {"id":80,"monto_recibido":"154.04","fecha_recibido":"2026-07-03 16:00:12","transaccion":"44784","numero_autorizacion":"79025592","referencia":"SPEI-20260703160027-441","estado":"confirmado"}
+2026-07-03 16:01:05 - Pago seleccionado para cancelación - {"id":80,"monto_recibido":"154.04","fecha_recibido":"2026-07-03 16:00:12","transaccion":"44784","numero_autorizacion":"79025592","referencia":"SPEI-20260703160027-441","estado":"confirmado"}
+2026-07-03 16:01:05 - Monto no coincide - {"monto_bd":154.039999999999992041921359486877918243408203125,"monto_request":302.009999999999990905052982270717620849609375}
+2026-07-03 16:01:25 - Datos procesados - {"clabe":"646180633000001750","transaccion":"44784","autorizacion":"79025592","referencia":"","fecha":"0001-01-01T00:00:00","monto":154.039999999999992041921359486877918243408203125}
+2026-07-03 16:01:25 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:01:25 - Pago confirmado encontrado (match exacto) - {"id":80,"monto_recibido":"154.04","fecha_recibido":"2026-07-03 16:00:12","transaccion":"44784","numero_autorizacion":"79025592","referencia":"SPEI-20260703160027-441","estado":"confirmado"}
+2026-07-03 16:01:25 - Pago seleccionado para cancelación - {"id":80,"monto_recibido":"154.04","fecha_recibido":"2026-07-03 16:00:12","transaccion":"44784","numero_autorizacion":"79025592","referencia":"SPEI-20260703160027-441","estado":"confirmado"}
+2026-07-03 16:01:25 - Error: Día diferente - {"request":"0001-01-01 00:00:00","recibido":"2026-07-03 16:00:12"}
+2026-07-03 16:04:16 - Datos procesados - {"clabe":"646180633000001750","transaccion":"44784","autorizacion":"79025592","referencia":"","fecha":"2026-07-03T16:03:00","monto":154.039999999999992041921359486877918243408203125}
+2026-07-03 16:04:16 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:04:16 - Pago confirmado encontrado (match exacto) - {"id":80,"monto_recibido":"154.04","fecha_recibido":"2026-07-03 16:00:12","transaccion":"44784","numero_autorizacion":"79025592","referencia":"SPEI-20260703160027-441","estado":"confirmado"}
+2026-07-03 16:04:16 - Pago seleccionado para cancelación - {"id":80,"monto_recibido":"154.04","fecha_recibido":"2026-07-03 16:00:12","transaccion":"44784","numero_autorizacion":"79025592","referencia":"SPEI-20260703160027-441","estado":"confirmado"}
+2026-07-03 16:04:16 - Validación de fecha exitosa - mismo día
+2026-07-03 16:04:16 - Pago marcado como cancelado - {"id":80}
+2026-07-03 16:04:16 - Montos calculados - {"monto_a_cancelar":154.039999999999992041921359486877918243408203125,"monto_pendiente_actual":"5457.92","nuevo_monto_pendiente":5611.9600000000000363797880709171295166015625}
+2026-07-03 16:04:16 - CLABE actualizada
+2026-07-03 16:04:16 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelación exitosa"}
+2026-07-03 16:08:54 - Datos procesados - {"clabe":"646180633000001750","transaccion":"44784","autorizacion":"79025592","referencia":"","fecha":"2026-07-03T16:03:00","monto":154.039999999999992041921359486877918243408203125}
+2026-07-03 16:08:54 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:08:54 - Pago ya estaba cancelado previamente (match exacto) - {"id":80,"monto_recibido":"154.04","fecha_recibido":"2026-07-03 16:00:12","transaccion":"44784","numero_autorizacion":"79025592","referencia":"SPEI-20260703160027-441","estado":"cancelado"}
+2026-07-03 16:10:21 - Datos procesados - {"clabe":"646180633000001750","transaccion":"44784","autorizacion":"40084","referencia":"","fecha":"0001-01-01T00:00:00","monto":1544.0399999999999636202119290828704833984375}
+2026-07-03 16:10:21 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:10:21 - No se encontró ningún pago confirmado ni cancelado con los criterios proporcionados
+2026-07-03 16:11:01 - Datos procesados - {"clabe":"646180633000001750","transaccion":"40084","autorizacion":"00317833","referencia":"","fecha":"0001-01-01T00:00:00","monto":1544.0399999999999636202119290828704833984375}
+2026-07-03 16:11:01 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:11:01 - Pago confirmado encontrado (match exacto) - {"id":81,"monto_recibido":"1544.04","fecha_recibido":"2026-07-03 16:09:12","transaccion":"40084","numero_autorizacion":"00317833","referencia":"SPEI-20260703160926-622","estado":"confirmado"}
+2026-07-03 16:11:01 - Pago seleccionado para cancelación - {"id":81,"monto_recibido":"1544.04","fecha_recibido":"2026-07-03 16:09:12","transaccion":"40084","numero_autorizacion":"00317833","referencia":"SPEI-20260703160926-622","estado":"confirmado"}
+2026-07-03 16:11:01 - Validación de fecha exitosa - mismo día - {"hoy":"2026-07-03 16:11:01","recibido":"2026-07-03 16:09:12"}
+2026-07-03 16:11:01 - Pago marcado como cancelado - {"id":81}
+2026-07-03 16:11:01 - Montos calculados - {"monto_a_cancelar":1544.0399999999999636202119290828704833984375,"monto_pendiente_actual":"4067.92","nuevo_monto_pendiente":5611.9600000000000363797880709171295166015625}
+2026-07-03 16:11:01 - CLABE actualizada
+2026-07-03 16:11:01 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelación exitosa"}
+2026-07-03 16:13:07 - Datos procesados - {"clabe":"646180633000001750","transaccion":"40084","autorizacion":"00317833","referencia":"","fecha":"0001-01-01T00:00:00","monto":154.039999999999992041921359486877918243408203125}
+2026-07-03 16:13:07 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:13:07 - Pago ya estaba cancelado previamente (match exacto) - {"id":81,"monto_recibido":"1544.04","fecha_recibido":"2026-07-03 16:09:12","transaccion":"40084","numero_autorizacion":"00317833","referencia":"SPEI-20260703160926-622","estado":"cancelado"}
+2026-07-03 16:13:11 - Datos procesados - {"clabe":"646180633000001750","transaccion":"4004","autorizacion":"00317833","referencia":"","fecha":"0001-01-01T00:00:00","monto":154.039999999999992041921359486877918243408203125}
+2026-07-03 16:13:11 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:13:11 - No se encontró ningún pago confirmado ni cancelado con los criterios proporcionados
+2026-07-03 16:14:16 - Datos procesados - {"clabe":"646180633000001750","transaccion":"4004","autorizacion":"4908069","referencia":"","fecha":"0001-01-01T00:00:00","monto":154.039999999999992041921359486877918243408203125}
+2026-07-03 16:14:16 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:14:16 - No se encontró ningún pago confirmado ni cancelado con los criterios proporcionados
+2026-07-03 16:14:42 - Datos procesados - {"clabe":"646180633000001750","transaccion":"00084","autorizacion":"49080691","referencia":"","fecha":"0001-01-01T00:00:00","monto":1.04000000000000003552713678800500929355621337890625}
+2026-07-03 16:14:42 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:14:42 - Pago confirmado encontrado (match exacto) - {"id":82,"monto_recibido":"4.04","fecha_recibido":"2026-07-03 16:09:12","transaccion":"00084","numero_autorizacion":"49080691","referencia":"SPEI-20260703161349-693","estado":"confirmado"}
+2026-07-03 16:14:42 - Pago seleccionado para cancelación - {"id":82,"monto_recibido":"4.04","fecha_recibido":"2026-07-03 16:09:12","transaccion":"00084","numero_autorizacion":"49080691","referencia":"SPEI-20260703161349-693","estado":"confirmado"}
+2026-07-03 16:14:42 - Monto no coincide - {"monto_bd":4.04000000000000003552713678800500929355621337890625,"monto_request":1.04000000000000003552713678800500929355621337890625}
+2026-07-03 16:15:21 - Datos procesados - {"clabe":"646180633000001750","transaccion":"00084","autorizacion":"49080691","referencia":"","fecha":"0001-01-01T00:00:00","monto":4.04000000000000003552713678800500929355621337890625}
+2026-07-03 16:15:21 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:15:21 - Pago confirmado encontrado (match exacto) - {"id":82,"monto_recibido":"4.04","fecha_recibido":"2026-07-03 16:09:12","transaccion":"00084","numero_autorizacion":"49080691","referencia":"SPEI-20260703161349-693","estado":"confirmado"}
+2026-07-03 16:15:21 - Pago seleccionado para cancelación - {"id":82,"monto_recibido":"4.04","fecha_recibido":"2026-07-03 16:09:12","transaccion":"00084","numero_autorizacion":"49080691","referencia":"SPEI-20260703161349-693","estado":"confirmado"}
+2026-07-03 16:15:21 - Validación de fecha exitosa - mismo día - {"hoy":"2026-07-03 16:15:21","recibido":"2026-07-03 16:09:12"}
+2026-07-03 16:15:21 - Pago marcado como cancelado - {"id":82}
+2026-07-03 16:15:21 - Montos calculados - {"monto_a_cancelar":4.04000000000000003552713678800500929355621337890625,"monto_pendiente_actual":"5607.92","nuevo_monto_pendiente":5611.9600000000000363797880709171295166015625}
+2026-07-03 16:15:21 - CLABE actualizada
+2026-07-03 16:15:21 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelación exitosa"}
+2026-07-03 16:16:27 - Datos procesados - {"clabe":"646180633000001750","transaccion":"00085","autorizacion":"49080691","referencia":"","fecha":"0001-01-01T00:00:00","monto":404}
+2026-07-03 16:16:27 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:16:27 - No se encontró ningún pago confirmado ni cancelado con los criterios proporcionados
+2026-07-03 16:16:42 - Datos procesados - {"clabe":"646180633000001750","transaccion":"00085","autorizacion":"58533208","referencia":"","fecha":"0001-01-01T00:00:00","monto":404}
+2026-07-03 16:16:42 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:16:42 - Pago confirmado encontrado (match exacto) - {"id":83,"monto_recibido":"114.04","fecha_recibido":"2026-07-03 16:15:12","transaccion":"00085","numero_autorizacion":"58533208","referencia":"SPEI-20260703161543-220","estado":"confirmado"}
+2026-07-03 16:16:42 - Pago seleccionado para cancelación - {"id":83,"monto_recibido":"114.04","fecha_recibido":"2026-07-03 16:15:12","transaccion":"00085","numero_autorizacion":"58533208","referencia":"SPEI-20260703161543-220","estado":"confirmado"}
+2026-07-03 16:16:42 - Monto no coincide - {"monto_bd":114.0400000000000062527760746888816356658935546875,"monto_request":404}
+2026-07-03 16:16:53 - Datos procesados - {"clabe":"646180633000001750","transaccion":"00085","autorizacion":"58533208","referencia":"","fecha":"0001-01-01T00:00:00","monto":404}
+2026-07-03 16:16:53 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:16:53 - Pago confirmado encontrado (match exacto) - {"id":83,"monto_recibido":"114.04","fecha_recibido":"2026-07-03 16:15:12","transaccion":"00085","numero_autorizacion":"58533208","referencia":"SPEI-20260703161543-220","estado":"confirmado"}
+2026-07-03 16:16:53 - Pago seleccionado para cancelación - {"id":83,"monto_recibido":"114.04","fecha_recibido":"2026-07-03 16:15:12","transaccion":"00085","numero_autorizacion":"58533208","referencia":"SPEI-20260703161543-220","estado":"confirmado"}
+2026-07-03 16:16:53 - Monto no coincide - {"monto_bd":114.0400000000000062527760746888816356658935546875,"monto_request":404}
+2026-07-03 16:17:07 - Datos procesados - {"clabe":"646180633000001751","transaccion":"00085","autorizacion":"58533208","referencia":"","fecha":"0001-01-01T00:00:00","monto":114.0400000000000062527760746888816356658935546875}
+2026-07-03 16:17:12 - Datos procesados - {"clabe":"646180633000001750","transaccion":"00085","autorizacion":"58533208","referencia":"","fecha":"0001-01-01T00:00:00","monto":114.0400000000000062527760746888816356658935546875}
+2026-07-03 16:17:12 - CLABE encontrada - {"id":34,"account":"178311443915805"}
+2026-07-03 16:17:12 - Pago confirmado encontrado (match exacto) - {"id":83,"monto_recibido":"114.04","fecha_recibido":"2026-07-03 16:15:12","transaccion":"00085","numero_autorizacion":"58533208","referencia":"SPEI-20260703161543-220","estado":"confirmado"}
+2026-07-03 16:17:12 - Pago seleccionado para cancelación - {"id":83,"monto_recibido":"114.04","fecha_recibido":"2026-07-03 16:15:12","transaccion":"00085","numero_autorizacion":"58533208","referencia":"SPEI-20260703161543-220","estado":"confirmado"}
+2026-07-03 16:17:12 - Validación de fecha exitosa - mismo día - {"hoy":"2026-07-03 16:17:12","recibido":"2026-07-03 16:15:12"}
+2026-07-03 16:17:12 - Pago marcado como cancelado - {"id":83}
+2026-07-03 16:17:12 - Montos calculados - {"monto_a_cancelar":114.0400000000000062527760746888816356658935546875,"monto_pendiente_actual":"5497.92","nuevo_monto_pendiente":5611.9600000000000363797880709171295166015625}
+2026-07-03 16:17:12 - CLABE actualizada
+2026-07-03 16:17:12 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelación exitosa"}
+2026-07-03 19:16:42 - Datos procesados - {"clabe":"646180633000001682","transaccion":"13006","autorizacion":"77329464","referencia":"","fecha":"0001-01-01T00:00:00","monto":123}
+2026-07-03 19:16:42 - CLABE encontrada - {"id":27,"account":"178277120184738"}
+2026-07-03 19:16:42 - Pago confirmado encontrado (match exacto) - {"id":85,"monto_recibido":"123.00","fecha_recibido":"2026-07-03 19:58:07","transaccion":"13006","numero_autorizacion":"77329464","referencia":"SPEI-20260703191324-246","estado":"confirmado"}
+2026-07-03 19:16:42 - Pago seleccionado para cancelación - {"id":85,"monto_recibido":"123.00","fecha_recibido":"2026-07-03 19:58:07","transaccion":"13006","numero_autorizacion":"77329464","referencia":"SPEI-20260703191324-246","estado":"confirmado"}
+2026-07-03 19:16:42 - Validación de fecha exitosa - mismo día - {"hoy":"2026-07-03 19:16:42","recibido":"2026-07-03 19:58:07"}
+2026-07-03 19:16:42 - Pago marcado como cancelado - {"id":85}
+2026-07-03 19:16:42 - Montos calculados - {"monto_a_cancelar":123,"monto_pendiente_actual":"21472.00","nuevo_monto_pendiente":21595}
+2026-07-03 19:16:42 - CLABE actualizada
+2026-07-03 19:16:42 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelación exitosa"}
+2026-07-03 19:17:53 - Datos procesados - {"clabe":"646180633000001569","transaccion":"13006","autorizacion":"77329464","referencia":"","fecha":"0001-01-01T00:00:00","monto":123}
+2026-07-03 19:17:53 - CLABE encontrada - {"id":16,"account":"178216587106923"}
+2026-07-03 19:17:53 - No se encontró ningún pago confirmado ni cancelado con los criterios proporcionados
+2026-07-06 09:30:08 - Datos procesados - {"clabe":"646180633000001831","transaccion":"101","autorizacion":"62615130","referencia":"","fecha":"2026-07-06T10:30:07Z","monto":5800}
+2026-07-06 09:30:08 - CLABE encontrada - {"id":40,"account":"178335175480830"}
+2026-07-06 09:30:08 - Pago confirmado encontrado (match exacto) - {"id":87,"monto_recibido":"5800.00","fecha_recibido":"2026-07-06 10:29:45","transaccion":"101","numero_autorizacion":"62615130","referencia":"SPEI-20260706092946-148","estado":"confirmado"}
+2026-07-06 09:30:08 - Pago seleccionado para cancelación - {"id":87,"monto_recibido":"5800.00","fecha_recibido":"2026-07-06 10:29:45","transaccion":"101","numero_autorizacion":"62615130","referencia":"SPEI-20260706092946-148","estado":"confirmado"}
+2026-07-06 09:30:08 - Validación de fecha exitosa - mismo día - {"hoy":"2026-07-06 09:30:08","recibido":"2026-07-06 10:29:45"}
+2026-07-06 09:30:08 - Pago marcado como cancelado - {"id":87}
+2026-07-06 09:30:08 - Montos calculados - {"monto_a_cancelar":5800,"monto_pendiente_actual":"0.00","nuevo_monto_pendiente":5800}
+2026-07-06 09:30:08 - CLABE actualizada
+2026-07-06 09:30:08 - Cancelación exitosa - {"codigo":0,"mensaje":"Cancelación exitosa"}
