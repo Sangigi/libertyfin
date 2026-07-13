@@ -12,7 +12,7 @@ register_shutdown_function(function () {
     if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
         error_log("Fatal error: " . print_r($error, true));
         // Si es una petición AJAX, responder con JSON de error
-        if (isset($_POST['actualizar_descuento_ajax']) || isset($_POST['agregar_producto_ajax']) || isset($_POST['actualizar_cantidad_ajax']) || isset($_POST['actualizar_precio_ajax'])) {
+        if (isset($_POST['actualizar_descuento_ajax']) || isset($_POST['agregar_producto_ajax']) || isset($_POST['actualizar_cantidad_ajax']) || isset($_POST['actualizar_precio_ajax']) || isset($_POST['actualizar_comisiones_carrito_ajax'])) {
             while (ob_get_level()) ob_end_clean();
             header('Content-Type: application/json');
             echo json_encode([
@@ -641,6 +641,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_precio_aja
     echo json_encode($response);
     exit();
 }
+
+    // ========== GUARDAR COMISIONES PENDIENTES ASIGNADAS A UN PRODUCTO DEL CARRITO ==========
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_comisiones_carrito_ajax'])) {
+        header('Content-Type: application/json');
+        $index = intval($_POST['index'] ?? -1);
+        $comisiones = json_decode($_POST['comisiones'] ?? '[]', true);
+        if ($index >= 0 && isset($_SESSION['carrito'][$index])) {
+            $_SESSION['carrito'][$index]['comisiones'] = is_array($comisiones) ? $comisiones : [];
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Producto no encontrado en el carrito']);
+        }
+        exit();
+    }
 
     // ========== MANEJO DE ACTUALIZACIÓN DE CANTIDAD VIA AJAX (CON RECALCULO DE PRECIO POR MAYOREO) ==========
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_cantidad_ajax'])) {
@@ -1413,6 +1427,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_precio_aja
                                 throw new Exception("Error al insertar detalle: " . $stmt->error);
                             }
                             $stmt->close();
+                        }
+
+                        // ---- Guardar comisiones pendientes asignadas a este producto en caja ----
+                        if (!empty($item['comisiones'])) {
+                            $venta_detalle_id = $conn->insert_id; // el detalle recién insertado arriba
+
+                            foreach ($item['comisiones'] as $com) {
+                                $area_id = intval($com['area_id'] ?? 0);
+                                $regla_id = intval($com['regla_id'] ?? 0);
+                                $colaborador_id = intval($com['colaborador_id'] ?? 0);
+                                $porcentaje_reparto = floatval($com['porcentaje_reparto'] ?? 100);
+
+                                if ($regla_id <= 0 || $colaborador_id <= 0) continue;
+
+                                $sql_regla = "SELECT concepto, porcentaje FROM comision_reglas WHERE id = ?";
+                                $stmt_regla = $conn->prepare($sql_regla);
+                                $stmt_regla->bind_param("i", $regla_id);
+                                $stmt_regla->execute();
+                                $regla_row = $stmt_regla->get_result()->fetch_assoc();
+                                $stmt_regla->close();
+                                if (!$regla_row) continue;
+
+                                $area_nombre = '';
+                                if ($area_id > 0) {
+                                    $sql_area = "SELECT nombre FROM comision_areas WHERE id = ?";
+                                    $stmt_area = $conn->prepare($sql_area);
+                                    $stmt_area->bind_param("i", $area_id);
+                                    $stmt_area->execute();
+                                    $area_nombre = $stmt_area->get_result()->fetch_assoc()['nombre'] ?? '';
+                                    $stmt_area->close();
+                                }
+
+                                $sql_colab = "SELECT nombre FROM comision_colaboradores WHERE id = ?";
+                                $stmt_colab = $conn->prepare($sql_colab);
+                                $stmt_colab->bind_param("i", $colaborador_id);
+                                $stmt_colab->execute();
+                                $colaborador_nombre = $stmt_colab->get_result()->fetch_assoc()['nombre'] ?? '';
+                                $stmt_colab->close();
+                                if ($colaborador_nombre === '') continue;
+
+                                $monto_base = max(0, ($precio_unitario_sin_iva - $costo_unitario_item) * $cantidad);
+                                $porcentaje_regla = floatval($regla_row['porcentaje']);
+                                $monto_comision = $monto_base * ($porcentaje_regla / 100) * ($porcentaje_reparto / 100);
+                                $usuario_id_comision = $_SESSION['usuario_id'] ?? null;
+
+                                $sql_ins_com = "INSERT INTO venta_comisiones
+                                    (venta_id, venta_detalle_id, area_id, area_nombre, regla_id, concepto,
+                                     colaborador_id, colaborador_nombre, porcentaje_regla, porcentaje_reparto,
+                                     costo_unitario, precio_unitario, cantidad, monto_base, monto_comision, usuario_id)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                                $stmt_ins_com = $conn->prepare($sql_ins_com);
+                                $stmt_ins_com->bind_param(
+                                    "iiisisisdddddddi", // 16 params: i,i,i,s,i,s,i,s,d,d,d,d,d,d,d,i
+                                    $venta_id, $venta_detalle_id, $area_id, $area_nombre, $regla_id, $regla_row['concepto'],
+                                    $colaborador_id, $colaborador_nombre, $porcentaje_regla, $porcentaje_reparto,
+                                    $costo_unitario_item, $precio_unitario_sin_iva, $cantidad, $monto_base, $monto_comision, $usuario_id_comision
+                                );
+                                if (!$stmt_ins_com->execute()) {
+                                    error_log("⚠️ ERROR al guardar comisión - Venta detalle ID: $venta_detalle_id, Error: " . $stmt_ins_com->error);
+                                }
+                                $stmt_ins_com->close();
+                            }
                         }
 
                         $sql_update_stock = "
@@ -3923,6 +3999,56 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         </div>
     </div>
 
+    <!-- Modal para asignar comisión a un producto del carrito -->
+    <div class="modal fade" id="asignarComisionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-tag me-2"></i>Asignar Comisión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Producto: <strong id="comisionProductoNombre"></strong></p>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small">Área</label>
+                            <select class="form-select form-select-sm" id="comisionArea"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Concepto / Rol</label>
+                            <select class="form-select form-select-sm" id="comisionRegla"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Colaborador</label>
+                            <select class="form-select form-select-sm" id="comisionColaborador"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">% de reparto (si el rol se divide entre varios)</label>
+                            <select class="form-select form-select-sm" id="comisionPorcentajeReparto">
+                                <option value="100">100% (una sola persona)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="button" class="btn btn-success btn-sm w-100" id="btnAgregarComisionLinea">
+                                <i class="fas fa-plus me-1"></i>Agregar a la lista
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm">
+                        <thead><tr><th>Área</th><th>Concepto</th><th>Colaborador</th><th>% reparto</th><th></th></tr></thead>
+                        <tbody id="comisionesListaTbody"></tbody>
+                    </table>
+                    <small class="text-muted">Estas comisiones se guardarán al confirmar el pago de la venta.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para editar precio unitario -->
     <div class="modal fade precio-edit-modal" id="editarPrecioModal" tabindex="-1">
         <div class="modal-dialog">
@@ -4425,6 +4551,15 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                                             data-cantidad="<?php echo $cantidad_raw; ?>"
                                                             data-precio-actual="<?php echo floatval($item['precio']); ?>">
                                                         <i class="fas fa-edit me-1"></i>Editar Precio
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-success btn-asignar-comision"
+                                                            data-index="<?php echo $index; ?>"
+                                                            data-producto-id="<?php echo $item['id']; ?>"
+                                                            data-producto-nombre="<?php echo htmlspecialchars($item['nombre']); ?>">
+                                                        <i class="fas fa-user-tag me-1"></i>Comisión
+                                                        <?php if (!empty($item['comisiones'])): ?>
+                                                            <span class="badge bg-success ms-1"><?php echo count($item['comisiones']); ?></span>
+                                                        <?php endif; ?>
                                                     </button>
                                                 </div>
                                              </div>
@@ -5151,6 +5286,15 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                                                     data-precio-actual="<?php echo floatval($item['precio']); ?>">
                                                                 <i class="fas fa-edit me-1"></i>Editar Precio
                                                             </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-success btn-asignar-comision"
+                                                                    data-index="<?php echo $index; ?>"
+                                                                    data-producto-id="<?php echo $item['id']; ?>"
+                                                                    data-producto-nombre="<?php echo htmlspecialchars($item['nombre']); ?>">
+                                                                <i class="fas fa-user-tag me-1"></i>Comisión
+                                                                <?php if (!empty($item['comisiones'])): ?>
+                                                                    <span class="badge bg-success ms-1"><?php echo count($item['comisiones']); ?></span>
+                                                                <?php endif; ?>
+                                                            </button>
                                                         </div>
                                                         
                                                         <div class="descuento-info mt-1">
@@ -5326,6 +5470,133 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         let currentPrecioProducto = null;
 
         window.currentCarrito = <?php echo json_encode($_SESSION['carrito'] ?? []); ?>;
+
+        // ========== FUNCIONES PARA ASIGNAR COMISIÓN POR PRODUCTO ==========
+        let catalogosComision = null;
+        let comisionIndexActual = null;
+
+        function cargarCatalogosComision(callback) {
+            if (catalogosComision) { callback(); return; }
+            fetch('guardar_comision_producto.php?accion=obtener_catalogos')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        catalogosComision = data;
+                        callback();
+                    } else {
+                        mostrarNotificacionError('No se pudieron cargar los catálogos de comisión');
+                    }
+                })
+                .catch(() => mostrarNotificacionError('Error de conexión al cargar catálogos de comisión'));
+        }
+
+        function poblarSelectAreasComision() {
+            const sel = document.getElementById('comisionArea');
+            sel.innerHTML = catalogosComision.areas.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('');
+            poblarSelectReglasComision();
+        }
+
+        function poblarSelectReglasComision() {
+            const areaId = document.getElementById('comisionArea').value;
+            const reglas = catalogosComision.reglas.filter(r => r.area_id == areaId);
+            const sel = document.getElementById('comisionRegla');
+            sel.innerHTML = reglas.map(r => `<option value="${r.id}">${r.concepto} (${r.porcentaje}%)</option>`).join('');
+        }
+
+        function poblarSelectColaboradoresComision() {
+            const sel = document.getElementById('comisionColaborador');
+            sel.innerHTML = catalogosComision.colaboradores.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+        }
+
+        function poblarSelectPorcentajeRepartoComision() {
+            const sel = document.getElementById('comisionPorcentajeReparto');
+            let html = '<option value="100">100% (una sola persona)</option>';
+            catalogosComision.porcentajes.forEach(p => {
+                html += `<option value="${p.valor}">${p.valor}%</option>`;
+            });
+            sel.innerHTML = html;
+        }
+
+        function renderizarListaComisiones() {
+            const item = window.currentCarrito[comisionIndexActual];
+            const tbody = document.getElementById('comisionesListaTbody');
+            const lista = (item && item.comisiones) || [];
+            tbody.innerHTML = lista.map((c, i) => `
+                <tr>
+                    <td>${c.area_nombre}</td>
+                    <td>${c.concepto}</td>
+                    <td>${c.colaborador_nombre}</td>
+                    <td>${c.porcentaje_reparto}%</td>
+                    <td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-comision" data-i="${i}"><i class="fas fa-times"></i></button></td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="text-center text-muted">Sin comisiones asignadas</td></tr>';
+        }
+
+        function guardarComisionesPendientesEnSesion() {
+            const item = window.currentCarrito[comisionIndexActual];
+            const formData = new FormData();
+            formData.append('actualizar_comisiones_carrito_ajax', 'true');
+            formData.append('index', comisionIndexActual);
+            formData.append('comisiones', JSON.stringify((item && item.comisiones) || []));
+            fetch('caja.php', { method: 'POST', body: formData });
+        }
+
+        function setupAsignarComision() {
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('.btn-asignar-comision');
+                if (btn) {
+                    comisionIndexActual = btn.dataset.index;
+                    document.getElementById('comisionProductoNombre').textContent = btn.dataset.productoNombre;
+
+                    cargarCatalogosComision(function () {
+                        poblarSelectAreasComision();
+                        poblarSelectColaboradoresComision();
+                        poblarSelectPorcentajeRepartoComision();
+                        renderizarListaComisiones();
+                        new bootstrap.Modal(document.getElementById('asignarComisionModal')).show();
+                    });
+                    return;
+                }
+
+                const btnQuitar = e.target.closest('.btn-quitar-comision');
+                if (btnQuitar) {
+                    window.currentCarrito[comisionIndexActual].comisiones.splice(parseInt(btnQuitar.dataset.i), 1);
+                    renderizarListaComisiones();
+                    guardarComisionesPendientesEnSesion();
+                }
+            });
+
+            document.getElementById('comisionArea')?.addEventListener('change', poblarSelectReglasComision);
+
+            document.getElementById('btnAgregarComisionLinea')?.addEventListener('click', function () {
+                const areaSel = document.getElementById('comisionArea');
+                const reglaSel = document.getElementById('comisionRegla');
+                const colabSel = document.getElementById('comisionColaborador');
+                const porcentajeReparto = document.getElementById('comisionPorcentajeReparto').value;
+
+                if (!areaSel.value || !reglaSel.value || !colabSel.value) {
+                    mostrarNotificacionError('Selecciona área, concepto y colaborador');
+                    return;
+                }
+
+                const item = window.currentCarrito[comisionIndexActual];
+                if (!item.comisiones) item.comisiones = [];
+                item.comisiones.push({
+                    area_id: areaSel.value,
+                    area_nombre: areaSel.selectedOptions[0].textContent,
+                    regla_id: reglaSel.value,
+                    concepto: reglaSel.selectedOptions[0].textContent,
+                    colaborador_id: colabSel.value,
+                    colaborador_nombre: colabSel.selectedOptions[0].textContent,
+                    porcentaje_reparto: porcentajeReparto
+                });
+
+                renderizarListaComisiones();
+                guardarComisionesPendientesEnSesion();
+            });
+        }
+
+        setupAsignarComision();
 
         // ========== FUNCIONES PARA DETECTAR DISPOSITIVOS ==========
         function esDispositivoMovil() {
@@ -7123,6 +7394,13 @@ function guardarPrecioProducto() {
                                 data-precio-actual="${item.precio.toFixed(2)}">
                             <i class="fas fa-edit me-1"></i>Editar Precio
                         </button>
+                        <button type="button" class="btn btn-sm btn-outline-success btn-asignar-comision"
+                                data-index="${index}"
+                                data-producto-id="${item.id}"
+                                data-producto-nombre="${escapeHtml(item.nombre)}">
+                            <i class="fas fa-user-tag me-1"></i>Comisión
+                            ${item.comisiones && item.comisiones.length ? `<span class="badge bg-success ms-1">${item.comisiones.length}</span>` : ''}
+                        </button>
                     </div>
                 </td>
                 <td width="12%">
@@ -7283,6 +7561,13 @@ function guardarPrecioProducto() {
                                                 data-cantidad="${item.cantidad}"
                                                 data-precio-actual="${item.precio.toFixed(2)}">
                                             <i class="fas fa-edit me-1"></i>Editar Precio
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-success btn-asignar-comision"
+                                                data-index="${index}"
+                                                data-producto-id="${item.id}"
+                                                data-producto-nombre="${escapeHtml(item.nombre)}">
+                                            <i class="fas fa-user-tag me-1"></i>Comisión
+                                            ${item.comisiones && item.comisiones.length ? `<span class="badge bg-success ms-1">${item.comisiones.length}</span>` : ''}
                                         </button>
                                     </div>
                                     
