@@ -303,6 +303,32 @@ try {
         $stmt_venta->execute([$venta_id]);
         $venta_especifica = $stmt_venta->fetch(PDO::FETCH_ASSOC);
         $stmt_venta = null;
+
+        // Calcular el número secuencial de esta venta, respetando los MISMOS
+        // filtros y orden que se usan en el listado, para que coincida
+        // exactamente con el número mostrado en la tabla/tarjetas.
+        $numero_venta_detalle = null;
+        if ($venta_especifica) {
+            $condicion_posicion = ($filtro_orden === 'desc')
+                ? "(v.fecha > ? OR (v.fecha = ? AND v.id > ?))"
+                : "(v.fecha < ? OR (v.fecha = ? AND v.id < ?))";
+
+            $sql_posicion = "SELECT COUNT(*) as posicion FROM ventas v "
+                . ($where_clause !== '' ? $where_clause . " AND " : "WHERE ")
+                . $condicion_posicion;
+
+            $params_posicion = array_merge(
+                $params,
+                [$venta_especifica['fecha'], $venta_especifica['fecha'], $venta_id]
+            );
+
+            $stmt_posicion = $conn->prepare($sql_posicion);
+            $stmt_posicion->execute($params_posicion);
+            $resultado_posicion = $stmt_posicion->fetch(PDO::FETCH_ASSOC);
+            $stmt_posicion = null;
+
+            $numero_venta_detalle = intval($resultado_posicion['posicion']) + 1;
+        }
     }
     
     // Cerrar conexión
@@ -1078,6 +1104,12 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
                         <?php endif; ?>
                         <?php if (($_SESSION['usuario_rol'] ?? '') === 'admin'): ?>
                             <li class="nav-item">
+                                <a class="nav-link" href="comisiones_config.php">
+                                    <i class="fas fa-percentage"></i>
+                                    Comisiones
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" href="configuracion.php">
                                     <i class="fas fa-cogs"></i>
                                     Configuración
@@ -1171,6 +1203,12 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
                             </li>
                         <?php endif; ?>
                         <?php if (($_SESSION['usuario_rol'] ?? '') === 'admin'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="comisiones_config.php">
+                                    <i class="fas fa-percentage"></i>
+                                    Comisiones
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="configuracion.php">
                                     <i class="fas fa-cogs"></i>
@@ -1637,7 +1675,7 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Detalles de Venta <?php echo isset($_GET['ver_venta']) ? '#' . $_GET['ver_venta'] : ''; ?></h5>
+                    <h5 class="modal-title">Detalles de Venta <?php echo isset($numero_venta_detalle) && $numero_venta_detalle !== null ? '#' . $numero_venta_detalle : ''; ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
