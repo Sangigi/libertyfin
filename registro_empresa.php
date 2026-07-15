@@ -659,6 +659,31 @@ CREATE TABLE `movimientos_caja` (
     CONSTRAINT `movimientos_caja_ibfk_2` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursales` (`id`)
 );
 
+CREATE TABLE `gastos` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `concepto` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+    `categoria` varchar(100) COLLATE utf8_unicode_ci DEFAULT 'Otros',
+    `monto` decimal(10,2) NOT NULL,
+    `tipo` enum('manual','automatico') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'manual',
+    `origen` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+    `venta_id` int(11) DEFAULT NULL,
+    `usuario_id` int(11) DEFAULT NULL,
+    `sucursal_id` int(11) DEFAULT NULL,
+    `metodo_pago` enum('efectivo','tarjeta','transferencia') COLLATE utf8_unicode_ci DEFAULT NULL,
+    `proveedor` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
+    `numero_referencia` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+    `descripcion` text COLLATE utf8_unicode_ci,
+    `fecha` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_gastos_venta` (`venta_id`),
+    KEY `idx_gastos_usuario` (`usuario_id`),
+    KEY `idx_gastos_sucursal` (`sucursal_id`),
+    KEY `idx_gastos_fecha` (`fecha`),
+    CONSTRAINT `gastos_ibfk_1` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `gastos_ibfk_2` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`),
+    CONSTRAINT `gastos_ibfk_3` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursales` (`id`)
+);
+
 CREATE TABLE `movimientos_inventario` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `producto_id` int(11) NOT NULL,
@@ -731,6 +756,109 @@ FROM productos p
 LEFT JOIN categorias c ON p.categoria_id = c.id
 LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
 WHERE p.stock <= p.stock_minimo AND p.activo = TRUE;
+
+-- Módulo de comisiones (áreas, colaboradores, reglas y asignación por venta)
+CREATE TABLE `comision_areas` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `nombre` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+    `activo` tinyint(1) DEFAULT '1',
+    `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `nombre` (`nombre`)
+);
+
+CREATE TABLE `comision_colaboradores` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `nombre` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+    `area_id` int(11) DEFAULT NULL,
+    `activo` tinyint(1) DEFAULT '1',
+    `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `fecha_actualizacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_area` (`area_id`),
+    KEY `idx_activo` (`activo`),
+    CONSTRAINT `comision_colaboradores_ibfk_1` FOREIGN KEY (`area_id`) REFERENCES `comision_areas` (`id`) ON DELETE SET NULL
+);
+
+CREATE TABLE `comision_reglas` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `area_id` int(11) NOT NULL,
+    `concepto` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+    `porcentaje` decimal(5,2) NOT NULL,
+    `activo` tinyint(1) DEFAULT '1',
+    `orden` int(11) DEFAULT '0',
+    PRIMARY KEY (`id`),
+    KEY `idx_area` (`area_id`),
+    CONSTRAINT `comision_reglas_ibfk_1` FOREIGN KEY (`area_id`) REFERENCES `comision_areas` (`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `comision_porcentajes_reparto` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `valor` decimal(5,2) NOT NULL,
+    `activo` tinyint(1) DEFAULT '1',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `valor` (`valor`)
+);
+
+CREATE TABLE `venta_comisiones` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `venta_id` int(11) NOT NULL,
+    `venta_detalle_id` int(11) NOT NULL,
+    `area_id` int(11) DEFAULT NULL,
+    `area_nombre` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+    `regla_id` int(11) DEFAULT NULL,
+    `concepto` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+    `colaborador_id` int(11) DEFAULT NULL,
+    `colaborador_nombre` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+    `porcentaje_regla` decimal(5,2) NOT NULL,
+    `porcentaje_reparto` decimal(5,2) NOT NULL DEFAULT '100.00',
+    `costo_unitario` decimal(10,2) NOT NULL,
+    `precio_unitario` decimal(10,2) NOT NULL,
+    `cantidad` decimal(10,3) NOT NULL,
+    `monto_base` decimal(10,2) NOT NULL,
+    `monto_comision` decimal(10,2) NOT NULL,
+    `usuario_id` int(11) DEFAULT NULL,
+    `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_venta` (`venta_id`),
+    KEY `idx_venta_detalle` (`venta_detalle_id`),
+    KEY `idx_colaborador` (`colaborador_id`),
+    KEY `idx_fecha` (`fecha_creacion`),
+    CONSTRAINT `venta_comisiones_ibfk_1` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `venta_comisiones_ibfk_2` FOREIGN KEY (`venta_detalle_id`) REFERENCES `venta_detalles` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `venta_comisiones_ibfk_3` FOREIGN KEY (`colaborador_id`) REFERENCES `comision_colaboradores` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `venta_comisiones_ibfk_4` FOREIGN KEY (`area_id`) REFERENCES `comision_areas` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `venta_comisiones_ibfk_5` FOREIGN KEY (`regla_id`) REFERENCES `comision_reglas` (`id`) ON DELETE SET NULL
+);
+
+-- Datos semilla de comisiones (100% editables desde el panel de Comisiones)
+INSERT INTO `comision_areas` (`nombre`) VALUES ('Legal'), ('Marketing'), ('Contabilidad'), ('Recluta'), ('Programación');
+
+INSERT INTO `comision_porcentajes_reparto` (`valor`) VALUES (30.00), (25.00), (15.00), (12.50), (5.00);
+
+INSERT INTO `comision_colaboradores` (`nombre`) VALUES ('Xathziri'), ('Raul'), ('Alexis'), ('Leonel'), ('Ricardo'), ('Daniel'), ('Axel');
+
+INSERT INTO `comision_reglas` (`area_id`, `concepto`, `porcentaje`, `orden`)
+SELECT id, 'Abogado', 41.00, 1 FROM `comision_areas` WHERE nombre = 'Legal';
+INSERT INTO `comision_reglas` (`area_id`, `concepto`, `porcentaje`, `orden`)
+SELECT id, 'IDEAS', 41.00, 2 FROM `comision_areas` WHERE nombre = 'Legal';
+INSERT INTO `comision_reglas` (`area_id`, `concepto`, `porcentaje`, `orden`)
+SELECT id, 'Vendedor', 10.00, 3 FROM `comision_areas` WHERE nombre = 'Legal';
+INSERT INTO `comision_reglas` (`area_id`, `concepto`, `porcentaje`, `orden`)
+SELECT id, 'Gerente de Ventas', 5.00, 4 FROM `comision_areas` WHERE nombre = 'Legal';
+INSERT INTO `comision_reglas` (`area_id`, `concepto`, `porcentaje`, `orden`)
+SELECT id, 'Over', 3.00, 5 FROM `comision_areas` WHERE nombre = 'Legal';
+
+INSERT INTO `comision_reglas` (`area_id`, `concepto`, `porcentaje`, `orden`)
+SELECT id, 'IDEAS', 52.00, 1 FROM `comision_areas` WHERE nombre IN ('Marketing','Contabilidad','Recluta','Programación');
+INSERT INTO `comision_reglas` (`area_id`, `concepto`, `porcentaje`, `orden`)
+SELECT id, 'Área correspondiente', 30.00, 2 FROM `comision_areas` WHERE nombre IN ('Marketing','Contabilidad','Recluta','Programación');
+INSERT INTO `comision_reglas` (`area_id`, `concepto`, `porcentaje`, `orden`)
+SELECT id, 'Vendedor', 10.00, 3 FROM `comision_areas` WHERE nombre IN ('Marketing','Contabilidad','Recluta','Programación');
+INSERT INTO `comision_reglas` (`area_id`, `concepto`, `porcentaje`, `orden`)
+SELECT id, 'Gerente de Ventas', 5.00, 4 FROM `comision_areas` WHERE nombre IN ('Marketing','Contabilidad','Recluta','Programación');
+INSERT INTO `comision_reglas` (`area_id`, `concepto`, `porcentaje`, `orden`)
+SELECT id, 'Over', 3.00, 5 FROM `comision_areas` WHERE nombre IN ('Marketing','Contabilidad','Recluta','Programación');
     ";
 }
 
