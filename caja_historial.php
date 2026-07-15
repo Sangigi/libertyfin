@@ -772,6 +772,12 @@ try {
                          <?php endif; ?>
                         <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
                             <li class="nav-item">
+                                <a class="nav-link" href="comisiones_config.php">
+                                    <i class="fas fa-percentage"></i>
+                                    Comisiones
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" href="Configuracion">
                                     <i class="fas fa-cogs"></i>
                                     Configuración
