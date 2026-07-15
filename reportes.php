@@ -447,6 +447,43 @@ try {
                 
                 $response['vendedores_top'] = $vendedores;
             }
+
+            // Comisiones por colaborador
+            $sql_comisiones = "
+                SELECT
+                    vc.colaborador_nombre,
+                    vc.area_nombre,
+                    vc.concepto,
+                    COUNT(*) as veces,
+                    SUM(vc.monto_comision) as total_comision
+                FROM venta_comisiones vc
+                INNER JOIN ventas v ON vc.venta_id = v.id
+                WHERE DATE(v.fecha) BETWEEN ? AND ?
+                AND v.estado = 'completada'
+                $sucursal_filtro
+                GROUP BY vc.colaborador_nombre, vc.area_nombre, vc.concepto
+                ORDER BY total_comision DESC";
+
+            $stmt_comisiones = $conn->prepare($sql_comisiones);
+            if ($stmt_comisiones) {
+                if (!empty($params_comunes)) {
+                    $stmt_comisiones->execute($params_comunes);
+                }
+
+                $comisiones = [];
+                while ($row = $stmt_comisiones->fetch(PDO::FETCH_ASSOC)) {
+                    $comisiones[] = [
+                        'colaborador' => safe_html($row['colaborador_nombre']),
+                        'area' => safe_html($row['area_nombre']),
+                        'concepto' => safe_html($row['concepto']),
+                        'veces' => $row['veces'],
+                        'total' => formatMoney($row['total_comision'])
+                    ];
+                }
+                $stmt_comisiones = null;
+
+                $response['comisiones'] = $comisiones;
+            }
         }
         
         if ($tipo_reporte === 'general' || $tipo_reporte === 'clientes') {
@@ -892,6 +929,7 @@ try {
                         <?php endif; ?>
                         <li class="nav-item"><a class="nav-link active" href="Reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
                         <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
+                            <li class="nav-item"><a class="nav-link" href="comisiones_config.php"><i class="fas fa-percentage"></i> Comisiones</a></li>
                             <li class="nav-item"><a class="nav-link" href="Configuracion"><i class="fas fa-cogs"></i> Configuración</a></li>
                         <?php endif; ?>
                     </ul>
@@ -1046,6 +1084,11 @@ try {
                         <div class="row mb-4">
                             <div class="col-lg-6" id="productosContainer"></div>
                             <div class="col-lg-6" id="vendedoresContainer"></div>
+                        </div>
+                        
+                        <!-- Comisiones por colaborador -->
+                        <div class="row mb-4">
+                            <div class="col-12" id="comisionesContainer"></div>
                         </div>
                         
                         <!-- Clientes y Stock -->
@@ -1341,6 +1384,35 @@ try {
                 vendedoresContainer.innerHTML = vendedoresHtml;
             } else {
                 clone.querySelector('#vendedoresContainer').innerHTML = '<div class="card"><div class="card-body"><p class="text-muted text-center">No hay datos de vendedores</p></div></div>';
+            }
+
+            // Renderizar comisiones por colaborador
+            if (data.comisiones && data.comisiones.length > 0) {
+                const comisionesContainer = clone.querySelector('#comisionesContainer');
+                let comisionesHtml = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Comisiones por Colaborador</h5>
+                        </div>
+                        <div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover">
+                            <thead class="table-light"><tr><th>Colaborador</th><th>Área</th><th>Concepto</th><th class="text-center">Veces</th><th class="text-end">Total</th></tr></thead>
+                            <tbody>
+                `;
+                data.comisiones.forEach(c => {
+                    comisionesHtml += `
+                        <tr>
+                            <td>${c.colaborador}</td>
+                            <td>${c.area}</td>
+                            <td>${c.concepto}</td>
+                            <td class="text-center">${c.veces}</td>
+                            <td class="text-end text-success fw-bold">${c.total}</td>
+                        </tr>
+                    `;
+                });
+                comisionesHtml += '</tbody></table></div></div></div>';
+                comisionesContainer.innerHTML = comisionesHtml;
+            } else if (clone.querySelector('#comisionesContainer')) {
+                clone.querySelector('#comisionesContainer').innerHTML = '<div class="card"><div class="card-body"><p class="text-muted text-center">No hay comisiones registradas en este periodo</p></div></div>';
             }
             
             // Renderizar clientes frecuentes
