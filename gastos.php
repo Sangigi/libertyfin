@@ -103,6 +103,8 @@ try {
             $sucursal_id = !empty($_POST['sucursal_id']) ? (int)$_POST['sucursal_id'] : null;
             $metodo_pago = trim($_POST['metodo_pago'] ?? '') ?: null;
             $descripcion = trim($_POST['descripcion'] ?? '') ?: null;
+            $proveedor = trim($_POST['proveedor'] ?? '') ?: null;
+            $numero_referencia = trim($_POST['numero_referencia'] ?? '') ?: null;
 
             if ($concepto === '' || $monto <= 0) {
                 $mensaje = 'El concepto y el monto (mayor a 0) son obligatorios.';
@@ -110,16 +112,16 @@ try {
             } else {
                 if ($gasto_id > 0) {
                     // Editar: solo se permite editar gastos manuales
-                    $sql = "UPDATE gastos SET concepto = ?, categoria = ?, monto = ?, fecha = ?, sucursal_id = ?, metodo_pago = ?, descripcion = ?
+                    $sql = "UPDATE gastos SET concepto = ?, categoria = ?, monto = ?, fecha = ?, sucursal_id = ?, metodo_pago = ?, descripcion = ?, proveedor = ?, numero_referencia = ?
                             WHERE id = ? AND tipo = 'manual'";
                     $stmt = $conn->prepare($sql);
-                    $stmt->execute([$concepto, $categoria, $monto, $fecha, $sucursal_id, $metodo_pago, $descripcion, $gasto_id]);
+                    $stmt->execute([$concepto, $categoria, $monto, $fecha, $sucursal_id, $metodo_pago, $descripcion, $proveedor, $numero_referencia, $gasto_id]);
                     $mensaje = 'Gasto actualizado correctamente.';
                 } else {
-                    $sql = "INSERT INTO gastos (concepto, categoria, monto, tipo, origen, usuario_id, sucursal_id, metodo_pago, descripcion, fecha)
-                            VALUES (?, ?, ?, 'manual', 'manual', ?, ?, ?, ?, ?)";
+                    $sql = "INSERT INTO gastos (concepto, categoria, monto, tipo, origen, usuario_id, sucursal_id, metodo_pago, descripcion, fecha, proveedor, numero_referencia)
+                            VALUES (?, ?, ?, 'manual', 'manual', ?, ?, ?, ?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
-                    $stmt->execute([$concepto, $categoria, $monto, $_SESSION['usuario_id'], $sucursal_id, $metodo_pago, $descripcion, $fecha]);
+                    $stmt->execute([$concepto, $categoria, $monto, $_SESSION['usuario_id'], $sucursal_id, $metodo_pago, $descripcion, $fecha, $proveedor, $numero_referencia]);
                     $mensaje = 'Gasto registrado correctamente.';
                 }
                 $tipo_mensaje = 'success';
@@ -1026,6 +1028,12 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
                         <?php endif; ?>
                         <?php if (($_SESSION['usuario_rol'] ?? '') === 'admin'): ?>
                             <li class="nav-item">
+                                <a class="nav-link" href="comisiones_config.php">
+                                    <i class="fas fa-percentage"></i>
+                                    Comisiones
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" href="configuracion.php">
                                     <i class="fas fa-cogs"></i>
                                     Configuración
@@ -1120,6 +1128,12 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
                             </li>
                         <?php endif; ?>
                         <?php if (($_SESSION['usuario_rol'] ?? '') === 'admin'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="comisiones_config.php">
+                                    <i class="fas fa-percentage"></i>
+                                    Comisiones
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="configuracion.php">
                                     <i class="fas fa-cogs"></i>
@@ -1250,6 +1264,7 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
                                         <tr>
                                             <th>Fecha</th>
                                             <th>Concepto</th>
+                                            <th>Proveedor</th>
                                             <th>Categoría</th>
                                             <th>Tipo</th>
                                             <th>Sucursal</th>
@@ -1260,7 +1275,7 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
                                     <tbody>
                                         <?php if (empty($gastos)): ?>
                                             <tr>
-                                                <td colspan="7" class="text-center py-5 text-muted">
+                                                <td colspan="8" class="text-center py-5 text-muted">
                                                     <i class="fas fa-receipt fa-3x mb-3 d-block"></i>
                                                     No hay gastos registrados con estos filtros.
                                                 </td>
@@ -1274,7 +1289,11 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
                                                         <?php if (!empty($gasto['codigo_venta'])): ?>
                                                             <small class="text-muted">Venta: <?php echo safe_html_gasto($gasto['codigo_venta']); ?></small>
                                                         <?php endif; ?>
+                                                        <?php if (!empty($gasto['numero_referencia'])): ?>
+                                                            <small class="text-muted d-block">Ref: <?php echo safe_html_gasto($gasto['numero_referencia']); ?></small>
+                                                        <?php endif; ?>
                                                     </td>
+                                                    <td><?php echo safe_html_gasto($gasto['proveedor'] ?? '-'); ?></td>
                                                     <td><?php echo safe_html_gasto($gasto['categoria']); ?></td>
                                                     <td>
                                                         <?php if ($gasto['tipo'] === 'automatico'): ?>
@@ -1328,6 +1347,12 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
                                             <?php endif; ?>
                                         </div>
                                         <p class="text-muted small mb-1"><?php echo date('d/m/Y H:i', strtotime($gasto['fecha'])); ?> · <?php echo safe_html_gasto($gasto['categoria']); ?></p>
+                                        <?php if (!empty($gasto['proveedor'])): ?>
+                                            <p class="text-muted small mb-1">Proveedor: <?php echo safe_html_gasto($gasto['proveedor']); ?></p>
+                                        <?php endif; ?>
+                                        <?php if (!empty($gasto['numero_referencia'])): ?>
+                                            <p class="text-muted small mb-1">Ref: <?php echo safe_html_gasto($gasto['numero_referencia']); ?></p>
+                                        <?php endif; ?>
                                         <?php if (!empty($gasto['codigo_venta'])): ?>
                                             <p class="text-muted small mb-1">Venta: <?php echo safe_html_gasto($gasto['codigo_venta']); ?></p>
                                         <?php endif; ?>
@@ -1434,6 +1459,16 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
                                 <option value="transferencia">Transferencia</option>
                             </select>
                         </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Proveedor</label>
+                                <input type="text" class="form-control" name="proveedor" id="gasto_proveedor" maxlength="150" placeholder="Ej. CFE, Telmex...">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Referencia / Folio</label>
+                                <input type="text" class="form-control" name="numero_referencia" id="gasto_numero_referencia" maxlength="100" placeholder="Ej. Factura F-1234">
+                            </div>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label">Descripción</label>
                             <textarea class="form-control" name="descripcion" id="gasto_descripcion" rows="2" maxlength="500"></textarea>
@@ -1527,6 +1562,8 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
             document.getElementById('gasto_sucursal').value = '';
             document.getElementById('gasto_metodo_pago').value = '';
             document.getElementById('gasto_descripcion').value = '';
+            document.getElementById('gasto_proveedor').value = '';
+            document.getElementById('gasto_numero_referencia').value = '';
         }
 
         // Preparar modal para editar un gasto manual existente
@@ -1548,6 +1585,8 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
             document.getElementById('gasto_sucursal').value = gasto.sucursal_id || '';
             document.getElementById('gasto_metodo_pago').value = gasto.metodo_pago || '';
             document.getElementById('gasto_descripcion').value = gasto.descripcion || '';
+            document.getElementById('gasto_proveedor').value = gasto.proveedor || '';
+            document.getElementById('gasto_numero_referencia').value = gasto.numero_referencia || '';
 
             const modal = new bootstrap.Modal(document.getElementById('modalGasto'));
             modal.show();
