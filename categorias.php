@@ -460,6 +460,14 @@ try {
                             </a>
                         </li>
                         <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="comisiones_config.php">
+                                    <i class="fas fa-percentage"></i>
+                                    Comisiones
+                                </a>
+                            </li>
+                        <?php endif; ?>
+                        <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
                                 <a class="nav-link" href="configuracion.php">
                                     <i class="fas fa-cogs"></i>
                                     Configuración
