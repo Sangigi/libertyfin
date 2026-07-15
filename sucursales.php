@@ -959,6 +959,7 @@ function eliminarSucursal($conn)
                         <?php endif; ?>
                         <li class="nav-item"><a class="nav-link" href="Reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
                         <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
+                            <li class="nav-item"><a class="nav-link" href="comisiones_config.php"><i class="fas fa-percentage"></i> Comisiones</a></li>
                             <li class="nav-item"><a class="nav-link" href="Configuracion"><i class="fas fa-cogs"></i> Configuración</a></li>
                         <?php endif; ?>
                     </ul>
