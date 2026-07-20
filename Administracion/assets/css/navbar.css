@@ -1,0 +1,168 @@
+/* ========================================= */
+/* ESTILOS EXCLUSIVOS DEL NAVBAR */
+/* ========================================= */
+
+:root {
+    --primary-color: #27ae60;
+    --secondary-color: #2ecc71;
+}
+
+.navbar {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    color: white !important;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.navbar-brand img {
+    height: 30px;
+    width: auto;
+    margin-right: 10px;
+}
+
+.navbar-brand .brand-text {
+    display: inline-block;
+}
+
+.navbar .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    transition: color 0.3s ease;
+    padding: 0.5rem 1rem;
+}
+
+.navbar .nav-link:hover {
+    color: #ffffff !important;
+}
+
+.navbar .nav-link i {
+    margin-right: 5px;
+}
+
+.navbar .dropdown-menu {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    margin-top: 8px;
+    padding: 0.5rem 0;
+}
+
+.navbar .dropdown-item {
+    padding: 0.5rem 1.5rem;
+    transition: background 0.2s ease;
+}
+
+.navbar .dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.navbar .dropdown-item i {
+    width: 20px;
+    margin-right: 10px;
+    color: var(--primary-color);
+}
+
+.navbar .dropdown-divider {
+    margin: 0.3rem 0;
+}
+
+/* Botón hamburguesa para móvil */
+.navbar-toggler {
+    border: none;
+    padding: 0.5rem;
+    color: white;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.9)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* User info en navbar */
+.navbar-user {
+    display: flex;
+    align-items: center;
+    color: white;
+}
+
+.navbar-user .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    font-size: 0.9rem;
+}
+
+.navbar-user .user-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* ========================================= */
+/* RESPONSIVE NAVBAR */
+/* ========================================= */
+
+@media (max-width: 991.98px) {
+    .navbar-brand .brand-text {
+        font-size: 0.95rem;
+    }
+    
+    .navbar .navbar-nav {
+        padding: 0.5rem 0;
+    }
+    
+    .navbar .nav-item {
+        padding: 0.2rem 0;
+    }
+    
+    .navbar .dropdown-menu {
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .navbar .dropdown-item {
+        color: rgba(255, 255, 255, 0.8);
+        padding: 0.4rem 1rem;
+    }
+    
+    .navbar .dropdown-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+    
+    .navbar .dropdown-divider {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .navbar-brand img {
+        height: 25px;
+    }
+    
+    .navbar-brand .brand-text {
+        font-size: 0.85rem;
+    }
+    
+    .navbar-user .user-name {
+        display: none;
+    }
+}

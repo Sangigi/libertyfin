@@ -1,0 +1,354 @@
+/* ========================================= */
+/* ESTILOS ESPECÍFICOS DE USUARIOS */
+/* ========================================= */
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    touch-action: pan-y;
+    overflow-x: hidden;
+}
+
+/* Contenido principal */
+main {
+    margin-left: 280px;
+    padding: 20px;
+    transition: margin-left 0.3s ease-in-out;
+    min-height: calc(100vh - 56px);
+}
+
+@media (max-width: 991.98px) {
+    main {
+        margin-left: 0;
+        padding: 15px;
+    }
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background-color: #27ae60;
+    border-color: #27ae60;
+}
+
+.btn-primary:hover {
+    background-color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+/* Badges de roles */
+.badge-rol {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-administrador { background-color: #dc3545; color: white; }
+.badge-supervisor { background-color: #fd7e14; color: white; }
+.badge-empleado { background-color: #6f42c1; color: white; }
+.badge-contador { background-color: #20c997; color: white; }
+
+/* Badges de estado */
+.badge-estado {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Tabla */
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.table-responsive {
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #27ae60 #f1f1f1;
+    scroll-behavior: smooth;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #27ae60;
+    border-radius: 4px;
+}
+
+/* Formularios */
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #27ae60;
+    box-shadow: 0 0 0 0.2rem rgba(39, 174, 96, 0.25);
+}
+
+.form-group {
+    position: relative;
+}
+
+.password-toggle {
+    cursor: pointer;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    z-index: 10;
+    transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+    color: #27ae60;
+}
+
+/* Modal header */
+.modal-header {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    border-radius: 15px 15px 0 0;
+}
+
+.modal-header .btn-close {
+    color: white;
+    filter: brightness(0) invert(1);
+}
+
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Paginación */
+.pagination {
+    gap: 5px;
+}
+
+.page-item {
+    margin: 2px;
+}
+
+.page-link {
+    border-radius: 8px;
+    color: #2c3e50;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+    padding: 0.5rem 0.75rem;
+}
+
+.page-link:hover {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    border-color: #27ae60;
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border-color: #27ae60;
+    color: white;
+}
+
+.page-item.disabled .page-link {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Botones de acción en tabla */
+.btn-group .btn {
+    margin: 0 2px;
+    transition: all 0.3s ease;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-group .btn-info:hover {
+    background-color: #0dcaf0;
+    color: white;
+}
+
+.btn-group .btn-warning:hover {
+    background-color: #ffc107;
+    color: white;
+}
+
+.btn-group .btn-danger:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-group .btn-secondary:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* ========================================= */
+/* RESPONSIVE */
+/* ========================================= */
+
+@media (max-width: 991.98px) {
+    .col-md-2 {
+        flex: 0 0 33.333%;
+        max-width: 33.333%;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .col-md-2 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    .d-md-flex {
+        flex-direction: column;
+    }
+    
+    .d-md-flex .btn {
+        margin-bottom: 10px;
+        width: 100%;
+    }
+    
+    .card-header h5 {
+        font-size: 1rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .col-md-2 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    /* Vista móvil para tabla */
+    .table thead {
+        display: none;
+    }
+    
+    .table tbody tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 10px;
+        background: white;
+    }
+    
+    .table tbody td {
+        display: block;
+        text-align: right;
+        padding: 5px 10px;
+        position: relative;
+        border: none;
+    }
+    
+    .table tbody td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .table tbody td .btn-group {
+        justify-content: flex-end;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
+    }
+    
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+}
+
+/* Indicador de scroll en móvil */
+@media (max-width: 767.98px) {
+    .table-responsive::after {
+        content: '← Desliza para ver más →';
+        position: absolute;
+        bottom: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(39, 174, 96, 0.9);
+        color: white;
+        padding: 3px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 5;
+    }
+
+    .table-responsive:hover::after,
+    .table-responsive.touch-active::after {
+        opacity: 1;
+    }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #27ae60;
+}

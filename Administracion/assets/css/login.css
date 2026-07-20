@@ -1,0 +1,362 @@
+/* ========================================= */
+/* ESTILOS ESPECÍFICOS DEL LOGIN */
+/* ========================================= */
+
+:root {
+    --primary-color: #27ae60;
+    --primary-dark: #2ecc71;
+    --secondary-color: #2c3e50;
+    --light-bg: #f8f9fa;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --success-color: #27ae60;
+    --warning-color: #e74c3c;
+}
+
+body {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    margin: 0;
+}
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content-wrapper {
+    width: 100%;
+    max-width: 480px;
+    padding: 1rem;
+}
+
+/* Card */
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    background-color: white;
+    width: 100%;
+    overflow: hidden;
+    animation: fadeIn 0.5s ease;
+}
+
+.card-header {
+    background: var(--primary-color);
+    color: white;
+    border-bottom: none;
+    padding: 1.8rem;
+    text-align: center;
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+/* Formulario */
+.form-control, .form-select {
+    border: 1.5px solid #dee2e6;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.15);
+}
+
+.required:after {
+    content: " *";
+    color: var(--warning-color);
+    font-weight: bold;
+}
+
+/* Logo */
+.logo-container {
+    padding: 1rem 0;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.logo-horizontal {
+    max-width: 100%;
+    height: auto;
+    max-height: 70px;
+}
+
+.section-title {
+    color: var(--secondary-color);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+/* Campos de contraseña */
+.password-input-group {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    z-index: 5;
+    padding: 5px;
+}
+
+.password-toggle:hover {
+    color: var(--primary-color);
+}
+
+/* Validación */
+.is-invalid {
+    border-color: var(--warning-color) !important;
+}
+
+.is-valid {
+    border-color: var(--success-color) !important;
+}
+
+/* Alertas */
+.alert-info {
+    background-color: #e7f5ff;
+    border-color: #a5d8ff;
+    color: #1864ab;
+}
+
+.alert-warning {
+    background-color: #fff9db;
+    border-color: #ffd43b;
+    color: #e67700;
+}
+
+/* Botones */
+.btn-login {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    padding: 0.85rem;
+    font-weight: 500;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    width: 100%;
+    font-size: 1rem;
+}
+
+.btn-login:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+.btn-login:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-forgot {
+    background-color: transparent;
+    border: none;
+    color: var(--primary-color);
+    text-decoration: none;
+    padding: 0.5rem 0;
+    display: inline-block;
+}
+
+.btn-forgot:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Checkbox */
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Enlaces */
+.login-links {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.login-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.login-link:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Spinner */
+.spinner-border {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+}
+
+/* Iconos input */
+.input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    z-index: 5;
+}
+
+.input-with-icon {
+    padding-left: 40px !important;
+}
+
+/* Recordar contraseña */
+.remember-forgot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+/* Mensaje de bienvenida */
+.welcome-message {
+    text-align: center;
+    color: #6c757d;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+
+/* Versión */
+.version-info {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: white;
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+.version-info p {
+    margin: 0.3rem 0;
+}
+
+/* ========================================= */
+/* ANIMACIONES */
+/* ========================================= */
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* ========================================= */
+/* RESPONSIVE */
+/* ========================================= */
+
+@media (max-width: 576px) {
+    .content-wrapper {
+        padding: 0.5rem;
+        max-width: 100%;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .card-header {
+        padding: 1.5rem;
+    }
+    
+    .logo-horizontal {
+        max-height: 50px;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+    }
+    
+    .remember-forgot {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    body {
+        padding: 0.5rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .card-header {
+        padding: 1rem;
+    }
+    
+    .card-header h3 {
+        font-size: 1.3rem;
+    }
+    
+    .form-control {
+        padding: 0.7rem 0.8rem;
+        font-size: 0.9rem;
+    }
+    
+    .btn-login {
+        padding: 0.7rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* ========================================= */
+/* MEJORAS DE ACCESIBILIDAD */
+/* ========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .card {
+        animation: none;
+    }
+}
+
+@media print {
+    body {
+        background: white !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #dee2e6 !important;
+    }
+    
+    .btn-login {
+        background: #6c757d !important;
+    }
+}

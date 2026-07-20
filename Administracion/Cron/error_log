@@ -1,0 +1,29 @@
+[14-Jul-2026 13:34:11 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[14-Jul-2026 13:34:11 America/Mexico_City] ✅ Logo embebido correctamente: /home2/juanc141/public_html/Administracion/Cron/../../images/logo-libertyfin.png
+[14-Jul-2026 13:34:13 America/Mexico_City] ✅ Correo enviado a: sanchez.vanegas.alexis@gmail.com - Empresa: PRUEBAS
+[14-Jul-2026 13:34:14 America/Mexico_City] ❌ Excepción al enviar reporte admin: SMTP Error: The following recipients failed: admin@libertyfin.com.mx: An email sent to this address has been rejected with the reason 'Mailbox does not exist' within the last 30 days. Check for typos in the email, or ensure that this subscriber is not a part of your mailing list. To send an email to this address, contact the support team once you are sure the mailbox has been created
+
+[14-Jul-2026 13:42:17 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[14-Jul-2026 13:42:17 America/Mexico_City] ⚠️ Logo blanco no encontrado en: /home2/juanc141/public_html/Administracion/Cron/../../images/logo-libertyfin-white.png
+[14-Jul-2026 13:42:17 America/Mexico_City] ✅ Logo normal embebido correctamente: /home2/juanc141/public_html/Administracion/Cron/../../images/logo-libertyfin.png
+[14-Jul-2026 13:42:20 America/Mexico_City] ✅ Correo enviado a: sanchez.vanegas.alexis@gmail.com - Empresa: PRUEBAS
+[14-Jul-2026 13:42:21 America/Mexico_City] ❌ Excepción al enviar reporte admin: SMTP Error: The following recipients failed: admin@libertyfin.com.mx: An email sent to this address has been rejected with the reason 'Mailbox does not exist' within the last 30 days. Check for typos in the email, or ensure that this subscriber is not a part of your mailing list. To send an email to this address, contact the support team once you are sure the mailbox has been created
+
+[14-Jul-2026 13:46:57 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[14-Jul-2026 13:46:57 America/Mexico_City] ✅ Logo blanco embebido correctamente: /home2/juanc141/public_html/Administracion/Cron/../../img/logo-libertyfin-white.png
+[14-Jul-2026 13:46:57 America/Mexico_City] ✅ Logo normal embebido correctamente: /home2/juanc141/public_html/Administracion/Cron/../../img/logo-libertyfin.png
+[14-Jul-2026 13:46:59 America/Mexico_City] ✅ Correo enviado a: sanchez.vanegas.alexis@gmail.com - Empresa: PRUEBAS
+[14-Jul-2026 13:47:01 America/Mexico_City] ❌ Excepción al enviar reporte admin: SMTP Error: The following recipients failed: admin@libertyfin.com.mx: An email sent to this address has been rejected with the reason 'Mailbox does not exist' within the last 30 days. Check for typos in the email, or ensure that this subscriber is not a part of your mailing list. To send an email to this address, contact the support team once you are sure the mailbox has been created
+
+[14-Jul-2026 13:52:06 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[14-Jul-2026 13:52:06 America/Mexico_City] ✅ Logo blanco embebido correctamente: /home2/juanc141/public_html/Administracion/Cron/../../img/logo-libertyfin-white.png
+[14-Jul-2026 13:52:06 America/Mexico_City] ✅ Logo normal embebido correctamente: /home2/juanc141/public_html/Administracion/Cron/../../img/logo-libertyfin.png
+[14-Jul-2026 13:52:08 America/Mexico_City] ✅ Correo enviado a: sanchez.vanegas.alexis@gmail.com - Empresa: PRUEBAS
+[14-Jul-2026 13:52:09 America/Mexico_City] ❌ Excepción al enviar reporte admin: SMTP Error: The following recipients failed: admin@libertyfin.com.mx: An email sent to this address has been rejected with the reason 'Mailbox does not exist' within the last 30 days. Check for typos in the email, or ensure that this subscriber is not a part of your mailing list. To send an email to this address, contact the support team once you are sure the mailbox has been created
+
+[14-Jul-2026 14:13:48 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[14-Jul-2026 14:13:48 America/Mexico_City] ✅ Logo blanco embebido correctamente: /home2/juanc141/public_html/Administracion/Cron/../../img/logo-libertyfin-white.png
+[14-Jul-2026 14:13:48 America/Mexico_City] ✅ Logo normal embebido correctamente: /home2/juanc141/public_html/Administracion/Cron/../../img/logo-libertyfin.png
+[14-Jul-2026 14:13:50 America/Mexico_City] ✅ Correo enviado a: sanchez.vanegas.alexis@gmail.com - Empresa: PRUEBAS
+[14-Jul-2026 14:13:51 America/Mexico_City] ❌ Excepción al enviar reporte admin: SMTP Error: The following recipients failed: admin@libertyfin.com.mx: An email sent to this address has been rejected with the reason 'Mailbox does not exist' within the last 30 days. Check for typos in the email, or ensure that this subscriber is not a part of your mailing list. To send an email to this address, contact the support team once you are sure the mailbox has been created
+

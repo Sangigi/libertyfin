@@ -1,0 +1,506 @@
+/* ========================================= */
+/* ESTILOS ESPECÍFICOS DE PAGOS */
+/* ========================================= */
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    touch-action: pan-y;
+    overflow-x: hidden;
+}
+
+/* Contenido principal */
+main {
+    margin-left: 280px;
+    padding: 20px;
+    transition: margin-left 0.3s ease-in-out;
+    min-height: calc(100vh - 56px);
+}
+
+@media (max-width: 991.98px) {
+    main {
+        margin-left: 0;
+        padding: 15px;
+    }
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 1rem 1.25rem;
+}
+
+.stat-card {
+    border-left: 4px solid #27ae60;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card .card-body {
+    padding: 1.5rem;
+}
+
+.welcome-card {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    transform: rotate(30deg);
+}
+
+.welcome-card .card-body {
+    position: relative;
+    z-index: 1;
+}
+
+.metric-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Botones */
+.btn-primary {
+    background-color: #27ae60;
+    border-color: #27ae60;
+}
+
+.btn-primary:hover {
+    background-color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+.btn-secondary:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* Badges */
+.badge-estado {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Tabla */
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.table-responsive {
+    position: relative;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #27ae60 #f1f1f1;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #27ae60;
+    border-radius: 4px;
+}
+
+/* Filtros */
+.filtros-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.filtros-card .form-label {
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #27ae60;
+    box-shadow: 0 0 0 0.2rem rgba(39, 174, 96, 0.25);
+}
+
+/* Paginación */
+.pagination {
+    gap: 5px;
+}
+
+.page-item {
+    margin: 2px;
+}
+
+.page-link {
+    border-radius: 8px;
+    color: #2c3e50;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+    padding: 0.5rem 0.75rem;
+}
+
+.page-link:hover {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    border-color: #27ae60;
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border-color: #27ae60;
+    color: white;
+}
+
+.page-item.disabled .page-link {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.monto-positivo {
+    color: #27ae60;
+    font-weight: 600;
+}
+
+.tooltip-custom {
+    cursor: help;
+    border-bottom: 1px dotted #999;
+}
+
+/* Tabs */
+.nav-tabs .nav-link {
+    color: #495057;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: #27ae60;
+    border-bottom: 3px solid #27ae60;
+}
+
+.nav-tabs .nav-link i {
+    margin-right: 5px;
+}
+
+.tab-pane {
+    padding-top: 20px;
+}
+
+.search-box {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.search-box label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+}
+
+.search-box .input-group .btn {
+    border-radius: 0 8px 8px 0;
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+.table-container {
+    position: relative;
+    min-height: 300px;
+}
+
+/* Modal */
+.modal-header .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-radius: 15px 15px 0 0;
+}
+
+.modal-footer {
+    border-top: 1px solid #f0f0f0;
+}
+
+/* ========================================= */
+/* TARJETAS PARA MÓVIL */
+/* ========================================= */
+
+@media (max-width: 767.98px) {
+    .desktop-view {
+        display: none;
+    }
+    
+    .mobile-view {
+        display: block;
+    }
+    
+    .pago-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid #27ae60;
+        transition: all 0.3s ease;
+    }
+    
+    .pago-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    
+    .pago-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .pago-id {
+        font-family: monospace;
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .pago-fecha {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    
+    .pago-info {
+        margin-bottom: 0.75rem;
+    }
+    
+    .pago-info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .pago-label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .pago-value {
+        font-weight: 500;
+        color: #2c3e50;
+        text-align: right;
+        word-break: break-word;
+        max-width: 60%;
+    }
+    
+    .pago-monto {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #27ae60;
+    }
+    
+    .pago-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .badge-estado-mobile {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .btn-detalle-mobile {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .pago-transaccion {
+        font-family: monospace;
+        font-size: 0.7rem;
+        color: #6c757d;
+        word-break: break-all;
+    }
+    
+    .cards-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .desktop-view {
+        display: block;
+    }
+    .mobile-view {
+        display: none;
+    }
+}
+
+/* ========================================= */
+/* RESPONSIVE */
+/* ========================================= */
+
+@media (max-width: 991.98px) {
+    .col-md-2 {
+        flex: 0 0 33.333%;
+        max-width: 33.333%;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .col-md-2 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+    }
+    
+    .filtros-card {
+        padding: 15px;
+    }
+    
+    .card-header h5 {
+        font-size: 1rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .col-md-2 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .search-box {
+        padding: 10px;
+    }
+}
+
+/* Indicador de scroll en móvil */
+@media (max-width: 767.98px) {
+    .table-responsive::after {
+        content: '← Desliza para ver más →';
+        position: absolute;
+        bottom: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(39, 174, 96, 0.9);
+        color: white;
+        padding: 3px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 5;
+    }
+
+    .table-responsive:hover::after,
+    .table-responsive.touch-active::after {
+        opacity: 1;
+    }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #27ae60;
+}
