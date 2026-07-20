@@ -1,0 +1,344 @@
+[17-Jul-2026 17:21:46 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:21:46 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:21:54 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:21:54 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:21:59 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:21:59 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:21:59 America/Mexico_City] Plan de empresa: premium
+[17-Jul-2026 17:21:59 America/Mexico_City] Timbres disponibles: 497
+[17-Jul-2026 17:21:59 America/Mexico_City] ✅ Venta insertada - ID: 157, Código: 20260717172159
+[17-Jul-2026 17:21:59 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Pan trocante, Cantidad descontada: 1, Sucursal: 1
+[17-Jul-2026 17:21:59 America/Mexico_City] ✅ Caja actualizada correctamente
+[17-Jul-2026 17:21:59 America/Mexico_City] ✅ Gasto automático registrado para la venta 157 - Monto: 6
+[17-Jul-2026 17:21:59 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:21:59 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:23:59 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:23:59 America/Mexico_City] ℹ️ Plan prueba - No se requiere API Key de Facturapi
+[17-Jul-2026 17:23:59 America/Mexico_City] PHP Warning:  Undefined variable $organization_id in /home2/juanc141/public_html/cajapruebas.php on line 322
+[17-Jul-2026 17:23:59 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: prueba, API Key disponible: NO
+[17-Jul-2026 17:23:59 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:24:00 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:24:00 America/Mexico_City] ℹ️ Plan prueba - No se requiere API Key de Facturapi
+[17-Jul-2026 17:24:00 America/Mexico_City] PHP Warning:  Undefined variable $organization_id in /home2/juanc141/public_html/cajapruebas.php on line 322
+[17-Jul-2026 17:24:00 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: prueba, API Key disponible: NO
+[17-Jul-2026 17:24:00 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:24:31 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:24:31 America/Mexico_City] ℹ️ Plan prueba - No se requiere API Key de Facturapi
+[17-Jul-2026 17:24:31 America/Mexico_City] PHP Warning:  Undefined variable $organization_id in /home2/juanc141/public_html/cajapruebas.php on line 322
+[17-Jul-2026 17:24:31 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: prueba, API Key disponible: NO
+[17-Jul-2026 17:24:31 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:24:40 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:24:40 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:24:41 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:24:41 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:24:41 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:24:41 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:24:42 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:24:42 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:24:56 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:24:56 America/Mexico_City] ℹ️ Plan prueba - No se requiere API Key de Facturapi
+[17-Jul-2026 17:24:56 America/Mexico_City] PHP Warning:  Undefined variable $organization_id in /home2/juanc141/public_html/cajapruebas.php on line 322
+[17-Jul-2026 17:24:56 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: prueba, API Key disponible: NO
+[17-Jul-2026 17:24:56 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:24:56 America/Mexico_City] === INICIO PROCESAR PAGO ===
+[17-Jul-2026 17:24:56 America/Mexico_City] Plan de empresa: premium
+[17-Jul-2026 17:24:56 America/Mexico_City] Timbres disponibles: 497
+[17-Jul-2026 17:24:56 America/Mexico_City] ✅ Venta insertada - ID: 158, Código: 20260717172456
+[17-Jul-2026 17:24:56 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Pan trocante, Cantidad descontada: 4
+[17-Jul-2026 17:24:56 America/Mexico_City] ✅ Caja actualizada correctamente
+[17-Jul-2026 17:24:56 America/Mexico_City] ✅ Gasto automático registrado para la venta 158 - Monto: 24
+[17-Jul-2026 17:24:56 America/Mexico_City] 🎯 Plan Premium detectado - Generando recibo Facturapi
+[17-Jul-2026 17:24:56 America/Mexico_City] 🔑 Usando API Key: sk_test_3N...
+[17-Jul-2026 17:24:56 America/Mexico_City] 📦 Producto agregado a Facturapi: ID 99, Producto Facturapi: 6a5aac007b11f03f2e37e836
+[17-Jul-2026 17:24:56 America/Mexico_City] 📝 Creando recibo Facturapi con datos: {
+    "folio_number": 20260717172456,
+    "payment_form": "01",
+    "items": [
+        {
+            "quantity": 4,
+            "product": "6a5aac007b11f03f2e37e836"
+        }
+    ]
+}
+[17-Jul-2026 17:24:56 America/Mexico_City] PHP Warning:  Undefined property: stdClass::$id in /home2/juanc141/public_html/cajapruebas.php on line 1642
+[17-Jul-2026 17:24:56 America/Mexico_City] ✅ Recibo Facturapi creado: 
+[17-Jul-2026 17:24:56 America/Mexico_City] 🔗 URL de facturación: 
+[17-Jul-2026 17:24:56 America/Mexico_City] ✅ Venta actualizada con facturapi_receipt_id y urlfacturacion
+[17-Jul-2026 17:24:57 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:24:57 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:30:42 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:30:42 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:30:42 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:30:42 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:30:42 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:30:42 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:30:42 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:30:50 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:30:50 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:30:57 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:30:57 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:30:57 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:30:57 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:30:57 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:30:57 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:30:57 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:30:57 America/Mexico_City] === INICIO PROCESAR PAGO ===
+[17-Jul-2026 17:30:57 America/Mexico_City] Plan de empresa: premium
+[17-Jul-2026 17:30:57 America/Mexico_City] Timbres disponibles: 497
+[17-Jul-2026 17:30:57 America/Mexico_City] ✅ Venta insertada - ID: 159, Código: 20260717173057
+[17-Jul-2026 17:30:57 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Pan trocante, Cantidad descontada: 1
+[17-Jul-2026 17:30:57 America/Mexico_City] ✅ Caja actualizada correctamente
+[17-Jul-2026 17:30:57 America/Mexico_City] ✅ Gasto automático registrado para la venta 159 - Monto: 6
+[17-Jul-2026 17:30:57 America/Mexico_City] 🎯 Plan Premium detectado - Generando recibo Facturapi
+[17-Jul-2026 17:30:57 America/Mexico_City] 🔑 Usando API Key: sk_test_i2...
+[17-Jul-2026 17:30:57 America/Mexico_City] 📦 Producto agregado a Facturapi: ID 99, Producto Facturapi: 6a5aac007b11f03f2e37e836
+[17-Jul-2026 17:30:57 America/Mexico_City] 📝 Creando recibo Facturapi con datos: {
+    "folio_number": 20260717173057,
+    "payment_form": "01",
+    "items": [
+        {
+            "quantity": 1,
+            "product": "6a5aac007b11f03f2e37e836"
+        }
+    ]
+}
+[17-Jul-2026 17:30:58 America/Mexico_City] ✅ Recibo Facturapi creado: 6a5abb317b11f03f2e3c2993
+[17-Jul-2026 17:30:58 America/Mexico_City] 🔗 URL de facturación: https://factura.space/demo/WiqmVCZG
+[17-Jul-2026 17:30:58 America/Mexico_City] ✅ Venta actualizada con facturapi_receipt_id y urlfacturacion
+[17-Jul-2026 17:30:58 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:30:58 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:37:34 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:37:34 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:37:34 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:37:34 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:37:34 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:37:34 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:37:34 America/Mexico_City] Buscando caja por usuario/sucursal...
+[17-Jul-2026 17:37:34 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 8
+[17-Jul-2026 17:37:44 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:37:44 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:37:59 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:37:59 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:37:59 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:37:59 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:37:59 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:37:59 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:37:59 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:38:09 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:38:09 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:38:09 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:38:10 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:38:10 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:38:10 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:38:10 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:38:11 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:38:11 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:38:11 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:38:11 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:38:11 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:38:11 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:38:11 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:38:21 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:38:21 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:38:21 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:38:21 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:38:21 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:38:21 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:38:21 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:38:21 America/Mexico_City] === INICIO PROCESAR PAGO ===
+[17-Jul-2026 17:38:21 America/Mexico_City] Plan de empresa: premium
+[17-Jul-2026 17:38:21 America/Mexico_City] Timbres disponibles: 497
+[17-Jul-2026 17:38:21 America/Mexico_City] ✅ Venta insertada - ID: 160, Código: 20260717173821
+[17-Jul-2026 17:38:21 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Pagina Responsivo para Ventas, Cantidad descontada: 1
+[17-Jul-2026 17:38:21 America/Mexico_City] ✅ Caja actualizada correctamente
+[17-Jul-2026 17:38:21 America/Mexico_City] ✅ Gasto automático registrado para la venta 160 - Monto: 5
+[17-Jul-2026 17:38:21 America/Mexico_City] 🎯 Plan Premium detectado - Generando recibo Facturapi
+[17-Jul-2026 17:38:21 America/Mexico_City] 🔑 Usando API Key: sk_test_i2...
+[17-Jul-2026 17:38:21 America/Mexico_City] 📦 Producto agregado a Facturapi: ID 98, Producto Facturapi: 6a556b08f082f916992fcef5
+[17-Jul-2026 17:38:21 America/Mexico_City] 📝 Creando recibo Facturapi con datos: {
+    "folio_number": 20260717173821,
+    "payment_form": "04",
+    "items": [
+        {
+            "quantity": 1,
+            "product": "6a556b08f082f916992fcef5"
+        }
+    ]
+}
+[17-Jul-2026 17:38:22 America/Mexico_City] ✅ Recibo Facturapi creado: 6a5abcee19b44bad167819a8
+[17-Jul-2026 17:38:22 America/Mexico_City] 🔗 URL de facturación: https://factura.space/demo/CkDJRc4R
+[17-Jul-2026 17:38:22 America/Mexico_City] ✅ Venta actualizada con facturapi_receipt_id y urlfacturacion
+[17-Jul-2026 17:38:22 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:38:22 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:41:52 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:41:52 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:41:52 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:41:52 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:41:52 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:41:52 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:41:52 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:42:05 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:42:05 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:42:05 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:42:06 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:42:06 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:42:06 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:42:06 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:42:20 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:42:20 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:42:37 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:42:37 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:42:37 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:42:37 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:42:37 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:42:37 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:42:37 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:42:38 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:42:38 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:42:38 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:42:39 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:42:39 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:42:39 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:42:39 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:42:50 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:42:50 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[17-Jul-2026 17:42:50 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[17-Jul-2026 17:42:51 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[17-Jul-2026 17:42:51 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[17-Jul-2026 17:42:51 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[17-Jul-2026 17:42:51 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:42:51 America/Mexico_City] === INICIO PROCESAR PAGO ===
+[17-Jul-2026 17:42:51 America/Mexico_City] Plan de empresa: premium
+[17-Jul-2026 17:42:51 America/Mexico_City] Timbres disponibles: 497
+[17-Jul-2026 17:42:51 America/Mexico_City] ✅ Venta insertada - ID: 161, Código: 20260717174251
+[17-Jul-2026 17:42:51 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Pagina Responsivo para Ventas, Cantidad descontada: 1
+[17-Jul-2026 17:42:51 America/Mexico_City] ✅ Caja actualizada correctamente
+[17-Jul-2026 17:42:51 America/Mexico_City] ✅ Gasto automático registrado para la venta 161 - Monto: 5
+[17-Jul-2026 17:42:51 America/Mexico_City] 🎯 Plan Premium detectado - Generando recibo Facturapi
+[17-Jul-2026 17:42:51 America/Mexico_City] 🔑 Usando API Key: sk_test_i2...
+[17-Jul-2026 17:42:51 America/Mexico_City] 📦 Producto agregado a Facturapi: ID 98, Producto Facturapi: 6a556b08f082f916992fcef5
+[17-Jul-2026 17:42:51 America/Mexico_City] 📝 Creando recibo Facturapi con datos: {
+    "folio_number": 20260717174251,
+    "payment_form": "03",
+    "items": [
+        {
+            "quantity": 1,
+            "product": "6a556b08f082f916992fcef5"
+        }
+    ]
+}
+[17-Jul-2026 17:42:51 America/Mexico_City] ✅ Recibo Facturapi creado: 6a5abdfb7b11f03f2e3ced57
+[17-Jul-2026 17:42:51 America/Mexico_City] 🔗 URL de facturación: https://factura.space/demo/hFn3CnnK
+[17-Jul-2026 17:42:51 America/Mexico_City] ✅ Venta actualizada con facturapi_receipt_id y urlfacturacion
+[17-Jul-2026 17:42:51 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:42:51 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:48:35 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:48:35 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:48:46 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:48:46 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:48:59 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:49:00 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:50:44 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:50:44 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:50:45 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:50:45 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:51:39 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:51:39 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:52:13 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:52:13 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:54:54 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:54:54 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:54:57 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:54:57 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:54:59 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:54:59 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[17-Jul-2026 17:55:03 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:55:03 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 06:33:50 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 06:33:50 America/Mexico_City] Buscando caja por usuario/sucursal...
+[20-Jul-2026 06:33:50 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 8
+[20-Jul-2026 06:34:03 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 06:34:03 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[20-Jul-2026 06:34:03 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[20-Jul-2026 06:34:03 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[20-Jul-2026 06:34:03 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[20-Jul-2026 06:34:03 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[20-Jul-2026 06:34:03 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 06:34:13 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 06:34:13 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 06:45:52 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 06:45:52 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 07:23:39 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 07:23:39 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 07:23:44 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 07:23:44 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 07:23:49 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 07:23:49 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 07:24:00 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 07:24:00 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 09:09:02 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 09:09:02 America/Mexico_City] Buscando caja por usuario/sucursal...
+[20-Jul-2026 09:09:02 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 8
+[20-Jul-2026 09:09:08 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 09:09:08 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 09:09:13 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 09:09:13 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 09:09:13 America/Mexico_City] Plan de empresa: premium
+[20-Jul-2026 09:09:13 America/Mexico_City] Timbres disponibles: 497
+[20-Jul-2026 09:09:13 America/Mexico_City] ✅ Venta insertada - ID: 162, Código: 20260720090913
+[20-Jul-2026 09:09:13 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Pagina Integracion api, Cantidad descontada: 1, Sucursal: 1
+[20-Jul-2026 09:09:13 America/Mexico_City] ✅ Caja actualizada correctamente
+[20-Jul-2026 09:09:13 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 09:09:13 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 09:09:23 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 09:09:23 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 09:12:46 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 09:12:46 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[20-Jul-2026 09:12:46 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[20-Jul-2026 09:12:46 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[20-Jul-2026 09:12:46 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[20-Jul-2026 09:12:46 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[20-Jul-2026 09:12:46 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 09:12:58 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 09:12:58 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[20-Jul-2026 09:12:58 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[20-Jul-2026 09:12:58 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[20-Jul-2026 09:12:58 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[20-Jul-2026 09:12:58 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[20-Jul-2026 09:12:59 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 09:13:02 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 09:13:02 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[20-Jul-2026 09:13:02 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[20-Jul-2026 09:13:02 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[20-Jul-2026 09:13:02 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[20-Jul-2026 09:13:02 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[20-Jul-2026 09:13:02 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[20-Jul-2026 09:13:02 America/Mexico_City] === INICIO PROCESAR PAGO ===
+[20-Jul-2026 09:13:02 America/Mexico_City] Plan de empresa: premium
+[20-Jul-2026 09:13:02 America/Mexico_City] Timbres disponibles: 497
+[20-Jul-2026 09:13:02 America/Mexico_City] ✅ Venta insertada - ID: 163, Código: 20260720091302
+[20-Jul-2026 09:13:02 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Pagina Integracion api, Cantidad descontada: 1
+[20-Jul-2026 09:13:02 America/Mexico_City] ✅ Caja actualizada correctamente
+[20-Jul-2026 09:13:02 America/Mexico_City] 🎯 Plan Premium detectado - Generando recibo Facturapi
+[20-Jul-2026 09:13:02 America/Mexico_City] 🔑 Usando API Key: sk_test_i2...
+[20-Jul-2026 09:13:02 America/Mexico_City] 📦 Producto agregado a Facturapi: ID 100, Producto Facturapi: 6a5ac0c019b44bad1679565e
+[20-Jul-2026 09:13:02 America/Mexico_City] 📝 Creando recibo Facturapi con datos: {
+    "folio_number": 20260720091302,
+    "payment_form": "01",
+    "items": [
+        {
+            "quantity": 1,
+            "product": "6a5ac0c019b44bad1679565e"
+        }
+    ]
+}
+[20-Jul-2026 09:13:03 America/Mexico_City] ✅ Recibo Facturapi creado: 6a5e3afe432c1c1ec96939d7
+[20-Jul-2026 09:13:03 America/Mexico_City] 🔗 URL de facturación: https://factura.space/demo/Li4onmEJ
+[20-Jul-2026 09:13:03 America/Mexico_City] ✅ Venta actualizada con facturapi_receipt_id y urlfacturacion
+[20-Jul-2026 09:13:03 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 09:13:03 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6a4b9bbaacda39b43044b932, Timbres: 497
+[20-Jul-2026 09:13:03 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6a4b9bbaacda39b43044b932
+[20-Jul-2026 09:13:03 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[20-Jul-2026 09:13:03 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[20-Jul-2026 09:13:03 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[20-Jul-2026 09:13:03 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8

@@ -1,0 +1,82 @@
+[17-Jul-2026 17:32:30 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[17-Jul-2026 17:32:30 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:33:09 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:33:10 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:46:27 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:46:29 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:46:33 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:51:36 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:53:01 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:54:40 America/Mexico_City] ✅ Imagen subida exitosamente: /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+[17-Jul-2026 17:54:40 America/Mexico_City]    Ruta física: /home2/juanc141/public_html/uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+[17-Jul-2026 17:54:40 America/Mexico_City] Total imágenes subidas: 1
+[17-Jul-2026 17:54:40 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[17-Jul-2026 17:54:40 America/Mexico_City] Producto ID: 100
+[17-Jul-2026 17:54:40 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+)
+
+[17-Jul-2026 17:54:40 America/Mexico_City] Índice principal: 0
+[17-Jul-2026 17:54:40 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[17-Jul-2026 17:54:40 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+[17-Jul-2026 17:54:40 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[17-Jul-2026 17:54:40 America/Mexico_City] Se subieron 1 imágenes para el producto ID: 100
+[17-Jul-2026 17:55:42 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:57:12 America/Mexico_City] ✓ IMAGEN MANTENIDA: /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+[17-Jul-2026 17:57:12 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[17-Jul-2026 17:57:12 America/Mexico_City] Producto ID: 100
+[17-Jul-2026 17:57:12 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+)
+
+[17-Jul-2026 17:57:12 America/Mexico_City] Índice principal: 0
+[17-Jul-2026 17:57:12 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[17-Jul-2026 17:57:12 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+[17-Jul-2026 17:57:12 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[17-Jul-2026 17:57:12 America/Mexico_City] IMÁGENES GUARDADAS EN BD: 1 imágenes, Principal índice: 0
+[17-Jul-2026 22:29:47 America/Mexico_City] PHP Warning:  Undefined variable $registro_exitoso in /home2/juanc141/public_html/solicitudEmpresa.php on line 694
+[17-Jul-2026 22:29:47 America/Mexico_City] PHP Warning:  Undefined variable $registro_exitoso in /home2/juanc141/public_html/solicitudEmpresa.php on line 1083
+[18-Jul-2026 01:49:27 America/Mexico_City] PHP Warning:  Undefined variable $registro_exitoso in /home2/juanc141/public_html/solicitudEmpresa.php on line 694
+[18-Jul-2026 01:49:27 America/Mexico_City] PHP Warning:  Undefined variable $registro_exitoso in /home2/juanc141/public_html/solicitudEmpresa.php on line 1083
+[18-Jul-2026 04:33:40 America/Mexico_City] PHP Warning:  Undefined variable $registro_exitoso in /home2/juanc141/public_html/solicitudEmpresa.php on line 694
+[18-Jul-2026 04:33:40 America/Mexico_City] PHP Warning:  Undefined variable $registro_exitoso in /home2/juanc141/public_html/solicitudEmpresa.php on line 1083
+[18-Jul-2026 12:21:20 America/Mexico_City] PHP Warning:  Undefined variable $registro_exitoso in /home2/juanc141/public_html/solicitudEmpresa.php on line 694
+[18-Jul-2026 12:21:20 America/Mexico_City] PHP Warning:  Undefined variable $registro_exitoso in /home2/juanc141/public_html/solicitudEmpresa.php on line 1083
+[20-Jul-2026 06:33:02 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.188.10.63
+[20-Jul-2026 06:33:03 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 06:34:26 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 06:45:50 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 07:05:25 America/Mexico_City] No se recibieron imágenes para el producto ID: 101
+[20-Jul-2026 07:18:57 America/Mexico_City] No se recibieron imágenes para el producto ID: 102
+[20-Jul-2026 07:22:44 America/Mexico_City] ✓ IMAGEN MANTENIDA: /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+[20-Jul-2026 07:22:44 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[20-Jul-2026 07:22:44 America/Mexico_City] Producto ID: 100
+[20-Jul-2026 07:22:44 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+)
+
+[20-Jul-2026 07:22:44 America/Mexico_City] Índice principal: 0
+[20-Jul-2026 07:22:44 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[20-Jul-2026 07:22:44 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+[20-Jul-2026 07:22:44 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[20-Jul-2026 07:22:44 America/Mexico_City] IMÁGENES GUARDADAS EN BD: 1 imágenes, Principal índice: 0
+[20-Jul-2026 07:23:24 America/Mexico_City] ✓ IMAGEN MANTENIDA: /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+[20-Jul-2026 07:23:24 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[20-Jul-2026 07:23:24 America/Mexico_City] Producto ID: 100
+[20-Jul-2026 07:23:24 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+)
+
+[20-Jul-2026 07:23:24 America/Mexico_City] Índice principal: 0
+[20-Jul-2026 07:23:24 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[20-Jul-2026 07:23:24 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_100_1784332480_6a5ac0c06f224.jpg
+[20-Jul-2026 07:23:24 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[20-Jul-2026 07:23:24 America/Mexico_City] IMÁGENES GUARDADAS EN BD: 1 imágenes, Principal índice: 0
+[20-Jul-2026 09:08:57 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.124.14.104
+[20-Jul-2026 09:08:58 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 09:19:47 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[20-Jul-2026 11:36:13 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
