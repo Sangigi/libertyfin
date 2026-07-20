@@ -1,9 +1,0 @@
-[19-Mar-2026 11:19:07 America/Mexico_City] PHPMailer encontrado en: /home2/juanc141/public_html/Distribuidor/../vendor/autoload.php
-[19-Mar-2026 11:19:09 America/Mexico_City] ✅ Correo enviado a: sanchez.vanegas.alexis@gmail.com
-[20-Mar-2026 17:07:17 America/Mexico_City] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in /home2/juanc141/public_html/Distribuidor/panel-distribuidor.php on line 2
-[20-Mar-2026 17:07:17 America/Mexico_City] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home2/juanc141/public_html/Distribuidor/panel-distribuidor.php:1) in /home2/juanc141/public_html/Distribuidor/panel-distribuidor.php on line 6
-[30-Mar-2026 10:50:42 America/Mexico_City] PHPMailer encontrado en: /home2/juanc141/public_html/Distribuidor/../vendor/autoload.php
-[30-Mar-2026 10:50:42 America/Mexico_City] Error en registro distribuidor: El correo electrónico ya está registrado como distribuidor.
-[30-Mar-2026 10:51:36 America/Mexico_City] PHPMailer encontrado en: /home2/juanc141/public_html/Distribuidor/../vendor/autoload.php
-[30-Mar-2026 10:51:38 America/Mexico_City] ✅ Correo enviado a: socialmedia@grupoideasmx.com
-[03-Jul-2026 15:32:05 America/Mexico_City] PHPMailer encontrado en: /home2/juanc141/public_html/Distribuidor/../vendor/autoload.php

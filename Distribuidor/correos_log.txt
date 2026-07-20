@@ -1,7 +1,0 @@
-[2026-03-04 12:33:01] Intentando enviar correo a: asv.ventas.servicios@gmail.com
-[2026-03-04 12:33:01] PHPMailer encontrado en: /home2/juanc141/public_html/Distribuidor/../vendor/autoload.php
-[2026-03-04 12:33:01] ✅ Correo enviado exitosamente a: asv.ventas.servicios@gmail.com
-[2026-03-04 12:43:00] ERROR FATAL: El correo electrónico ya está registrado como distribuidor.
-[2026-03-04 12:43:57] Intentando enviar correo a: asv.ventas.servicios@gmail.com
-[2026-03-04 12:43:57] PHPMailer encontrado en: /home2/juanc141/public_html/Distribuidor/../vendor/autoload.php
-[2026-03-04 12:43:57] ✅ Correo enviado exitosamente a: asv.ventas.servicios@gmail.com
