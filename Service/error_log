@@ -1,0 +1,281 @@
+[17-Jul-2026 06:50:42 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 06:50:42 America/Mexico_City] Monto recibido: 1140
+[17-Jul-2026 06:50:42 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178429264073628
+[17-Jul-2026 06:50:42 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 06:50:42 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 06:50:42 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"292642889","Description":"Pago en caja - Folio: 178429264073628","Amount":114000,"Reference":"000000292642889","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 06:50:47 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 06:50:47 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/Y1830STA","reference":"0000600000002926428893","referenceEmisor":"000000292642889"}
+[17-Jul-2026 06:50:47 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/Y1830STA
+[17-Jul-2026 06:50:47 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 06:52:53 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 06:52:53 America/Mexico_City] SPEI Payload - Account: 178429277093950 - Monto: 1140 - Descripción: Pago venta - 178429277093950 - Monto: $1140.00
+[17-Jul-2026 06:52:53 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 06:52:53 America/Mexico_City] SPEI Payload - Account: 178429277092124 - Monto: 1140 - Descripción: Pago venta - 178429277092124 - Monto: $1140.00
+[17-Jul-2026 06:53:26 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 06:53:26 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 06:53:26 America/Mexico_City] SPEI Payload - Account: 178429280466046 - Monto: 1140 - Descripción: Pago venta - 178429280466046 - Monto: $1140.00
+[17-Jul-2026 06:53:26 America/Mexico_City] SPEI Payload - Account: 178429280466527 - Monto: 1140 - Descripción: Pago venta - 178429280466527 - Monto: $1140.00
+[17-Jul-2026 06:55:01 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 06:55:01 America/Mexico_City] SPEI Payload - Account: 178429289962362 - Monto: 1140 - Descripción: Pago venta - 178429289962362 - Monto: $1140.00
+[17-Jul-2026 06:55:01 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 06:55:01 America/Mexico_City] SPEI Payload - Account: 178429289962889 - Monto: 1140 - Descripción: Pago venta - 178429289962889 - Monto: $1140.00
+[17-Jul-2026 06:55:10 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 06:55:10 America/Mexico_City] Monto recibido: 1140
+[17-Jul-2026 06:55:10 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178429290862115
+[17-Jul-2026 06:55:10 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 06:55:10 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 06:55:10 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"292910238","Description":"Pago en caja - Folio: 178429290862115","Amount":114000,"Reference":"000000292910238","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 06:55:14 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 06:55:14 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/Y9WUZID5","reference":"0000600000002929102383","referenceEmisor":"000000292910238"}
+[17-Jul-2026 06:55:14 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/Y9WUZID5
+[17-Jul-2026 06:55:14 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 06:56:02 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 06:56:02 America/Mexico_City] Monto recibido: 1140
+[17-Jul-2026 06:56:02 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178429295975468
+[17-Jul-2026 06:56:02 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 06:56:02 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 06:56:02 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"292962768","Description":"Pago en caja - Folio: 178429295975468","Amount":114000,"Reference":"000000292962768","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 06:56:05 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 06:56:05 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/J265BIF6","reference":"0000600000002929627683","referenceEmisor":"000000292962768"}
+[17-Jul-2026 06:56:05 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/J265BIF6
+[17-Jul-2026 06:56:05 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 08:51:10 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 08:51:10 America/Mexico_City] Monto recibido: 1140
+[17-Jul-2026 08:51:10 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178429986628115
+[17-Jul-2026 08:51:10 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 08:51:10 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 08:51:10 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"299870117","Description":"Pago en caja - Folio: 178429986628115","Amount":114000,"Reference":"000000299870117","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 08:51:14 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 08:51:14 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/KE1FS5AL","reference":"0000600000002998701173","referenceEmisor":"000000299870117"}
+[17-Jul-2026 08:51:14 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/KE1FS5AL
+[17-Jul-2026 08:51:14 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 08:51:14 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 08:51:14 America/Mexico_City] Monto recibido: 1140
+[17-Jul-2026 08:51:14 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178429986628412
+[17-Jul-2026 08:51:14 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 08:51:14 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 08:51:14 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"299874840","Description":"Pago en caja - Folio: 178429986628412","Amount":114000,"Reference":"000000299874840","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 08:51:16 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 08:51:16 America/Mexico_City] SPEI Payload - Account: 178429987274560 - Monto: 1140 - Descripción: Pago venta - 178429987274560 - Monto: $1140.00
+[17-Jul-2026 08:51:16 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 08:51:16 America/Mexico_City] SPEI Payload - Account: 178429987275056 - Monto: 1140 - Descripción: Pago venta - 178429987275056 - Monto: $1140.00
+[17-Jul-2026 08:51:17 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 08:51:17 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/RCAIS23R","reference":"0000600000002998748403","referenceEmisor":"000000299874840"}
+[17-Jul-2026 08:51:17 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/RCAIS23R
+[17-Jul-2026 08:51:17 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 08:51:24 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 08:51:24 America/Mexico_City] Monto recibido: 1140
+[17-Jul-2026 08:51:24 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178429988007438
+[17-Jul-2026 08:51:24 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 08:51:24 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 08:51:24 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"299884344","Description":"Pago en caja - Folio: 178429988007438","Amount":114000,"Reference":"000000299884344","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 08:51:27 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 08:51:27 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/KXQNH07U","reference":"0000600000002998843443","referenceEmisor":"000000299884344"}
+[17-Jul-2026 08:51:27 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/KXQNH07U
+[17-Jul-2026 08:51:27 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 08:51:27 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 08:51:27 America/Mexico_City] Monto recibido: 1140
+[17-Jul-2026 08:51:27 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178429988007381
+[17-Jul-2026 08:51:27 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 08:51:27 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 08:51:27 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"299887591","Description":"Pago en caja - Folio: 178429988007381","Amount":114000,"Reference":"000000299887591","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 08:51:30 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 08:51:30 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/HL9HT1CC","reference":"0000600000002998875913","referenceEmisor":"000000299887591"}
+[17-Jul-2026 08:51:30 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/HL9HT1CC
+[17-Jul-2026 08:51:30 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 09:09:38 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 09:09:38 America/Mexico_City] Monto recibido: 1140
+[17-Jul-2026 09:09:38 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178430097401821
+[17-Jul-2026 09:09:38 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 09:09:38 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 09:09:38 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"300978830","Description":"Pago en caja - Folio: 178430097401821","Amount":114000,"Reference":"000000300978830","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 09:09:42 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 09:09:42 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/CRBCYWDI","reference":"0000600000003009788303","referenceEmisor":"000000300978830"}
+[17-Jul-2026 09:09:42 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/CRBCYWDI
+[17-Jul-2026 09:09:42 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 09:28:32 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 09:28:32 America/Mexico_City] SPEI Payload - Account: 178430210767388 - Monto: 54 - Descripción: Pago venta - 178430210767388 - Monto: $54.00
+[17-Jul-2026 09:28:32 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 09:28:32 America/Mexico_City] SPEI Payload - Account: 178430210768041 - Monto: 54 - Descripción: Pago venta - 178430210768041 - Monto: $54.00
+[17-Jul-2026 09:28:38 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 09:28:38 America/Mexico_City] Monto recibido: 54
+[17-Jul-2026 09:28:38 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178430211451373
+[17-Jul-2026 09:28:38 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 09:28:38 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 09:28:38 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"302118529","Description":"Pago en caja - Folio: 178430211451373","Amount":5400,"Reference":"000000302118529","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 09:28:41 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 09:28:41 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/7GRXCHVY","reference":"0000600000003021185293","referenceEmisor":"000000302118529"}
+[17-Jul-2026 09:28:41 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/7GRXCHVY
+[17-Jul-2026 09:28:41 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 09:28:41 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 09:28:41 America/Mexico_City] Monto recibido: 54
+[17-Jul-2026 09:28:41 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178430211451768
+[17-Jul-2026 09:28:41 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 09:28:41 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 09:28:41 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"302121916","Description":"Pago en caja - Folio: 178430211451768","Amount":5400,"Reference":"000000302121916","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 09:28:44 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 09:28:44 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/UXOAAYS6","reference":"0000600000003021219163","referenceEmisor":"000000302121916"}
+[17-Jul-2026 09:28:44 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/UXOAAYS6
+[17-Jul-2026 09:28:44 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 09:35:15 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 09:35:15 America/Mexico_City] Monto recibido: 54
+[17-Jul-2026 09:35:15 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178430251061433
+[17-Jul-2026 09:35:15 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 09:35:15 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 09:35:15 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"302515114","Description":"Pago en caja - Folio: 178430251061433","Amount":5400,"Reference":"000000302515114","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 09:35:18 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 09:35:18 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/4TVFP05A","reference":"0000600000003025151143","referenceEmisor":"000000302515114"}
+[17-Jul-2026 09:35:18 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/4TVFP05A
+[17-Jul-2026 09:35:18 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 09:35:29 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 09:35:29 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 09:35:29 America/Mexico_City] SPEI Payload - Account: 178430252499027 - Monto: 54 - Descripción: Pago venta - 178430252499027 - Monto: $54.00
+[17-Jul-2026 09:35:29 America/Mexico_City] SPEI Payload - Account: 178430252499128 - Monto: 54 - Descripción: Pago venta - 178430252499128 - Monto: $54.00
+[17-Jul-2026 09:41:31 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 09:41:31 America/Mexico_City] Monto recibido: 54
+[17-Jul-2026 09:41:31 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178430288613393
+[17-Jul-2026 09:41:31 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 09:41:31 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 09:41:31 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"302891898","Description":"Pago en caja - Folio: 178430288613393","Amount":5400,"Reference":"000000302891898","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 09:41:34 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 09:41:34 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/5Z777M1Z","reference":"0000600000003028918983","referenceEmisor":"000000302891898"}
+[17-Jul-2026 09:41:34 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/5Z777M1Z
+[17-Jul-2026 09:41:34 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 09:41:34 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 09:41:34 America/Mexico_City] Monto recibido: 54
+[17-Jul-2026 09:41:34 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178430288613125
+[17-Jul-2026 09:41:34 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 09:41:34 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 09:41:34 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"302894827","Description":"Pago en caja - Folio: 178430288613125","Amount":5400,"Reference":"000000302894827","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 09:41:37 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 09:41:37 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/AN2N3D02","reference":"0000600000003028948273","referenceEmisor":"000000302894827"}
+[17-Jul-2026 09:41:37 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/AN2N3D02
+[17-Jul-2026 09:41:37 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 10:02:51 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 10:02:51 America/Mexico_City] Monto recibido: 54
+[17-Jul-2026 10:02:51 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178430416590816
+[17-Jul-2026 10:02:51 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 10:02:51 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 10:02:51 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"304171895","Description":"Pago en caja - Folio: 178430416590816","Amount":5400,"Reference":"000000304171895","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 10:02:55 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 10:02:55 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/ED8YHHSD","reference":"0000600000003041718953","referenceEmisor":"000000304171895"}
+[17-Jul-2026 10:02:55 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/ED8YHHSD
+[17-Jul-2026 10:02:55 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 10:02:55 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 10:02:55 America/Mexico_City] Monto recibido: 54
+[17-Jul-2026 10:02:55 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178430416591311
+[17-Jul-2026 10:02:55 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 10:02:55 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 10:02:55 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"304175493","Description":"Pago en caja - Folio: 178430416591311","Amount":5400,"Reference":"000000304175493","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 10:02:59 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 10:02:59 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/FQB4W44U","reference":"0000600000003041754933","referenceEmisor":"000000304175493"}
+[17-Jul-2026 10:02:59 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/FQB4W44U
+[17-Jul-2026 10:02:59 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 10:04:06 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 10:04:06 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 10:04:06 America/Mexico_City] SPEI Payload - Account: 178430424137087 - Monto: 54 - Descripción: Pago venta - 178430424137087 - Monto: $54.00
+[17-Jul-2026 10:04:06 America/Mexico_City] SPEI Payload - Account: 178430424137355 - Monto: 54 - Descripción: Pago venta - 178430424137355 - Monto: $54.00
+[17-Jul-2026 10:44:37 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 10:44:37 America/Mexico_City] SPEI Payload - Account: 178430667280406 - Monto: 54 - Descripción: Pago venta - 178430667280406 - Monto: $54.00
+[17-Jul-2026 10:44:37 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 10:44:37 America/Mexico_City] SPEI Payload - Account: 178430667280957 - Monto: 54 - Descripción: Pago venta - 178430667280957 - Monto: $54.00
+[17-Jul-2026 10:47:06 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 10:47:07 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 11:21:39 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 11:21:39 America/Mexico_City] Monto recibido: 1140
+[17-Jul-2026 11:21:39 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178430889979013
+[17-Jul-2026 11:21:39 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 11:21:39 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 11:21:39 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"308899986","Description":"Pago en caja - Folio: 178430889979013","Amount":114000,"Reference":"000000308899986","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 11:21:43 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 11:21:43 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/NMRUBPCQ","reference":"0000600000003088999863","referenceEmisor":"000000308899986"}
+[17-Jul-2026 11:21:43 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/NMRUBPCQ
+[17-Jul-2026 11:21:43 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 11:21:54 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 11:21:54 America/Mexico_City] SPEI Payload - Account: 178430891412578 - Monto: 1140 - Descripción: Pago venta - 178430891412578 - Monto: $1140.00
+[17-Jul-2026 11:23:00 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 11:23:00 America/Mexico_City] Monto recibido: 1140
+[17-Jul-2026 11:23:00 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178430897973328
+[17-Jul-2026 11:23:00 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 11:23:00 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 11:23:00 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"308980927","Description":"Pago en caja - Folio: 178430897973328","Amount":114000,"Reference":"000000308980927","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 11:23:03 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 11:23:03 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/DD13DW8K","reference":"0000600000003089809273","referenceEmisor":"000000308980927"}
+[17-Jul-2026 11:23:03 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/DD13DW8K
+[17-Jul-2026 11:23:03 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 11:23:03 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 11:23:03 America/Mexico_City] Monto recibido: 1140
+[17-Jul-2026 11:23:03 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178430897973678
+[17-Jul-2026 11:23:03 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 11:23:03 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 11:23:03 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"308983682","Description":"Pago en caja - Folio: 178430897973678","Amount":114000,"Reference":"000000308983682","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 11:23:06 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 11:23:06 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/MWQKHQH5","reference":"0000600000003089836823","referenceEmisor":"000000308983682"}
+[17-Jul-2026 11:23:06 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/MWQKHQH5
+[17-Jul-2026 11:23:06 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 11:23:13 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 11:23:13 America/Mexico_City] SPEI Payload - Account: 178430899334447 - Monto: 1140 - Descripción: Pago venta - 178430899334447 - Monto: $1140.00
+[17-Jul-2026 11:23:13 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 11:23:13 America/Mexico_City] SPEI Payload - Account: 178430899334148 - Monto: 1140 - Descripción: Pago venta - 178430899334148 - Monto: $1140.00
+[17-Jul-2026 14:30:00 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 14:30:00 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 14:30:00 America/Mexico_City] SPEI Payload - Account: 178432019484005 - Monto: 88 - Descripción: Pago venta - 178432019484005 - Monto: $88.00
+[17-Jul-2026 14:30:00 America/Mexico_City] SPEI Payload - Account: 178432019484724 - Monto: 88 - Descripción: Pago venta - 178432019484724 - Monto: $88.00
+[17-Jul-2026 14:44:20 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 14:44:20 America/Mexico_City] SPEI Payload - Account: 178432105573665 - Monto: 88 - Descripción: Pago venta - 178432105573665 - Monto: $88.00
+[17-Jul-2026 14:44:27 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 14:44:27 America/Mexico_City] Monto recibido: 88
+[17-Jul-2026 14:44:27 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178432106213741
+[17-Jul-2026 14:44:27 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 14:44:27 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 14:44:27 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"321067820","Description":"Pago en caja - Folio: 178432106213741","Amount":8800,"Reference":"000000321067820","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 14:44:30 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 14:44:30 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/F9NP48EL","reference":"0000600000003210678203","referenceEmisor":"000000321067820"}
+[17-Jul-2026 14:44:30 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/F9NP48EL
+[17-Jul-2026 14:44:30 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 14:44:30 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 14:44:30 America/Mexico_City] Monto recibido: 88
+[17-Jul-2026 14:44:30 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178432106214016
+[17-Jul-2026 14:44:30 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 14:44:30 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 14:44:30 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"321070619","Description":"Pago en caja - Folio: 178432106214016","Amount":8800,"Reference":"000000321070619","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 14:44:33 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 14:44:33 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/4CJ6BXWP","reference":"0000600000003210706193","referenceEmisor":"000000321070619"}
+[17-Jul-2026 14:44:33 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/4CJ6BXWP
+[17-Jul-2026 14:44:33 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 17:38:14 America/Mexico_City] === NUEVA PETICIÓN DE PAGO ===
+[17-Jul-2026 17:38:14 America/Mexico_City] Monto recibido: 4500
+[17-Jul-2026 17:38:14 America/Mexico_City] Descripción recibida: Pago en caja - Folio: 178433148881610
+[17-Jul-2026 17:38:14 America/Mexico_City] Empresa DB: juanc141_grupo_ideas_mx
+[17-Jul-2026 17:38:14 America/Mexico_City] Error al obtener datos de la empresa: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list'
+[17-Jul-2026 17:38:14 America/Mexico_City] Datos enviados a Pagadetodo: {"User":"g4u8Hl60l2","Password":"43(1q-@0OX","IntegrationID":"124","BusinessID":"000060","PaymentTypes":"41","Id":"331494740","Description":"Pago en caja - Folio: 178433148881610","Amount":450000,"Reference":"000000331494740","ExpirationDate":"2026-07-18"}
+[17-Jul-2026 17:38:18 America/Mexico_City] Código HTTP: 200
+[17-Jul-2026 17:38:18 America/Mexico_City] Respuesta de Pagadetodo: {"code":"success","message":"","url":"https://u.mitec.com.mx/p/i/S2PAJHS0","reference":"0000600000003314947403","referenceEmisor":"000000331494740"}
+[17-Jul-2026 17:38:18 America/Mexico_City] ÉXITO: URL generada: https://u.mitec.com.mx/p/i/S2PAJHS0
+[17-Jul-2026 17:38:18 America/Mexico_City] === FIN DE PETICIÓN ===
+
+[17-Jul-2026 17:42:43 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:42:43 America/Mexico_City] ✅ Variables de entorno cargadas correctamente
+[17-Jul-2026 17:42:43 America/Mexico_City] SPEI Payload - Account: 178433175792699 - Monto: 1200 - Descripción: Pago venta - 178433175792699 - Monto: $1200.00
+[17-Jul-2026 17:42:43 America/Mexico_City] SPEI Payload - Account: 178433175793304 - Monto: 1200 - Descripción: Pago venta - 178433175793304 - Monto: $1200.00
