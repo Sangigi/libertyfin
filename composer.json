@@ -1,8 +1,0 @@
-{
-    "require": {
-        "phpoffice/phpspreadsheet": "^5.3",
-        "tecnickcom/tcpdf": "^6.10",
-        "facturapi/facturapi-php": "2.0",
-        "phpmailer/phpmailer": "^7.0"
-    }
-}
