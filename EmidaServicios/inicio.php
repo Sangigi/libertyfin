@@ -1,13 +1,14 @@
 <?php
+// EmidaServicios/inicio.php
 session_start();
 
 // Verificar si el usuario está logueado
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header("Location: login.php");
+    header("Location: ../login.php");
     exit();
 }
 
-// Configuración de la base de datos
+// Configuración de la base de datos de la empresa
 $servername = "libertyfin.com.mx";
 $username = "juanc141_alexis";
 $password = "Alexis1997";
@@ -61,14 +62,9 @@ try {
         // Si encontramos el logo, convertirlo a base64
         if (!empty($logo_path) && file_exists($logo_path)) {
             $logo_empresa = $logo_path;
-
-            // Obtener la extensión del archivo
             $extension = strtolower(pathinfo($logo_path, PATHINFO_EXTENSION));
-
-            // Verificar que sea una imagen válida
             $extensiones_validas = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
             if (in_array($extension, $extensiones_validas)) {
-                // Leer el archivo y convertirlo a base64
                 $logo_data = base64_encode(file_get_contents($logo_path));
                 $logo_src_base64 = 'data:image/' . $extension . ';base64,' . $logo_data;
             }
@@ -93,7 +89,7 @@ try {
     $result_estadisticas = $conn->query($sql_estadisticas);
     $estadisticas = $result_estadisticas->fetch_assoc();
 
-    // OBTENER EL PLAN DE LA EMPRESA Y DATOS DE TIMBRES DESDE LA BASE DE DATOS PRINCIPAL
+    // OBTENER EL PLAN DE LA EMPRESA, TIMBRES Y CREDENCIALES EMIDA DESDE LA BASE DE DATOS PRINCIPAL
     $servername_main = "libertyfin.com.mx";
     $username_main = "juanc141_alexis";
     $password_main = "Alexis1997";
@@ -105,9 +101,12 @@ try {
     $empresa_plan = "prueba";
     $timbres_totales = 0;
     $timbres_disponibles = 0;
+    $terminal_id = null;
+    $clerk_id = null;
 
     if ($conn_main) {
-        $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?";
+        // Incluimos los campos terminal_emida y clerk_id_emida en la consulta
+        $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida, clerk_id_emida FROM empresas WHERE id = ?";
         $stmt_empresa = $conn_main->prepare($sql_empresa);
         $stmt_empresa->bind_param("i", $_SESSION['empresa_id']);
         $stmt_empresa->execute();
@@ -118,6 +117,20 @@ try {
             $empresa_plan = $empresa_data['plan'];
             $timbres_totales = $empresa_data['timbres_totales'] ?? 0;
             $timbres_disponibles = $empresa_data['timbres_disponibles'] ?? 0;
+
+            // Obtener credenciales (sin valores por defecto)
+            $terminal_id = $empresa_data['terminal_emida'] ?? null;
+            $clerk_id = $empresa_data['clerk_id_emida'] ?? null;
+
+            // Guardar en sesión solo si existen
+            if (!empty($terminal_id) && !empty($clerk_id)) {
+                $_SESSION['terminal_id'] = $terminal_id;
+                $_SESSION['clerk_id'] = $clerk_id;
+            } else {
+                // Asegurar que la sesión no tenga valores residuales
+                unset($_SESSION['terminal_id']);
+                unset($_SESSION['clerk_id']);
+            }
         }
         $stmt_empresa->close();
         $conn_main->close();
@@ -132,97 +145,177 @@ try {
     $servicios_emida = [];
     $error_emida = '';
 
-    // Obtener terminal_id y clerk_id de la sesión o configuración
-    $terminal_id = $_SESSION['terminal_id'] ?? '4418653';
-    $clerk_id = $_SESSION['clerk_id'] ?? 'e55it7';
+    // Recuperar credenciales de sesión (ya validadas)
+    $terminal_id = $_SESSION['terminal_id'] ?? null;
+    $clerk_id = $_SESSION['clerk_id'] ?? null;
 
-    // Llamar al proxy en lugar del archivo local
-    $proxy_url = 'http://104.248.179.142/proxy_emida.php';
-
-    $ch = curl_init($proxy_url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-
-    $response = curl_exec($ch);
-
-    if (curl_errno($ch)) {
-        $error_emida = 'Error CURL: ' . curl_error($ch);
-        error_log("Error al conectar con proxy Emida: " . curl_error($ch));
+    // Solo llamar al proxy si ambas credenciales existen
+    if (empty($terminal_id) || empty($clerk_id)) {
+        $error_emida = 'Credenciales de Emida no configuradas para esta empresa. Contacte al administrador.';
     } else {
-        // Buscar la respuesta XML en el output
-        if (preg_match('/<pre>(.*?)<\/pre>/s', $response, $matches)) {
-            $response_xml = html_entity_decode($matches[1]);
+        // Llamar al proxy enviando terminal y clerk como parámetros GET
+        $proxy_url = 'http://143.198.146.140/flowservice.php?terminal=' . urlencode($terminal_id) . '&clerk=' . urlencode($clerk_id);
 
-            // Extraer el contenido XML de la respuesta SOAP
-            if (preg_match('/<return xsi:type="xsd:string">(.*?)<\/return>/s', $response_xml, $matches_inner)) {
-                $xml_contenido = html_entity_decode($matches_inner[1]);
+        $ch = curl_init($proxy_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
 
-                // Limpiar caracteres no deseados
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            $error_emida = 'Error CURL: ' . curl_error($ch);
+            error_log("Error al conectar con proxy Emida: " . curl_error($ch));
+        } else {
+            // Limpiar la respuesta - eliminar BOM y caracteres no deseados
+            $response = trim($response);
+            // Eliminar BOM UTF-8 si existe
+            if (substr($response, 0, 3) == "\xEF\xBB\xBF") {
+                $response = substr($response, 3);
+            }
+            
+            // LA RESPUESTA ES EL XML DIRECTO, no está envuelta en <pre>
+            $response_xml = $response;
+            
+            // Extraer el contenido XML de la respuesta SOAP - buscar return con o sin atributos
+            if (preg_match('/<return[^>]*>(.*?)<\/return>/s', $response_xml, $matches_inner)) {
+                $xml_contenido = trim($matches_inner[1]);
+                
+                // Decodificar entidades HTML
+                $xml_contenido = html_entity_decode($xml_contenido, ENT_QUOTES | ENT_XML1, 'UTF-8');
+                
+                // CORREGIR ENTIDADES MAL FORMADAS - ELIMINAR & QUE NO SON ENTIDADES VÁLIDAS
+                $xml_contenido = preg_replace_callback('/&(?!amp;|lt;|gt;|quot;|apos;|#[0-9]+;|#x[0-9A-Fa-f]+;)([a-zA-Z0-9]+)?/', function($matches) {
+                    return '&amp;';
+                }, $xml_contenido);
+                
+                // Limpiar caracteres de control no deseados (excepto tabs, newlines, carriage returns)
+                $xml_contenido = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $xml_contenido);
+                
+                // Eliminar caracteres XML inválidos
                 $xml_contenido = preg_replace('/[^\x{0009}\x{000A}\x{000D}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]+/u', ' ', $xml_contenido);
-
-                // Cargar el XML interno
-                $internal_xml = simplexml_load_string($xml_contenido);
-
-                if ($internal_xml) {
-                    // Buscar todos los productos
-                    $productos = $internal_xml->xpath('//Product');
-
-                    foreach ($productos as $producto) {
-                        // Procesar referencias para extraer información adicional
-                        $referencias = [];
-                        $refs = $producto->xpath('.//Reference1 | .//Reference2');
-                        foreach ($refs as $ref) {
-                            $referencias[] = [
-                                'nombre' => (string)$ref->ReferenceName,
-                                'tipo' => (string)$ref->FieldType,
-                                'min' => (string)$ref->LengthMin,
-                                'max' => (string)$ref->LengthMax,
-                                'prefijo' => (string)$ref->Prefix,
-                                'tooltip' => (string)$ref->ToolTip,
-                                'imagen' => (string)$ref->URLImage
-                            ];
-                        }
-
-                        $servicio = [
-                            'id' => (string)$producto->ProductId,
-                            'nombre' => (string)$producto->ProductName,
-                            'categoria' => (string)$producto->ProductCategory,
-                            'subcategoria' => (string)$producto->ProductSubCategory,
-                            'carrier' => (string)$producto->CarrierName,
-                            'flow_type' => (string)$producto->FlowType,
-                            'comision' => (float)$producto->ProductUFee,
-                            'moneda' => (string)$producto->CurrencyCode,
-                            'monto' => (float)$producto->Amount,
-                            'monto_min' => (float)$producto->AmountMin,
-                            'monto_max' => (float)$producto->AmountMax,
-                            'payment_type' => (string)$producto->PaymentType,
-                            'referencias' => $referencias
-                        ];
-
-                        $servicios_emida[] = $servicio;
-                    }
+                
+                // Verificar que no esté vacío
+                if (empty($xml_contenido)) {
+                    $error_emida = 'El contenido XML está vacío';
                 } else {
-                    $error_emida = 'Error al procesar el XML de respuesta';
-                    error_log("Error loading XML: " . libxml_get_last_error());
+                    // Intentar cargar el XML con opciones más flexibles
+                    $old_libxml_errors = libxml_use_internal_errors(true);
+                    
+                    // Método 1: Intentar con simplexml_load_string
+                    $internal_xml = simplexml_load_string($xml_contenido, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_NOBLANKS);
+                    
+                    // Método 2: Si falla, intentar con DOMDocument
+                    if ($internal_xml === false) {
+                        $dom = new DOMDocument();
+                        $dom->preserveWhiteSpace = false;
+                        @$dom->loadXML($xml_contenido, LIBXML_NOCDATA | LIBXML_NOBLANKS);
+                        $internal_xml = simplexml_import_dom($dom);
+                    }
+                    
+                    $xml_errors = libxml_get_errors();
+                    libxml_use_internal_errors($old_libxml_errors);
+                    
+                    if ($internal_xml !== false) {
+                        // Buscar todos los productos - diferentes posibles rutas XPath
+                        $productos = $internal_xml->xpath('//Product');
+                        
+                        // Si no encuentra con //Product, intentar con //NewDataSet/Product
+                        if (empty($productos)) {
+                            $productos = $internal_xml->xpath('//NewDataSet/Product');
+                        }
+                        
+                        // Si aún no encuentra, intentar con cualquier elemento Product
+                        if (empty($productos)) {
+                            $productos = $internal_xml->xpath('//*[local-name()="Product"]');
+                        }
+                        
+                        // Función auxiliar para limpiar strings
+                        $clean_string = function($str) {
+                            $str = trim((string)$str);
+                            $str = html_entity_decode($str, ENT_QUOTES | ENT_XML1, 'UTF-8');
+                            // Eliminar caracteres de control
+                            $str = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $str);
+                            return $str;
+                        };
+                        
+                        if (!empty($productos) && count($productos) > 0) {
+                            foreach ($productos as $producto) {
+                                // Procesar referencias
+                                $referencias = [];
+                                
+                                // Buscar Reference1 y Reference2 de diferentes maneras
+                                $refs = $producto->xpath('.//Reference1');
+                                $refs2 = $producto->xpath('.//Reference2');
+                                $all_refs = array_merge($refs, $refs2);
+                                
+                                foreach ($all_refs as $ref) {
+                                    $referencias[] = [
+                                        'nombre' => $clean_string($ref->ReferenceName),
+                                        'tipo' => $clean_string($ref->FieldType),
+                                        'min' => $clean_string($ref->LengthMin),
+                                        'max' => $clean_string($ref->LengthMax),
+                                        'prefijo' => $clean_string($ref->Prefix),
+                                        'tooltip' => $clean_string($ref->ToolTip),
+                                        'imagen' => $clean_string($ref->URLImage)
+                                    ];
+                                }
+                                
+                                // Obtener valores con valores por defecto
+                                $servicio_id = $clean_string($producto->ProductId);
+                                
+                                if (!empty($servicio_id)) {
+                                    $servicio = [
+                                        'id' => $servicio_id,
+                                        'nombre' => $clean_string($producto->ProductName),
+                                        'categoria' => $clean_string($producto->ProductCategory),
+                                        'subcategoria' => $clean_string($producto->ProductSubCategory),
+                                        'carrier' => $clean_string($producto->CarrierName),
+                                        'flow_type' => $clean_string($producto->FlowType),
+                                        'comision' => floatval($clean_string($producto->ProductUFee)),
+                                        'moneda' => $clean_string($producto->CurrencyCode),
+                                        'monto' => floatval($clean_string($producto->Amount)),
+                                        'monto_min' => floatval($clean_string($producto->AmountMin)),
+                                        'monto_max' => floatval($clean_string($producto->AmountMax)),
+                                        'payment_type' => $clean_string($producto->PaymentType),
+                                        'referencias' => $referencias
+                                    ];
+                                    
+                                    $servicios_emida[] = $servicio;
+                                }
+                            }
+                            
+                            if (count($servicios_emida) == 0) {
+                                $error_emida = 'No se encontraron productos con ID válido en el XML';
+                            }
+                        } else {
+                            // Debug: mostrar estructura del XML para diagnóstico
+                            $error_emida = 'No se encontraron elementos Product en el XML';
+                            error_log("Estructura XML recibida (primeros 1000 chars): " . substr($xml_contenido, 0, 1000));
+                        }
+                    } else {
+                        // Error al cargar XML - mostrar detalles
+                        $error_messages = [];
+                        foreach ($xml_errors as $error) {
+                            $error_messages[] = $error->message;
+                        }
+                        $error_emida = 'Error al procesar el XML: ' . implode(', ', array_slice($error_messages, 0, 3));
+                        error_log("XML parse errors: " . implode(', ', $error_messages));
+                        error_log("XML content (first 500 chars): " . substr($xml_contenido, 0, 500));
+                    }
                 }
             } else {
-                $error_emida = 'No se pudo extraer la respuesta XML';
-            }
-        } else {
-            // Si no encontramos la respuesta en formato pre, tomamos toda la salida
-            if (strpos($response, 'Error CURL') !== false) {
-                $error_emida = $response;
-            } else {
-                $error_emida = 'No se pudo obtener respuesta del proxy';
+                // No se encontró la etiqueta return
+                $error_emida = 'No se pudo extraer la respuesta XML. No se encontró etiqueta return.';
+                error_log("Respuesta del proxy (primeros 500 chars): " . substr($response, 0, 500));
             }
         }
-    }
 
-    curl_close($ch);
+        curl_close($ch);
+    }
 
     // =============================================
     // VERIFICAR ESTADO DE NOTIFICACIONES DE PAGO (vía remota)
@@ -268,322 +361,163 @@ try {
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
-    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Emida Servicios - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
+    <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tema CRM -->
+    <link rel="stylesheet" href="../css/crm-theme.css">
+    
     <style>
+        /* Estilos exclusivos para el módulo Emida, sin tocar sidebar ni navbar */
         :root {
             --primary-color: <?php echo getConfigValue($empresa_info, 'color_primario', '#27ae60'); ?>;
             --secondary-color: <?php echo getConfigValue($empresa_info, 'color_secundario', '#2ecc71'); ?>;
         }
 
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: pan-y;
-            overflow-x: hidden;
-        }
-
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .navbar-brand img {
-            height: 40px;
-            width: auto;
-            max-width: 120px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-
-        .sidebar {
-            background: #2c3e50;
-            color: white;
-            min-height: calc(100vh - 56px);
-            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            will-change: transform;
-        }
-
-        .sidebar .nav-link {
-            color: #ecf0f1;
-            padding: 12px 20px;
-            border-left: 3px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar .nav-link.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar .nav-link i {
-            width: 20px;
-            margin-right: 10px;
-        }
-
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-        }
-
         .stat-card {
             border-left: 4px solid var(--primary-color);
         }
-
         .stat-card .card-body {
-            padding: 1.5rem;
+            padding: 1.2rem;
         }
-
-        .welcome-card {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+        .stat-card h6 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
-
-        .welcome-card .logo-placeholder {
-            width: 60px;
-            height: 60px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-
-        .ingresos-card {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        .btn-success {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        .btn-success:hover {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .text-primary {
-            color: var(--primary-color) !important;
-        }
-
-        .text-success {
-            color: var(--secondary-color) !important;
-        }
-
-        .bg-primary {
-            background-color: var(--primary-color) !important;
-        }
-
-        .bg-success {
-            background-color: var(--secondary-color) !important;
-        }
-
-        .border-primary {
-            border-color: var(--primary-color) !important;
-        }
-
-        .sidebar-toggle {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.25rem;
-            padding: 0.5rem;
-            margin-right: 1rem;
-        }
-
-        .sidebar-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1040;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .sidebar-backdrop.show {
-            display: block;
-            opacity: 1;
-        }
-
-        @media (max-width: 767.98px) {
-            .sidebar .nav-link {
-                padding: 15px 20px;
-                min-height: 50px;
-                display: flex;
-                align-items: center;
-                cursor: pointer;
-            }
-
-            .sidebar .nav-link i {
-                font-size: 1.1rem;
-                width: 25px;
-            }
-
-            .sidebar .nav-link:active {
-                background: rgba(255, 255, 255, 0.2);
-                transform: translateX(5px);
-                transition: all 0.1s ease;
-            }
-
-            .sidebar-toggle {
-                display: block;
-            }
-
-            .sidebar {
-                position: fixed;
-                top: 56px;
-                left: 0;
-                transform: translateX(-100%);
-                width: 280px;
-                height: calc(100vh - 56px);
-                z-index: 1050;
-                overflow-y: auto;
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
-            }
-
-            .sidebar.show {
-                transform: translateX(0);
-                box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
-            }
-
-            main {
-                margin-left: 0 !important;
-                padding: 1rem !important;
-                transition: transform 0.3s ease-out;
-            }
-
-            body.sidebar-open main {
-                transform: translateX(280px);
-            }
-
-            .stat-card .card-body {
-                padding: 1rem;
-            }
-
-            .metric-value {
-                font-size: 1.5rem;
-            }
-
-            .btn-group-actions .btn {
-                padding: 0.75rem 0.5rem;
-                font-size: 0.875rem;
-            }
-        }
-
-        @media (max-width: 575.98px) {
-            .col-md-2 {
-                flex: 0 0 50%;
-                max-width: 50%;
-            }
-
-            .col-md-4 {
-                flex: 0 0 100%;
-                max-width: 100%;
-            }
-
-            .btn-group-actions .btn {
-                padding: 0.75rem 0.5rem;
-                font-size: 0.875rem;
-            }
-        }
-
-        .metric-value {
-            font-size: 1.8rem;
+        .stat-card h3 {
+            font-size: 1.5rem;
             font-weight: 700;
         }
-
-        .metric-label {
-            font-size: 0.875rem;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-group-actions .btn {
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-group-actions .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .btn:active,
-        .btn-group-actions .btn:active {
-            transform: scale(0.98);
-            transition: transform 0.1s ease;
-        }
-
-        .progress-bar {
-            background-color: var(--primary-color);
-        }
-
-        .badge.bg-primary {
-            background-color: var(--primary-color) !important;
-        }
-
-        .badge.bg-success {
-            background-color: var(--secondary-color) !important;
-        }
+        .border-primary { border-color: var(--primary-color) !important; }
+        .border-success { border-color: var(--lf-success, #28a745) !important; }
+        .border-info    { border-color: var(--lf-info, #17a2b8) !important; }
+        .border-warning { border-color: var(--lf-warning, #ffc107) !important; }
 
         .nav-tabs .nav-link {
-            color: #495057;
+            color: var(--lf-ink-2);
             font-weight: 500;
-            padding: 0.75rem 1.25rem;
+            padding: 0.6rem 1rem;
+            border: none;
+            border-bottom: 2px solid transparent;
         }
-
         .nav-tabs .nav-link:hover {
-            border-color: #e9ecef #e9ecef #dee2e6;
-            isolation: isolate;
+            border-color: var(--lf-border);
+            isolation: auto;
         }
-
         .nav-tabs .nav-link.active {
             color: var(--primary-color);
             font-weight: 600;
-            border-bottom: 3px solid var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            background: transparent;
         }
-
         .nav-tabs .nav-link i {
-            font-size: 1rem;
+            margin-right: 0.4rem;
         }
 
-        @media (max-width: 767.98px) {
+        .error-message {
+            background: var(--lf-danger-bg);
+            border-left: 4px solid var(--lf-danger);
+            padding: 1rem;
+            border-radius: var(--lf-r-sm);
+            margin-bottom: 1.5rem;
+            color: var(--lf-danger);
+        }
+
+        .badge-feature {
+            display: inline-block;
+            padding: 0.2rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin: 0.2rem 0.2rem 0.2rem 0;
+            background: var(--lf-surface-2);
+            border: 1px solid var(--lf-border);
+            color: var(--lf-ink-2);
+        }
+
+        .reference-card {
+            background: var(--lf-surface);
+            border: 1px solid var(--lf-border);
+            border-radius: var(--lf-r-sm);
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .reference-card:hover {
+            border-color: var(--primary-color);
+            background: var(--lf-primary-050);
+            transform: translateY(-1px);
+        }
+        .reference-title {
+            font-weight: 600;
+            color: var(--lf-primary-ink);
+            margin-bottom: 0.3rem;
+        }
+        .reference-detail {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--lf-muted);
+        }
+
+        .detail-section {
+            background: var(--lf-surface-2);
+            border-radius: var(--lf-r);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            border-left: 3px solid var(--primary-color);
+        }
+        .detail-section h6 {
+            color: var(--lf-ink);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid var(--lf-border);
+            padding-bottom: 0.5rem;
+        }
+        .detail-item {
+            display: flex;
+            padding: 0.3rem 0;
+            border-bottom: 1px solid var(--lf-border-2);
+        }
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            min-width: 140px;
+            color: var(--lf-muted);
+            font-size: 0.85rem;
+        }
+        .detail-value {
+            flex: 1;
+            color: var(--lf-ink);
+        }
+
+        .servicio-row {
+            transition: background 0.15s ease;
+            cursor: default;
+        }
+        .servicio-row:hover {
+            background: var(--lf-primary-050);
+        }
+
+        /* Responsive para móvil */
+        @media (max-width: 768px) {
+            .detail-item {
+                flex-direction: column;
+                padding: 0.5rem 0;
+            }
+            .detail-label {
+                min-width: auto;
+                margin-bottom: 0.15rem;
+            }
             .nav-tabs {
                 flex-wrap: nowrap;
                 overflow-x: auto;
@@ -592,229 +526,16 @@ try {
                 scrollbar-width: thin;
                 padding-bottom: 2px;
             }
-
             .nav-tabs .nav-item {
                 flex: 0 0 auto;
             }
-
             .nav-tabs .nav-link {
                 white-space: nowrap;
-                padding: 0.75rem 1rem;
+                padding: 0.6rem 0.8rem;
             }
-
-            .nav-tabs .nav-link i {
-                margin-right: 0.5rem;
+            .stat-card h3 {
+                font-size: 1.2rem;
             }
-        }
-
-        .error-message {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 1rem;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-        }
-
-        .modal.fade .modal-dialog {
-            transform: scale(0.8);
-            transition: transform 0.2s ease-out;
-        }
-
-        .modal.show .modal-dialog {
-            transform: scale(1);
-        }
-
-        .modal-body {
-            max-height: 70vh;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary-color) #f1f1f1;
-        }
-
-        .modal-body::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .modal-body::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-        }
-
-        .modal-body::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 3px;
-        }
-
-        .modal-body::-webkit-scrollbar-thumb:hover {
-            background: var(--secondary-color);
-        }
-
-        .detail-section {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .detail-section h6 {
-            color: var(--primary-color);
-            font-weight: 600;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 8px;
-        }
-
-        .detail-item {
-            display: flex;
-            margin-bottom: 10px;
-            padding: 8px;
-            background-color: white;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .detail-label {
-            font-weight: 600;
-            width: 140px;
-            color: #495057;
-            font-size: 0.9rem;
-        }
-
-        .detail-value {
-            flex: 1;
-            color: #212529;
-        }
-
-        .badge-feature {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-right: 5px;
-            margin-bottom: 5px;
-        }
-
-        .reference-card {
-            background-color: white;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
-            transition: transform 0.2s;
-            cursor: pointer;
-        }
-
-        .reference-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background-color: #f0f7ff;
-            border-color: var(--primary-color);
-        }
-
-        .reference-title {
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 8px;
-            font-size: 1rem;
-        }
-
-        .reference-detail {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: #6c757d;
-        }
-
-        .reference-image {
-            max-width: 100%;
-            max-height: 60px;
-            margin-top: 8px;
-            border-radius: 4px;
-        }
-
-        @media (max-width: 576px) {
-            .detail-item {
-                flex-direction: column;
-            }
-
-            .detail-label {
-                width: 100%;
-                margin-bottom: 5px;
-            }
-        }
-
-        .badge-feature {
-            background-color: #e9ecef;
-            color: #495057;
-            border-radius: 20px;
-            padding: 5px 12px;
-            font-size: 0.8rem;
-            margin: 0 5px 5px 0;
-            display: inline-flex;
-            align-items: center;
-            transition: all 0.2s;
-        }
-
-        .badge-feature:hover {
-            background-color: var(--primary-color);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .badge-feature i {
-            margin-right: 4px;
-            font-size: 0.7rem;
-        }
-
-        .prefijo-referencia {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: bold;
-        }
-
-        .validacion-item {
-            font-size: 0.9rem;
-            padding: 0.25rem 0;
-        }
-
-        .validacion-item i {
-            color: var(--primary-color);
-            width: 20px;
-        }
-
-        @media print {
-            .ticket-print {
-                font-family: 'Courier New', monospace;
-                font-size: 12px;
-                width: 80mm;
-                margin: 0 auto;
-            }
-        }
-
-        .chat-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-        }
-
-        .chat-button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 12px 24px;
-            cursor: pointer;
-            font-size: 16px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .chat-button:hover {
-            background-color: #0056b3;
         }
     </style>
 </head>
@@ -823,12 +544,11 @@ try {
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <!-- Botón hamburguesa para móvil -->
             <button class="sidebar-toggle" type="button" id="sidebarToggle">
                 <i class="fas fa-bars"></i>
             </button>
 
-            <a class="navbar-brand d-flex align-items-center" href="#">
+            <a class="navbar-brand d-flex align-items-center" href="../dashboard.php">
                 <?php if ($logo_src_base64): ?>
                     <img src="<?php echo $logo_src_base64; ?>"
                         alt="<?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>"
@@ -836,14 +556,14 @@ try {
                     <span>
                         <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>
                         <span class="badge bg-<?php
-                                                echo match ($empresa_plan) {
-                                                    'premium' => 'primary',
-                                                    'emprendedor' => 'success',
-                                                    'basico' => 'warning',
-                                                    'prueba' => 'info',
-                                                    default => 'secondary'
-                                                };
-                                                ?> ms-2" style="font-size: 0.5rem;">
+                            echo match ($empresa_plan) {
+                                'premium' => 'primary',
+                                'emprendedor' => 'success',
+                                'basico' => 'warning',
+                                'prueba' => 'info',
+                                default => 'secondary'
+                            };
+                        ?> ms-2" style="font-size: 0.5rem;">
                             <?php echo ucfirst($empresa_plan); ?>
                         </span>
                     </span>
@@ -856,14 +576,14 @@ try {
                     <span>
                         <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>
                         <span class="badge bg-<?php
-                                                echo match ($empresa_plan) {
-                                                    'premium' => 'primary',
-                                                    'emprendedor' => 'success',
-                                                    'basico' => 'warning',
-                                                    'prueba' => 'info',
-                                                    default => 'secondary'
-                                                };
-                                                ?> ms-2" style="font-size: 0.5rem;">
+                            echo match ($empresa_plan) {
+                                'premium' => 'primary',
+                                'emprendedor' => 'success',
+                                'basico' => 'warning',
+                                'prueba' => 'info',
+                                default => 'secondary'
+                            };
+                        ?> ms-2" style="font-size: 0.5rem;">
                             <?php echo ucfirst($empresa_plan); ?>
                         </span>
                     </span>
@@ -872,14 +592,14 @@ try {
                     <span>
                         <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>
                         <span class="badge bg-<?php
-                                                echo match ($empresa_plan) {
-                                                    'premium' => 'primary',
-                                                    'emprendedor' => 'success',
-                                                    'basico' => 'warning',
-                                                    'prueba' => 'info',
-                                                    default => 'secondary'
-                                                };
-                                                ?> ms-2" style="font-size: 0.5rem;">
+                            echo match ($empresa_plan) {
+                                'premium' => 'primary',
+                                'emprendedor' => 'success',
+                                'basico' => 'warning',
+                                'prueba' => 'info',
+                                default => 'secondary'
+                            };
+                        ?> ms-2" style="font-size: 0.5rem;">
                             <?php echo ucfirst($empresa_plan); ?>
                         </span>
                     </span>
@@ -899,10 +619,8 @@ try {
                         <li><span class="dropdown-item-text">
                                 <small>Rol: <?php echo htmlspecialchars($_SESSION['usuario_rol']); ?></small>
                             </span></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="../logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
                     </ul>
                 </li>
             </div>
@@ -914,81 +632,70 @@ try {
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
+            <!-- Sidebar (idéntico a dashboard.php) -->
             <div class="col-md-3 col-lg-2 sidebar" id="sidebar">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link" href="../dashboard.php">
-                                <i class="fas fa-tachometer-alt"></i>
-                                Dashboard
+                                <i class="fas fa-tachometer-alt"></i> Inicio
                             </a>
                         </li>
                         <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="../usuarios.php">
-                                    <i class="fas fa-user-cog"></i>
-                                    Usuarios
+                                    <i class="fas fa-user-cog"></i> Usuarios
                                 </a>
                             </li>
                         <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link" href="../caja.php">
-                                <i class="fas fa-cash-register"></i>
-                                Caja
+                                <i class="fas fa-cash-register"></i> Caja
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="../productos.php">
-                                <i class="fas fa-boxes"></i>
-                                Productos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="../inventario.php">
-                                <i class="fas fa-clipboard-list"></i>
-                                Inventario
+                                <i class="fas fa-boxes"></i> Productos
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="../clientes.php">
-                                <i class="fas fa-users"></i>
-                                Clientes
+                                <i class="fas fa-users"></i> Clientes
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="../ventas_lista.php">
-                                <i class="fas fa-receipt"></i>
-                                Ventas
+                                <i class="fas fa-receipt"></i> Ventas
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="../caja_historial.php">
-                                <i class="fas fa-cash-register"></i>
-                                Cortes de Caja
+                                <i class="fas fa-cash-register"></i> Cortes de Caja
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="../gastos.php">
+                                <i class="fas fa-money-bill-wave"></i> Gastos
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="../proveedores.php">
-                                <i class="fas fa-truck"></i>
-                                Proveedores
+                                <i class="fas fa-truck"></i> Proveedores
                             </a>
                         </li>
 
-                        <!-- MENÚ DE SUCURSALES CONDICIONAL -->
-                        <?php if ($empresa_plan !== 'basico'): ?>
+                        <?php if ($empresa_plan !== 'basico' && $_SESSION['usuario_rol'] === 'admin'): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="../sucursales.php">
-                                    <i class="fas fa-store"></i>
-                                    Sucursales
+                                    <i class="fas fa-store"></i> Sucursales
                                 </a>
                             </li>
                         <?php endif; ?>
+
                         <?php if ($_SESSION['usuario_rol'] === 'admin' && $_SESSION['sucursal_id'] == 1 && $timbres_disponibles > 0) : ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="../Facturacion/inicio.php">
-                                    <i class="fas fa-file-invoice-dollar"></i>
-                                    Facturación
+                                    <i class="fas fa-file-invoice-dollar"></i> Facturación
                                     <?php if ($timbres_disponibles > 0): ?>
                                         <span class="badge bg-success ms-2" style="font-size: 0.65rem;">
                                             <?php echo $timbres_disponibles; ?> timbres
@@ -1001,28 +708,34 @@ try {
                                 </a>
                             </li>
                         <?php endif; ?>
+
                         <li class="nav-item">
                             <a class="nav-link" href="../reportes.php">
-                                <i class="fas fa-chart-bar"></i>
-                                Reportes
+                                <i class="fas fa-chart-bar"></i> Reportes
                             </a>
                         </li>
+
                         <li class="nav-item">
                             <a class="nav-link active" href="inicio.php">
-                                <img src="../images/emidalogo.png" alt="" style="width: 20px; height: 20px; margin-right: 10px; object-fit: contain;">
+                                <img src="../images/emidalogo.png" alt="" style="width:20px;height:20px;margin-right:10px;object-fit:contain;">
                                 Emida Servicios
                                 <?php if ($notification_status && isset($notification_status['notification_status']) && !$notification_status['notification_status']['success']): ?>
-                                    <span class="badge bg-warning ms-2" style="font-size: 0.65rem;" title="Notificaciones no configuradas">
+                                    <span class="badge bg-warning ms-2" style="font-size:0.65rem;" title="Notificaciones no configuradas">
                                         <i class="fas fa-exclamation-triangle"></i>
                                     </span>
                                 <?php endif; ?>
                             </a>
                         </li>
+
                         <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
                             <li class="nav-item">
+                                <a class="nav-link" href="../comisiones_config.php">
+                                    <i class="fas fa-percentage"></i> Comisiones
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" href="../configuracion.php">
-                                    <i class="fas fa-cogs"></i>
-                                    Configuración
+                                    <i class="fas fa-cogs"></i> Configuración
                                 </a>
                             </li>
                         <?php endif; ?>
@@ -1032,8 +745,7 @@ try {
 
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4" id="mainContent">
-
-                <!-- Título de la sección -->
+                <!-- Título -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2"><i class="fas fa-bolt text-primary me-2"></i>Emida Servicios</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
@@ -1112,38 +824,36 @@ try {
                     </div>
                 </div>
 
-                <!-- Pestañas de navegación -->
+                <!-- Pestañas -->
                 <ul class="nav nav-tabs mb-4" id="emidaTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="catalogo-tab" data-bs-toggle="tab" data-bs-target="#catalogo" type="button" role="tab" aria-controls="catalogo" aria-selected="true">
+                        <button class="nav-link active" id="catalogo-tab" data-bs-toggle="tab" data-bs-target="#catalogo" type="button" role="tab">
                             <i class="fas fa-box-open me-2"></i>Catálogo Servicios
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="reportes-tab" data-bs-toggle="tab" data-bs-target="#reportes" type="button" role="tab" aria-controls="reportes" aria-selected="false">
+                        <button class="nav-link" id="reportes-tab" data-bs-toggle="tab" data-bs-target="#reportes" type="button" role="tab">
                             <i class="fas fa-chart-line me-2"></i>Reporte de Transacciones
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="buzon-tab" data-bs-toggle="tab" data-bs-target="#buzon" type="button" role="tab" aria-controls="buzon" aria-selected="false">
+                        <button class="nav-link" id="buzon-tab" data-bs-toggle="tab" data-bs-target="#buzon" type="button" role="tab">
                             <i class="fas fa-envelope me-2"></i>Buzón de Mensajes
                             <span class="badge bg-danger ms-2" id="mensajesNoLeidos">0</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="parametros-tab" data-bs-toggle="tab" data-bs-target="#parametros" type="button" role="tab" aria-controls="parametros" aria-selected="false">
+                        <button class="nav-link" id="parametros-tab" data-bs-toggle="tab" data-bs-target="#parametros" type="button" role="tab">
                             <i class="fas fa-cog me-2"></i>Parámetros
                         </button>
                     </li>
                 </ul>
 
-                <!-- Contenido de las pestañas -->
+                <!-- Contenido de pestañas -->
                 <div class="tab-content" id="emidaTabsContent">
 
-                    <!-- ========================================= -->
-                    <!-- Pestaña 1: Catálogo Servicios -->
-                    <!-- ========================================= -->
-                    <div class="tab-pane fade show active" id="catalogo" role="tabpanel" aria-labelledby="catalogo-tab">
+                    <!-- Pestaña 1: Catálogo -->
+                    <div class="tab-pane fade show active" id="catalogo" role="tabpanel">
                         <div class="card">
                             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0"><i class="fas fa-box-open text-primary me-2"></i>Catálogo de Servicios</h5>
@@ -1152,7 +862,6 @@ try {
                                 </button>
                             </div>
                             <div class="card-body">
-                                <!-- Mostrar error si existe -->
                                 <?php if (!empty($error_emida)): ?>
                                     <div class="error-message">
                                         <i class="fas fa-exclamation-triangle me-2"></i>
@@ -1160,13 +869,11 @@ try {
                                     </div>
                                 <?php endif; ?>
 
-                                <!-- Filtros de búsqueda -->
+                                <!-- Filtros -->
                                 <div class="row mb-3">
                                     <div class="col-md-4">
                                         <div class="input-group">
-                                            <span class="input-group-text bg-white">
-                                                <i class="fas fa-search text-muted"></i>
-                                            </span>
+                                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
                                             <input type="text" class="form-control" id="buscarServicio" placeholder="Buscar servicio...">
                                         </div>
                                     </div>
@@ -1176,14 +883,10 @@ try {
                                             <?php
                                             $categorias = array_unique(array_column($servicios_emida, 'categoria'));
                                             sort($categorias);
-                                            foreach ($categorias as $categoria):
-                                                if (!empty($categoria)):
+                                            foreach ($categorias as $categoria): if (!empty($categoria)):
                                             ?>
-                                                    <option value="<?php echo htmlspecialchars($categoria); ?>"><?php echo htmlspecialchars($categoria); ?></option>
-                                            <?php
-                                                endif;
-                                            endforeach;
-                                            ?>
+                                                <option value="<?php echo htmlspecialchars($categoria); ?>"><?php echo htmlspecialchars($categoria); ?></option>
+                                            <?php endif; endforeach; ?>
                                         </select>
                                     </div>
                                     <div class="col-md-3">
@@ -1192,14 +895,10 @@ try {
                                             <?php
                                             $carriers = array_unique(array_column($servicios_emida, 'carrier'));
                                             sort($carriers);
-                                            foreach ($carriers as $carrier):
-                                                if (!empty($carrier)):
+                                            foreach ($carriers as $carrier): if (!empty($carrier)):
                                             ?>
-                                                    <option value="<?php echo htmlspecialchars($carrier); ?>"><?php echo htmlspecialchars($carrier); ?></option>
-                                            <?php
-                                                endif;
-                                            endforeach;
-                                            ?>
+                                                <option value="<?php echo htmlspecialchars($carrier); ?>"><?php echo htmlspecialchars($carrier); ?></option>
+                                            <?php endif; endforeach; ?>
                                         </select>
                                     </div>
                                     <div class="col-md-2">
@@ -1209,7 +908,7 @@ try {
                                     </div>
                                 </div>
 
-                                <!-- Tabla de servicios -->
+                                <!-- Tabla -->
                                 <div class="table-responsive">
                                     <table class="table table-hover align-middle" id="tablaServicios">
                                         <thead class="table-light">
@@ -1228,92 +927,53 @@ try {
                                         </thead>
                                         <tbody id="serviciosBody">
                                             <?php if (empty($servicios_emida)): ?>
-                                                <tr>
-                                                    <td colspan="10" class="text-center py-4">
-                                                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                                                        <p class="text-muted mb-0">No hay servicios disponibles</p>
-                                                        <p class="text-muted small">Haz clic en "Actualizar Catálogo" para obtener los servicios de Emida</p>
+                                                <tr><td colspan="10" class="text-center py-4 text-muted">
+                                                    <i class="fas fa-box-open fa-3x mb-3"></i>
+                                                    <p>No hay servicios disponibles</p>
+                                                    <small>Haz clic en "Actualizar Catálogo" para obtener los servicios de Emida</small>
+                                                </td></tr>
+                                            <?php else: foreach ($servicios_emida as $servicio): ?>
+                                                <tr class="servicio-row"
+                                                    data-categoria="<?php echo htmlspecialchars($servicio['categoria']); ?>"
+                                                    data-carrier="<?php echo htmlspecialchars($servicio['carrier']); ?>"
+                                                    data-nombre="<?php echo htmlspecialchars($servicio['nombre']); ?>">
+                                                    <td><span class="badge bg-secondary"><?php echo htmlspecialchars($servicio['id']); ?></span></td>
+                                                    <td>
+                                                        <strong><?php echo htmlspecialchars($servicio['nombre']); ?></strong>
+                                                        <?php if (!empty($servicio['subcategoria']) && $servicio['subcategoria'] !== 'N/A'): ?>
+                                                            <br><small class="text-muted"><?php echo htmlspecialchars($servicio['subcategoria']); ?></small>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td><span class="badge bg-info"><?php echo htmlspecialchars($servicio['categoria']); ?></span></td>
+                                                    <td><?php echo htmlspecialchars($servicio['carrier']); ?></td>
+                                                    <td><?php echo $servicio['comision'] > 0 ? '<span class="text-success">$' . number_format($servicio['comision'], 2) . '</span>' : '<span class="text-muted">-</span>'; ?></td>
+                                                    <td><?php echo $servicio['monto'] > 0 ? '<strong>$' . number_format($servicio['monto'], 2) . '</strong>' : '<span class="text-muted">Variable</span>'; ?></td>
+                                                    <td><?php echo $servicio['monto_min'] > 0 ? '$' . number_format($servicio['monto_min'], 2) : '-'; ?></td>
+                                                    <td><?php echo $servicio['monto_max'] > 0 ? '$' . number_format($servicio['monto_max'], 2) : '-'; ?></td>
+                                                    <td>
+                                                        <?php
+                                                        $flowTypeLabels = [
+                                                            'A' => '<span class="badge bg-success">Venta Directa</span>',
+                                                            'B' => '<span class="badge bg-warning">Consulta/Pago</span>',
+                                                            'K' => '<span class="badge bg-primary">Recarga</span>',
+                                                            'F' => '<span class="badge bg-info">Pago Servicios</span>'
+                                                        ];
+                                                        echo $flowTypeLabels[$servicio['flow_type']] ?? '<span class="badge bg-secondary">' . $servicio['flow_type'] . '</span>';
+                                                        ?>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary" onclick="verDetalleServicio('<?php echo $servicio['id']; ?>')" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                                                        <button class="btn btn-sm btn-outline-success" onclick="venderServicio('<?php echo $servicio['id']; ?>')" title="Vender"><i class="fas fa-shopping-cart"></i></button>
+                                                        <?php if (!empty($servicio['referencias'])): ?>
+                                                            <button class="btn btn-sm btn-outline-info" onclick="verReferencias('<?php echo $servicio['id']; ?>')" title="Ver referencias"><i class="fas fa-list"></i></button>
+                                                        <?php endif; ?>
                                                     </td>
                                                 </tr>
-                                            <?php else: ?>
-                                                <?php foreach ($servicios_emida as $servicio): ?>
-                                                    <tr class="servicio-row"
-                                                        data-categoria="<?php echo htmlspecialchars($servicio['categoria']); ?>"
-                                                        data-carrier="<?php echo htmlspecialchars($servicio['carrier']); ?>"
-                                                        data-nombre="<?php echo htmlspecialchars($servicio['nombre']); ?>">
-                                                        <td>
-                                                            <span class="badge bg-secondary"><?php echo htmlspecialchars($servicio['id']); ?></span>
-                                                        </td>
-                                                        <td>
-                                                            <strong><?php echo htmlspecialchars($servicio['nombre']); ?></strong>
-                                                            <?php if (!empty($servicio['subcategoria']) && $servicio['subcategoria'] !== 'N/A'): ?>
-                                                                <br><small class="text-muted"><?php echo htmlspecialchars($servicio['subcategoria']); ?></small>
-                                                            <?php endif; ?>
-                                                        </td>
-                                                        <td>
-                                                            <span class="badge bg-info"><?php echo htmlspecialchars($servicio['categoria']); ?></span>
-                                                        </td>
-                                                        <td><?php echo htmlspecialchars($servicio['carrier']); ?></td>
-                                                        <td>
-                                                            <?php if ($servicio['comision'] > 0): ?>
-                                                                <span class="text-success">$<?php echo number_format($servicio['comision'], 2); ?></span>
-                                                            <?php else: ?>
-                                                                <span class="text-muted">-</span>
-                                                            <?php endif; ?>
-                                                        </td>
-                                                        <td>
-                                                            <?php if ($servicio['monto'] > 0): ?>
-                                                                <strong>$<?php echo number_format($servicio['monto'], 2); ?></strong>
-                                                            <?php else: ?>
-                                                                <span class="text-muted">Variable</span>
-                                                            <?php endif; ?>
-                                                        </td>
-                                                        <td>
-                                                            <?php if ($servicio['monto_min'] > 0): ?>
-                                                                $<?php echo number_format($servicio['monto_min'], 2); ?>
-                                                            <?php else: ?>
-                                                                -
-                                                            <?php endif; ?>
-                                                        </td>
-                                                        <td>
-                                                            <?php if ($servicio['monto_max'] > 0): ?>
-                                                                $<?php echo number_format($servicio['monto_max'], 2); ?>
-                                                            <?php else: ?>
-                                                                -
-                                                            <?php endif; ?>
-                                                        </td>
-                                                        <td>
-                                                            <?php
-                                                            $flowTypeLabels = [
-                                                                'A' => '<span class="badge bg-success">Venta Directa</span>',
-                                                                'B' => '<span class="badge bg-warning">Consulta/Pago</span>',
-                                                                'K' => '<span class="badge bg-primary">Recarga</span>',
-                                                                'F' => '<span class="badge bg-info">Pago Servicios</span>'
-                                                            ];
-                                                            echo $flowTypeLabels[$servicio['flow_type']] ?? '<span class="badge bg-secondary">' . $servicio['flow_type'] . '</span>';
-                                                            ?>
-                                                        </td>
-                                                        <td>
-                                                            <button class="btn btn-sm btn-outline-primary" onclick="verDetalleServicio('<?php echo $servicio['id']; ?>')" title="Ver detalles">
-                                                                <i class="fas fa-eye"></i>
-                                                            </button>
-                                                            <button class="btn btn-sm btn-outline-success" onclick="venderServicio('<?php echo $servicio['id']; ?>')" title="Vender">
-                                                                <i class="fas fa-shopping-cart"></i>
-                                                            </button>
-                                                            <?php if (!empty($servicio['referencias'])): ?>
-                                                                <button class="btn btn-sm btn-outline-info" onclick="verReferencias('<?php echo $servicio['id']; ?>')" title="Ver referencias">
-                                                                    <i class="fas fa-list"></i>
-                                                                </button>
-                                                            <?php endif; ?>
-                                                        </td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            <?php endif; ?>
+                                            <?php endforeach; endif; ?>
                                         </tbody>
                                     </table>
                                 </div>
 
-                                <!-- Información adicional -->
                                 <?php if (!empty($servicios_emida)): ?>
                                     <div class="row mt-3">
                                         <div class="col-md-12">
@@ -1329,8 +989,8 @@ try {
                         </div>
                     </div>
 
-                    <!-- Pestaña 2: Reporte de Transacciones -->
-                    <div class="tab-pane fade" id="reportes" role="tabpanel" aria-labelledby="reportes-tab">
+                    <!-- Pestaña 2: Reportes -->
+                    <div class="tab-pane fade" id="reportes" role="tabpanel">
                         <div class="card">
                             <div class="card-header bg-white">
                                 <h5 class="mb-0"><i class="fas fa-chart-line text-primary me-2"></i>Reporte de Transacciones</h5>
@@ -1364,84 +1024,29 @@ try {
                                         </select>
                                     </div>
                                     <div class="col-md-2 d-flex align-items-end">
-                                        <button class="btn btn-primary w-100" onclick="cargarTransacciones()">
-                                            <i class="fas fa-search me-1"></i>Filtrar
-                                        </button>
+                                        <button class="btn btn-primary w-100" onclick="cargarTransacciones()"><i class="fas fa-search me-1"></i>Filtrar</button>
                                     </div>
                                 </div>
-
                                 <div class="row mb-3">
                                     <div class="col-md-12">
                                         <div class="btn-group" role="group">
-                                            <button class="btn btn-outline-secondary btn-sm" onclick="exportarPDF()">
-                                                <i class="fas fa-file-pdf me-1"></i>PDF
-                                            </button>
-                                            <button class="btn btn-outline-success btn-sm" onclick="exportarExcel()">
-                                                <i class="fas fa-file-excel me-1"></i>Excel
-                                            </button>
-                                            <button class="btn btn-outline-primary btn-sm" onclick="imprimirReporte()">
-                                                <i class="fas fa-print me-1"></i>Imprimir
-                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm" onclick="exportarPDF()"><i class="fas fa-file-pdf me-1"></i>PDF</button>
+                                            <button class="btn btn-outline-success btn-sm" onclick="exportarExcel()"><i class="fas fa-file-excel me-1"></i>Excel</button>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="imprimirReporte()"><i class="fas fa-print me-1"></i>Imprimir</button>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-md-3">
-                                        <div class="card bg-primary text-white">
-                                            <div class="card-body py-3">
-                                                <h6 class="card-title">Total Transacciones</h6>
-                                                <h3 class="mb-0" id="totalTransacciones">0</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card bg-success text-white">
-                                            <div class="card-body py-3">
-                                                <h6 class="card-title">Monto Total</h6>
-                                                <h3 class="mb-0" id="montoTotal">$0.00</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card bg-info text-white">
-                                            <div class="card-body py-3">
-                                                <h6 class="card-title">Comisiones</h6>
-                                                <h3 class="mb-0" id="totalComisiones">$0.00</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card bg-warning text-white">
-                                            <div class="card-body py-3">
-                                                <h6 class="card-title">Transacciones Exitosas</h6>
-                                                <h3 class="mb-0" id="exitosas">0</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <div class="table-responsive">
                                     <table class="table table-hover align-middle">
                                         <thead class="table-light">
-                                            <tr>
-                                                <th>Fecha/Hora</th>
-                                                <th>Servicio</th>
-                                                <th>Referencia</th>
-                                                <th>Monto</th>
-                                                <th>Comisión</th>
-                                                <th>Estatus</th>
-                                                <th>Acciones</th>
-                                            </tr>
+                                            <tr><th>Fecha/Hora</th><th>Servicio</th><th>Referencia</th><th>Monto</th><th>Comisión</th><th>Estatus</th><th>Acciones</th></tr>
                                         </thead>
                                         <tbody id="transaccionesBody">
-                                            <tr>
-                                                <td colspan="7" class="text-center py-4">
-                                                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-                                                    <p class="text-muted mb-0">No hay transacciones en el período seleccionado</p>
-                                                    <p class="text-muted small">Selecciona un rango de fechas y haz clic en Filtrar</p>
-                                                </td>
-                                            </tr>
+                                            <tr><td colspan="7" class="text-center py-4 text-muted">
+                                                <i class="fas fa-chart-line fa-3x mb-3"></i>
+                                                <p>No hay transacciones en el período seleccionado</p>
+                                                <small>Selecciona un rango de fechas y haz clic en Filtrar</small>
+                                            </td></tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -1449,47 +1054,35 @@ try {
                         </div>
                     </div>
 
-                    <!-- Pestaña 3: Buzón de Mensajes -->
-                    <div class="tab-pane fade" id="buzon" role="tabpanel" aria-labelledby="buzon-tab">
+                    <!-- Pestaña 3: Buzón -->
+                    <div class="tab-pane fade" id="buzon" role="tabpanel">
                         <div class="card">
                             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0"><i class="fas fa-envelope text-primary me-2"></i>Buzón de Mensajes</h5>
                                 <div>
-                                    <button class="btn btn-outline-primary btn-sm me-2" onclick="marcarTodosLeidos()">
-                                        <i class="fas fa-check-double me-1"></i>Marcar todos como leídos
-                                    </button>
-                                    <button class="btn btn-primary btn-sm" onclick="enviarMensaje()">
-                                        <i class="fas fa-pen me-1"></i>Redactar
-                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm me-2" onclick="marcarTodosLeidos()"><i class="fas fa-check-double me-1"></i>Marcar todos como leídos</button>
+                                    <button class="btn btn-primary btn-sm" onclick="enviarMensaje()"><i class="fas fa-pen me-1"></i>Redactar</button>
                                 </div>
                             </div>
                             <div class="card-body">
                                 <ul class="nav nav-pills mb-3" id="mensajesPills" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="recibidos-tab" data-bs-toggle="pill" data-bs-target="#recibidos" type="button" role="tab">Recibidos</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="enviados-tab" data-bs-toggle="pill" data-bs-target="#enviados" type="button" role="tab">Enviados</button>
-                                    </li>
+                                    <li class="nav-item"><button class="nav-link active" id="recibidos-tab" data-bs-toggle="pill" data-bs-target="#recibidos" type="button" role="tab">Recibidos</button></li>
+                                    <li class="nav-item"><button class="nav-link" id="enviados-tab" data-bs-toggle="pill" data-bs-target="#enviados" type="button" role="tab">Enviados</button></li>
                                 </ul>
-
                                 <div class="tab-content" id="mensajesPillsContent">
                                     <div class="tab-pane fade show active" id="recibidos" role="tabpanel">
                                         <div class="list-group" id="listaMensajesRecibidos">
-                                            <div class="text-center py-5">
-                                                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
-                                                <p class="text-muted mb-0">No hay mensajes en la bandeja de entrada</p>
-                                                <p class="text-muted small">Los mensajes nuevos aparecerán aquí</p>
+                                            <div class="text-center py-5 text-muted">
+                                                <i class="fas fa-inbox fa-4x mb-3"></i>
+                                                <p>No hay mensajes en la bandeja de entrada</p>
                                             </div>
                                         </div>
                                     </div>
-
                                     <div class="tab-pane fade" id="enviados" role="tabpanel">
                                         <div class="list-group" id="listaMensajesEnviados">
-                                            <div class="text-center py-5">
-                                                <i class="fas fa-paper-plane fa-4x text-muted mb-3"></i>
-                                                <p class="text-muted mb-0">No hay mensajes enviados</p>
-                                                <p class="text-muted small">Los mensajes que envíes aparecerán aquí</p>
+                                            <div class="text-center py-5 text-muted">
+                                                <i class="fas fa-paper-plane fa-4x mb-3"></i>
+                                                <p>No hay mensajes enviados</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1499,33 +1092,22 @@ try {
                     </div>
 
                     <!-- Pestaña 4: Parámetros -->
-                    <div class="tab-pane fade" id="parametros" role="tabpanel" aria-labelledby="parametros-tab">
+                    <div class="tab-pane fade" id="parametros" role="tabpanel">
                         <div class="card">
                             <div class="card-header bg-white">
                                 <h5 class="mb-0"><i class="fas fa-cog text-primary me-2"></i>Configuración de Parámetros Emida</h5>
                             </div>
                             <div class="card-body">
-                                <form id="formParametros">
+                                <form id="formParametros" onsubmit="guardarParametros(event)">
                                     <h6 class="fw-bold mb-3">Configuración General</h6>
                                     <div class="row mb-4">
                                         <div class="col-md-6">
                                             <label class="form-label">Terminal ID</label>
-                                            <input type="text" class="form-control" id="terminalId" value="<?php echo htmlspecialchars($terminal_id); ?>" placeholder="ID del punto de venta">
+                                            <input type="text" class="form-control" id="terminalId" value="<?php echo htmlspecialchars($terminal_id ?? ''); ?>" placeholder="ID del punto de venta">
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Clerk ID / Contraseña</label>
-                                            <input type="password" class="form-control" id="clerkId" value="<?php echo htmlspecialchars($clerk_id); ?>" placeholder="Contraseña del punto de venta">
-                                        </div>
-                                    </div>
-
-                                    <div class="row mb-4">
-                                        <div class="col-md-6">
-                                            <label class="form-label">URL API (Pruebas)</label>
-                                            <input type="url" class="form-control" id="urlPruebas" value="https://test.emida.com/api" placeholder="URL de pruebas">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">URL API (Producción)</label>
-                                            <input type="url" class="form-control" id="urlProduccion" value="https://api.emida.com/v1" placeholder="URL de producción">
+                                            <input type="password" class="form-control" id="clerkId" value="<?php echo htmlspecialchars($clerk_id ?? ''); ?>" placeholder="Contraseña del punto de venta">
                                         </div>
                                     </div>
 
@@ -1533,24 +1115,15 @@ try {
                                     <div class="row mb-4">
                                         <div class="col-md-4">
                                             <label class="form-label">Comisión Recargas</label>
-                                            <div class="input-group">
-                                                <input type="number" class="form-control" id="comisionRecargas" value="0.00" step="0.01">
-                                                <span class="input-group-text">%</span>
-                                            </div>
+                                            <div class="input-group"><input type="number" class="form-control" id="comisionRecargas" value="0.00" step="0.01"><span class="input-group-text">%</span></div>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Comisión Pagos</label>
-                                            <div class="input-group">
-                                                <input type="number" class="form-control" id="comisionPagos" value="0.00" step="0.01">
-                                                <span class="input-group-text">%</span>
-                                            </div>
+                                            <div class="input-group"><input type="number" class="form-control" id="comisionPagos" value="0.00" step="0.01"><span class="input-group-text">%</span></div>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Comisión Tiempo Aire</label>
-                                            <div class="input-group">
-                                                <input type="number" class="form-control" id="comisionTiempoAire" value="0.00" step="0.01">
-                                                <span class="input-group-text">%</span>
-                                            </div>
+                                            <div class="input-group"><input type="number" class="form-control" id="comisionTiempoAire" value="0.00" step="0.01"><span class="input-group-text">%</span></div>
                                         </div>
                                     </div>
 
@@ -1567,18 +1140,6 @@ try {
                                         <div class="col-md-4">
                                             <label class="form-label">Número de Reintentos</label>
                                             <input type="number" class="form-control" id="numReintentos" value="3" min="1" max="10">
-                                        </div>
-                                    </div>
-
-                                    <h6 class="fw-bold mb-3">Horarios de Operación</h6>
-                                    <div class="row mb-4">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Hora Apertura</label>
-                                            <input type="time" class="form-control" id="horaApertura" value="09:00">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Hora Cierre</label>
-                                            <input type="time" class="form-control" id="horaCierre" value="20:00">
                                         </div>
                                     </div>
 
@@ -1608,36 +1169,22 @@ try {
                                     <div class="row mb-4">
                                         <div class="col-md-4">
                                             <label class="form-label">Monto máximo por transacción</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">$</span>
-                                                <input type="number" class="form-control" id="montoMaximo" value="5000">
-                                            </div>
+                                            <div class="input-group"><span class="input-group-text">$</span><input type="number" class="form-control" id="montoMaximo" value="5000"></div>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Monto mínimo por transacción</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">$</span>
-                                                <input type="number" class="form-control" id="montoMinimo" value="10">
-                                            </div>
+                                            <div class="input-group"><span class="input-group-text">$</span><input type="number" class="form-control" id="montoMinimo" value="10"></div>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Saldo mínimo alerta</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">$</span>
-                                                <input type="number" class="form-control" id="saldoMinimo" value="100">
-                                            </div>
+                                            <div class="input-group"><span class="input-group-text">$</span><input type="number" class="form-control" id="saldoMinimo" value="100"></div>
                                         </div>
                                     </div>
 
                                     <hr>
-
                                     <div class="text-end">
-                                        <button type="button" class="btn btn-secondary me-2" onclick="cancelarParametros()">
-                                            Cancelar
-                                        </button>
-                                        <button type="submit" class="btn btn-primary" onclick="guardarParametros(event)">
-                                            <i class="fas fa-save me-1"></i>Guardar Configuración
-                                        </button>
+                                        <button type="button" class="btn btn-secondary me-2" onclick="cancelarParametros()">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Guardar Configuración</button>
                                     </div>
                                 </form>
 
@@ -1682,74 +1229,55 @@ try {
         </div>
     </div>
 
-    <!-- MODALES PARA DETALLES DE SERVICIOS -->
-
-    <!-- Modal de Detalles del Servicio -->
-    <div class="modal fade" id="detalleServicioModal" tabindex="-1" aria-labelledby="detalleServicioModalLabel" aria-hidden="true">
+    <!-- ============================================ -->
+    <!-- MODALES COMPLETOS (sin cambios)              -->
+    <!-- ============================================ -->
+    
+    <!-- Modal Detalles Servicio -->
+    <div class="modal fade" id="detalleServicioModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white;">
-                    <h5 class="modal-title" id="detalleServicioModalLabel">
-                        <i class="fas fa-info-circle me-2"></i>Detalles del Servicio
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <div class="modal-header" style="background:var(--primary-color);color:white;">
+                    <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detalles del Servicio</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div id="detalleServicioContent">
-                        <div class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                            <p class="mt-2 text-muted">Cargando información del servicio...</p>
-                        </div>
-                    </div>
+                <div class="modal-body" id="detalleServicioContent">
+                    <div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Cargando...</p></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cerrar
-                    </button>
-                    <button type="button" class="btn btn-success" onclick="venderServicioModal()" id="btnVenderDesdeModal">
-                        <i class="fas fa-shopping-cart me-1"></i>Vender Servicio
-                    </button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button class="btn btn-success" onclick="venderServicioModal()" id="btnVenderDesdeModal">Vender Servicio</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal para Referencias -->
-    <div class="modal fade" id="referenciasModal" tabindex="-1" aria-labelledby="referenciasModalLabel" aria-hidden="true">
+    <!-- Modal Referencias -->
+    <div class="modal fade" id="referenciasModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-md">
             <div class="modal-content">
-                <div class="modal-header" style="background: var(--primary-color); color: white;">
-                    <h5 class="modal-title" id="referenciasModalLabel">
-                        <i class="fas fa-list me-2"></i>Campos de Referencia
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <div class="modal-header" style="background:var(--primary-color);color:white;">
+                    <h5 class="modal-title"><i class="fas fa-list me-2"></i>Campos de Referencia</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="referenciasModalContent">
-                </div>
+                <div class="modal-body" id="referenciasModalContent"></div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cerrar
-                    </button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL PARA VENTA DE SERVICIO EMIDA -->
-    <div class="modal fade" id="ventaServicioModal" tabindex="-1" aria-labelledby="ventaServicioModalLabel" aria-hidden="true">
+    <!-- Modal Venta Servicio -->
+    <div class="modal fade" id="ventaServicioModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white;">
-                    <h5 class="modal-title" id="ventaServicioModalLabel">
-                        <i class="fas fa-shopping-cart me-2"></i>Vender Servicio Emida
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <div class="modal-header" style="background:linear-gradient(135deg,var(--primary-color),var(--secondary-color));color:white;">
+                    <h5 class="modal-title"><i class="fas fa-shopping-cart me-2"></i>Vender Servicio Emida</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="formVentaServicio" onsubmit="procesarVentaServicio(event)">
                     <div class="modal-body">
-                        <!-- Campos ocultos -->
                         <input type="hidden" id="venta_productId" name="productId">
                         <input type="hidden" id="venta_productName" name="productName">
                         <input type="hidden" id="venta_montoFijo" name="montoFijo">
@@ -1758,57 +1286,39 @@ try {
                         <input type="hidden" id="venta_flowType" name="flowType">
                         <input type="hidden" id="venta_tipo_operacion" name="tipo_operacion" value="recarga">
 
-                        <!-- Información del servicio -->
                         <div class="alert alert-info mb-4">
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-info-circle fa-2x me-3"></i>
-                                <div>
-                                    <strong id="venta_nombreServicio"></strong><br>
-                                    <span id="venta_carrierServicio"></span>
-                                </div>
+                                <div><strong id="venta_nombreServicio"></strong><br><span id="venta_carrierServicio"></span></div>
                             </div>
                         </div>
 
                         <div class="row">
-                            <!-- Número de cuenta/referencia -->
                             <div class="col-md-12 mb-3">
                                 <label class="form-label" id="labelReferencia">Número de Referencia <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-white" id="prefijoReferencia"></span>
-                                    <input type="text" class="form-control" id="venta_accountId" name="accountId"
-                                        placeholder="Ingrese el número de referencia" required>
+                                    <input type="text" class="form-control" id="venta_accountId" name="accountId" placeholder="Ingrese el número de referencia" required>
                                 </div>
                                 <small class="text-muted" id="referenciaTooltip"></small>
                             </div>
-
-                            <!-- Monto (si es variable) -->
-                            <div class="col-md-6 mb-3" id="campoMonto" style="display: none;">
+                            <div class="col-md-6 mb-3" id="campoMonto" style="display:none;">
                                 <label class="form-label">Monto <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white">$</span>
-                                    <input type="number" class="form-control" id="venta_amount" name="amount"
-                                        step="0.01" min="0" placeholder="0.00">
-                                </div>
+                                <div class="input-group"><span class="input-group-text bg-white">$</span><input type="number" class="form-control" id="venta_amount" name="amount" step="0.01" min="0"></div>
                                 <small class="text-muted" id="rangoMonto"></small>
                             </div>
-
-                            <!-- Número de factura/invoice (interno) -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Número de Factura/Invoice <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="venta_invoiceNo" name="invoiceNo"
-                                    value="1" min="1" max="99999" required>
+                                <input type="number" class="form-control" id="venta_invoiceNo" name="invoiceNo" value="1" min="1" max="99999" required>
                                 <small class="text-muted">Número consecutivo (1-99999)</small>
                             </div>
-
-                            <!-- Campos de referencia extra (si aplica) -->
-                            <div class="col-md-12 mb-3" id="campoReferenciaExtra" style="display: none;">
+                            <div class="col-md-12 mb-3" id="campoReferenciaExtra" style="display:none;">
                                 <label class="form-label" id="labelReferenciaExtra">Referencia Adicional</label>
                                 <input type="text" class="form-control" id="venta_extraReference" name="extraReference">
                                 <small class="text-muted" id="tooltipReferenciaExtra"></small>
                             </div>
                         </div>
 
-                        <!-- Información de validación -->
                         <div class="bg-light p-3 rounded mt-3">
                             <h6 class="fw-bold mb-2"><i class="fas fa-clipboard-check me-2"></i>Validaciones</h6>
                             <ul class="small text-muted mb-0" id="listaValidaciones">
@@ -1817,51 +1327,39 @@ try {
                             </ul>
                         </div>
 
-                        <div id="mensajeVenta" style="display: none;" class="mt-3"></div>
+                        <div id="mensajeVenta" style="display:none;" class="mt-3"></div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-1"></i>Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-success" id="btnProcesarVenta">
-                            <i class="fas fa-shopping-cart me-1"></i>Procesar Venta
-                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success" id="btnProcesarVenta"><i class="fas fa-shopping-cart me-1"></i>Procesar Venta</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Modal de confirmación/resultado -->
+    <!-- Modal Resultado Venta -->
     <div class="modal fade" id="resultadoVentaModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header" id="resultadoModalHeader">
-                    <h5 class="modal-title" id="resultadoModalTitle">
-                        <i class="fas fa-check-circle me-2"></i>Resultado de Venta
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <h5 class="modal-title" id="resultadoModalTitle"><i class="fas fa-check-circle me-2"></i>Resultado de Venta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="resultadoModalBody">
-                </div>
+                <div class="modal-body" id="resultadoModalBody"></div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
-                        <i class="fas fa-check me-1"></i>Aceptar
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="imprimirTicket()">
-                        <i class="fas fa-print me-1"></i>Imprimir Ticket
-                    </button>
+                    <button class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+                    <button class="btn btn-secondary" onclick="imprimirTicket()">Imprimir Ticket</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Widget Zoho (Chat) -->
     <div class="chat-container">
         <?php
-        // Código del widget proporcionado por Emida
         $zoho_widget_code = "fe0dd9db5581ce9df4fc722576a714359a85becff42a97490a24b28ba30ad410";
         ?>
-
         <script type="text/javascript">
             var $zoho = $zoho || {};
             $zoho.salesiq = $zoho.salesiq || {
@@ -1869,25 +1367,22 @@ try {
                 values: {},
                 ready: function() {}
             };
-
             var d = document;
             var s = d.createElement("script");
             s.type = "text/javascript";
             s.id = "zsiqscript";
             s.defer = true;
             s.src = "https://salesiq.zoho.com/widget";
-
             var t = d.getElementsByTagName("script")[0];
             t.parentNode.insertBefore(s, t);
-
             d.write("<div id='zsiqwidget'></div>");
         </script>
     </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
+    
+ <script>
         // =============================================
         // VARIABLES GLOBALES
         // =============================================
@@ -3320,5 +2815,4 @@ try {
         });
     </script>
 </body>
-
 </html>

@@ -8,7 +8,7 @@ session_start();
 
 // Verificar si el usuario está logueado
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header("Location: Login");
+    header("Location: ../login.php");
     exit();
 }
 
@@ -22,7 +22,7 @@ $dbname = $_SESSION['empresa_db'];
 $organizacion = null;
 $mensaje = '';
 $tipo_mensaje = '';
-$api_key = "sk_user_MD3D8JvfsNHvtiR65bGokbH34FQyXo7GU65w85z1qA";
+$api_key = "sk_user_LV9Sw1JcA15AUyxSfD53ntQH6sCMiYmRRMP6tpJCi2";
 $organization_id = '';
 $test_api_key = null;
 
@@ -397,8 +397,9 @@ if (!empty($empresa_info['logo'])) {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Facturación - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
+    <link rel="icon" href="../../images/favicon.ico" type="image/x-icon">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -406,13 +407,270 @@ if (!empty($empresa_info['logo'])) {
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- CSS Personalizado -->
+    <!-- Tema CRM -->
+    <link rel="stylesheet" href="../css/crm-theme.css">
+    
+    <!-- CSS personalizado de Facturacion (solo para estilos específicos) -->
     <link rel="stylesheet" href="css/facturacion.css">
     
     <style>
         :root {
             --primary-color: <?php echo getConfigValue($empresa_info, 'color_primario', '#27ae60'); ?>;
             --secondary-color: <?php echo getConfigValue($empresa_info, 'color_secundario', '#2ecc71'); ?>;
+        }
+        /* Ajustes para que los estilos de facturacion convivan con el tema global */
+        .form-section {
+            background: var(--lf-surface);
+            border: 1px solid var(--lf-border);
+            border-radius: var(--lf-r);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .form-section h5 {
+            color: var(--lf-ink);
+            border-bottom: 1px solid var(--lf-border);
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .address-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .address-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+        }
+        .file-upload-area {
+            border: 2px dashed var(--lf-border);
+            border-radius: var(--lf-r);
+            padding: 2rem 1rem;
+            text-align: center;
+            background: var(--lf-surface-2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+            background: var(--lf-primary-050);
+        }
+        .file-upload-area.dragover {
+            border-color: var(--primary-color);
+            background: var(--lf-primary-100);
+        }
+        .file-upload-area.key-area:hover {
+            border-color: var(--lf-info);
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--lf-border);
+        }
+        .data-row:last-child {
+            border-bottom: none;
+        }
+        .data-label {
+            font-weight: 600;
+            color: var(--lf-muted);
+        }
+        .data-value {
+            color: var(--lf-ink);
+            font-weight: 500;
+        }
+        .cert-status {
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .cert-valid { background: var(--lf-success-bg); color: var(--lf-success); }
+        .cert-expiring { background: var(--lf-warning-bg); color: var(--lf-warning); }
+        .cert-expired { background: var(--lf-danger-bg); color: var(--lf-danger); }
+        .search-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .search-tabs .tab {
+            padding: 0.5rem 1.25rem;
+            border-radius: var(--lf-r-sm);
+            background: var(--lf-surface-2);
+            color: var(--lf-ink-2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+        .search-tabs .tab:hover {
+            background: var(--lf-surface-3);
+            color: var(--lf-ink);
+        }
+        .search-tabs .tab.active {
+            background: var(--primary-color);
+            color: var(--lf-on-brand);
+            border-color: var(--primary-color);
+        }
+        .search-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: flex-end;
+            margin-bottom: 1.5rem;
+        }
+        .search-form .form-group {
+            flex: 1 1 200px;
+        }
+        .search-form .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--lf-muted);
+            margin-bottom: 0.25rem;
+        }
+        .search-form .form-group .form-control {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+        }
+        .search-form .btn {
+            background: var(--primary-color);
+            color: var(--lf-on-brand);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--lf-r-sm);
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+        .search-form .btn:hover {
+            background: var(--lf-primary-hover);
+        }
+        .search-form .btn-secondary {
+            background: var(--lf-surface-3);
+            color: var(--lf-ink);
+        }
+        .search-form .btn-secondary:hover {
+            background: var(--lf-border);
+        }
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+        .results-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--lf-ink);
+        }
+        .results-info {
+            color: var(--lf-muted);
+            font-size: 0.9rem;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .pagination a, .pagination span {
+            display: inline-block;
+            padding: 0.4rem 0.9rem;
+            border-radius: var(--lf-r-sm);
+            background: var(--lf-surface);
+            border: 1px solid var(--lf-border);
+            color: var(--lf-ink-2);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .pagination a:hover {
+            background: var(--primary-color);
+            color: var(--lf-on-brand);
+            border-color: var(--primary-color);
+        }
+        .pagination .active {
+            background: var(--primary-color);
+            color: var(--lf-on-brand);
+            border-color: var(--primary-color);
+        }
+        .pagination .disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .no-results {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--lf-muted);
+        }
+        .no-results i {
+            font-size: 3rem;
+            color: var(--lf-muted-2);
+            margin-bottom: 1rem;
+        }
+        .alert-error {
+            background: var(--lf-danger-bg);
+            color: var(--lf-danger);
+            border: 1px solid color-mix(in srgb, var(--lf-danger) 30%, transparent);
+            border-radius: var(--lf-r);
+            padding: 1.5rem;
+        }
+        .btn-custom {
+            background: var(--primary-color);
+            color: var(--lf-on-brand);
+            border: none;
+            padding: 0.6rem 2rem;
+            border-radius: var(--lf-r-sm);
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+        .btn-custom:hover {
+            background: var(--lf-primary-hover);
+            color: var(--lf-on-brand);
+        }
+        .table td[data-label]::before {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .table td[data-label]::before {
+                display: inline-block;
+                content: attr(data-label) ": ";
+                font-weight: 600;
+                margin-right: 0.5rem;
+                color: var(--lf-muted);
+            }
+            .table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0.75rem;
+                border-bottom: 1px solid var(--lf-border);
+            }
+            .table td:last-child {
+                border-bottom: none;
+            }
+            .table thead {
+                display: none;
+            }
+            .table tbody tr {
+                display: block;
+                margin-bottom: 1rem;
+                background: var(--lf-surface);
+                border-radius: var(--lf-r);
+                border: 1px solid var(--lf-border);
+                padding: 0.25rem 0;
+            }
+            .search-form .form-group {
+                flex: 1 1 100%;
+            }
+            .search-form .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -483,11 +741,12 @@ if (!empty($empresa_info['logo'])) {
         </div>
     </nav>
 
+    <!-- Backdrop para móvil -->
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
+            <!-- Sidebar (exactamente igual a dashboard.php) -->
             <div class="col-md-3 col-lg-2 sidebar" id="sidebar">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
@@ -529,6 +788,11 @@ if (!empty($empresa_info['logo'])) {
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="../gastos.php">
+                                <i class="fas fa-money-bill-wave"></i> Gastos
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="../proveedores.php">
                                 <i class="fas fa-truck"></i> Proveedores
                             </a>
@@ -539,15 +803,6 @@ if (!empty($empresa_info['logo'])) {
                                 <a class="nav-link" href="../sucursales.php">
                                     <i class="fas fa-store"></i> Sucursales
                                 </a>
-                            </li>
-                        <?php else: ?>
-                            <li class="nav-item">
-                                <div class="nav-link text-muted" style="opacity: 0.6; cursor: not-allowed;">
-                                    <i class="fas fa-store"></i> Sucursales
-                                    <small class="d-block text-warning mt-1" style="font-size: 0.7rem;">
-                                        <i class="fas fa-lock"></i> Solo en planes superiores
-                                    </small>
-                                </div>
                             </li>
                         <?php endif; ?>
 
@@ -564,20 +819,22 @@ if (!empty($empresa_info['logo'])) {
                                 <i class="fas fa-chart-bar"></i> Reportes
                             </a>
                         </li>
-                          <?php if ($empresa_plan === 'premium'): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="../EmidaServicios/inicio.php">
-                                <img src="../images/emidalogo.png" alt="" style="width: 20px; height: 20px; margin-right: 10px; object-fit: contain;">
-                                Emida Servicios
-                                <?php if ($notification_status && isset($notification_status['notification_status']) && !$notification_status['notification_status']['success']): ?>
-                                    <span class="badge bg-warning ms-2" style="font-size: 0.65rem;" title="Notificaciones no configuradas">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                    </span>
-                                <?php endif; ?>
-                            </a>
-                        </li>
-                         <?php endif; ?>
+
+                        <?php if ($empresa_plan === 'premium'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="../EmidaServicios/inicio.php">
+                                    <img src="../images/emidalogo.png" alt="" style="width: 20px; height: 20px; margin-right: 10px; object-fit: contain;">
+                                    Emida Servicios
+                                </a>
+                            </li>
+                        <?php endif; ?>
+
                         <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="../comisiones_config.php">
+                                    <i class="fas fa-percentage"></i> Comisiones
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="../configuracion.php">
                                     <i class="fas fa-cogs"></i> Configuración
@@ -733,7 +990,7 @@ if (!empty($empresa_info['logo'])) {
                             </div>
 
                             <div class="d-flex justify-content-between mt-4">
-                                <a href="dashboard.php" class="btn btn-outline-secondary">
+                                <a href="../dashboard.php" class="btn btn-outline-secondary">
                                     <i class="fas fa-arrow-left me-2"></i> Volver al Inicio
                                 </a>
                                 <button type="submit" class="btn btn-custom">
@@ -1290,7 +1547,274 @@ if (!empty($empresa_info['logo'])) {
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- JavaScript Personalizado -->
-    <script src="js/facturacion.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // =============================================
+            // FUNCIONALIDAD DE SIDEBAR (igual que dashboard.php)
+            // =============================================
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+            function openSidebar() {
+                if (sidebar && !sidebar.classList.contains('show')) {
+                    sidebar.classList.add('show');
+                    sidebarBackdrop.classList.add('show');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+
+            function closeSidebar() {
+                if (sidebar && sidebar.classList.contains('show')) {
+                    sidebar.classList.remove('show');
+                    sidebarBackdrop.classList.remove('show');
+                    document.body.style.overflow = '';
+                }
+            }
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (sidebar.classList.contains('show')) {
+                        closeSidebar();
+                    } else {
+                        openSidebar();
+                    }
+                });
+            }
+
+            if (sidebarBackdrop) {
+                sidebarBackdrop.addEventListener('click', closeSidebar);
+            }
+
+            // Cerrar sidebar al hacer clic en un enlace (en móvil)
+            const sidebarLinks = document.querySelectorAll('#sidebar .nav-link');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 768) {
+                        closeSidebar();
+                    }
+                });
+            });
+
+            // Ajustar en redimensionamiento
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 768) {
+                    closeSidebar();
+                }
+            });
+
+            // =============================================
+            // SWIPE AUTOMÁTICO (igual que dashboard.php)
+            // =============================================
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            let isTouchActive = false;
+            const SWIPE_THRESHOLD = 50;
+            const SWIPE_EDGE_ZONE = 30;
+            const VERTICAL_THRESHOLD = 30;
+
+            document.addEventListener('touchstart', function(e) {
+                if (window.innerWidth >= 768) return;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchEndX = touchStartX;
+                touchEndY = touchStartY;
+                isTouchActive = true;
+            });
+
+            document.addEventListener('touchmove', function(e) {
+                if (!isTouchActive) return;
+                touchEndX = e.touches[0].clientX;
+                touchEndY = e.touches[0].clientY;
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchend', function(e) {
+                if (!isTouchActive) return;
+                isTouchActive = false;
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+
+                if (Math.abs(deltaY) > VERTICAL_THRESHOLD) return;
+
+                const isSidebarOpen = sidebar && sidebar.classList.contains('show');
+
+                if (deltaX > SWIPE_THRESHOLD) {
+                    if (touchStartX <= SWIPE_EDGE_ZONE && !isSidebarOpen) {
+                        openSidebar();
+                    }
+                } else if (deltaX < -SWIPE_THRESHOLD) {
+                    if (isSidebarOpen) {
+                        closeSidebar();
+                    }
+                }
+
+                touchStartX = 0;
+                touchStartY = 0;
+                touchEndX = 0;
+                touchEndY = 0;
+            });
+
+            // =============================================
+            // FUNCIONALIDADES ESPECÍFICAS DE FACTURACIÓN
+            // =============================================
+
+            // Tabs de búsqueda de productos
+            const tabs = document.querySelectorAll('.search-tabs .tab');
+            const searchTypeInput = document.getElementById('search_type');
+            const textGroup = document.getElementById('text-search-group');
+            const skuGroup = document.getElementById('sku-search-group');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.dataset.tab;
+                    
+                    // Actualizar clases activas
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Actualizar input hidden
+                    if (searchTypeInput) searchTypeInput.value = tabName;
+                    
+                    // Mostrar/ocultar grupos
+                    if (textGroup) {
+                        textGroup.style.display = tabName === 'text' ? 'block' : 'none';
+                    }
+                    if (skuGroup) {
+                        skuGroup.style.display = tabName === 'sku' ? 'block' : 'none';
+                    }
+                    
+                    // Limpiar campos no visibles
+                    if (tabName !== 'text') {
+                        const qInput = document.getElementById('q');
+                        if (qInput) qInput.value = '';
+                    }
+                    if (tabName !== 'sku') {
+                        const skuInput = document.getElementById('sku');
+                        if (skuInput) skuInput.value = '';
+                    }
+                });
+            });
+
+            // Drag & drop para certificados
+            function setupDropZone(dropAreaId, fileInputId, fileNameId) {
+                const dropArea = document.getElementById(dropAreaId);
+                const fileInput = document.getElementById(fileInputId);
+                const fileName = document.getElementById(fileNameId);
+
+                if (!dropArea || !fileInput) return;
+
+                dropArea.addEventListener('click', function() {
+                    fileInput.click();
+                });
+
+                dropArea.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    this.classList.add('dragover');
+                });
+
+                dropArea.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragover');
+                });
+
+                dropArea.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        fileInput.files = files;
+                        fileInput.dispatchEvent(new Event('change'));
+                    }
+                });
+
+                fileInput.addEventListener('change', function() {
+                    if (this.files.length > 0 && fileName) {
+                        fileName.textContent = '📄 ' + this.files[0].name;
+                        fileName.style.color = 'var(--lf-success)';
+                    } else if (fileName) {
+                        fileName.textContent = '';
+                    }
+                });
+            }
+
+            setupDropZone('cerDropArea', 'cer_file', 'cerFileName');
+            setupDropZone('keyDropArea', 'key_file', 'keyFileName');
+            setupDropZone('logoDropArea', 'logo_file', 'logoFileName');
+
+            // Toggle password visibility
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            if (togglePassword && passwordInput) {
+                togglePassword.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    this.querySelector('i').classList.toggle('fa-eye');
+                    this.querySelector('i').classList.toggle('fa-eye-slash');
+                });
+            }
+
+            // Botón limpiar certificados
+            const btnLimpiar = document.getElementById('btnLimpiar');
+            if (btnLimpiar) {
+                btnLimpiar.addEventListener('click', function() {
+                    const cerInput = document.getElementById('cer_file');
+                    const keyInput = document.getElementById('key_file');
+                    const passwordInput = document.getElementById('password');
+                    const cerFileName = document.getElementById('cerFileName');
+                    const keyFileName = document.getElementById('keyFileName');
+
+                    if (cerInput) { cerInput.value = ''; cerInput.dispatchEvent(new Event('change')); }
+                    if (keyInput) { keyInput.value = ''; keyInput.dispatchEvent(new Event('change')); }
+                    if (passwordInput) passwordInput.value = '';
+                    if (cerFileName) cerFileName.textContent = '';
+                    if (keyFileName) keyFileName.textContent = '';
+                });
+            }
+
+            // Color picker sincronización
+            const colorPicker = document.getElementById('color');
+            const colorHex = document.getElementById('color_hex');
+            if (colorPicker && colorHex) {
+                colorPicker.addEventListener('input', function() {
+                    colorHex.value = this.value;
+                });
+                colorHex.addEventListener('input', function() {
+                    if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                        colorPicker.value = this.value;
+                    }
+                });
+            }
+
+            // Reset PDF config
+            const btnResetPDF = document.getElementById('btnResetPDF');
+            if (btnResetPDF) {
+                btnResetPDF.addEventListener('click', function() {
+                    const checkboxes = document.querySelectorAll('#formPersonalizacion .form-check-input');
+                    const defaults = {
+                        'codes': true,
+                        'product_key': true,
+                        'round_unit_price': false,
+                        'tax_breakdown': true,
+                        'ieps_breakdown': true,
+                        'render_carta_porte': false
+                    };
+                    checkboxes.forEach(cb => {
+                        const id = cb.id;
+                        if (defaults.hasOwnProperty(id)) {
+                            cb.checked = defaults[id];
+                        }
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>
