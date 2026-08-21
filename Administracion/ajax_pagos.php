@@ -3,7 +3,7 @@
 
 // Configuración de error reporting para debug
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // No mostrar errores en pantalla
+ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 // Configuración de sesión
@@ -131,7 +131,6 @@ if ($action === 'get_paypal') {
     
     $stmt = $conn->prepare($sql);
     
-    // Preparar parámetros
     if (!empty($params)) {
         $params_with_limit = array_merge($params, [$registros_por_pagina, $offset]);
         $types_with_limit = $types . "ii";
@@ -145,7 +144,6 @@ if ($action === 'get_paypal') {
     
     $pagos = [];
     while ($row = $result->fetch_assoc()) {
-        // Calcular items_count
         $items_count = 0;
         if (!empty($row['cart_data'])) {
             $cartData = json_decode($row['cart_data'], true);
@@ -192,17 +190,17 @@ if ($action === 'get_paypal') {
     // Filtro estado
     if (!empty($filtro_estado)) {
         if ($filtro_estado === 'COMPLETED') {
-            $where .= " AND response = 'approved'";
+            $where .= " AND pl.response = 'approved'";
         } elseif ($filtro_estado === 'FAILED') {
-            $where .= " AND response = 'denied'";
+            $where .= " AND pl.response = 'denied'";
         }
     }
     
-    // Búsqueda
+    // Búsqueda - INCLUYE búsqueda por nombre de empresa
     if (!empty($busqueda)) {
-        $where .= " AND (reference LIKE ? OR email LIKE ? OR cc_name LIKE ? OR foliocpagos LIKE ? OR auth LIKE ?)";
+        $where .= " AND (pl.reference LIKE ? OR pl.email LIKE ? OR pl.cc_name LIKE ? OR pl.foliocpagos LIKE ? OR pl.auth LIKE ? OR e.nombre_empresa LIKE ?)";
         $busqueda_param = "%" . $busqueda . "%";
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 6; $i++) {
             $params[] = $busqueda_param;
             $types .= "s";
         }
@@ -210,19 +208,23 @@ if ($action === 'get_paypal') {
     
     // Filtros fecha
     if (!empty($filtro_fecha_inicio)) {
-        $where .= " AND DATE(fecha_registro) >= ?";
+        $where .= " AND DATE(pl.fecha_registro) >= ?";
         $params[] = $filtro_fecha_inicio;
         $types .= "s";
     }
     
     if (!empty($filtro_fecha_fin)) {
-        $where .= " AND DATE(fecha_registro) <= ?";
+        $where .= " AND DATE(pl.fecha_registro) <= ?";
         $params[] = $filtro_fecha_fin;
         $types .= "s";
     }
     
-    // Contar total
-    $sql_count = "SELECT COUNT(*) as total FROM pagos_liga $where";
+    // Contar total con JOIN
+    $sql_count = "SELECT COUNT(*) as total 
+                  FROM pagos_liga pl
+                  LEFT JOIN pagos_generadas pg ON pl.reference = pg.reference
+                  LEFT JOIN empresas e ON pg.empresa_id = e.id
+                  $where";
     $stmt_count = $conn->prepare($sql_count);
     
     if (!empty($params)) {
@@ -238,39 +240,42 @@ if ($action === 'get_paypal') {
     $total_paginas = ceil($total_registros / $registros_por_pagina);
     $offset = ($pagina - 1) * $registros_por_pagina;
     
-    // Consulta principal
+    // Consulta principal con JOIN para obtener nombre de empresa
     $sql = "SELECT 
-                id,
-                reference,
-                response,
-                foliocpagos,
-                auth,
-                cd_response,
-                cd_error,
-                nb_error,
-                time,
-                date,
-                nb_company,
-                nb_merchant,
-                cc_type,
-                tp_operation,
-                cc_name,
-                cc_number,
-                cc_expmonth,
-                cc_expyear,
-                amount,
-                emv_key_date,
-                id_url,
-                email,
-                payment_type,
-                promocion,
-                number_tkn,
-                cc_mask,
-                raw_response,
-                fecha_registro
-            FROM pagos_liga
+                pl.id,
+                pl.reference,
+                pl.response,
+                pl.foliocpagos,
+                pl.auth,
+                pl.cd_response,
+                pl.cd_error,
+                pl.nb_error,
+                pl.time,
+                pl.date,
+                pl.nb_company,
+                pl.nb_merchant,
+                pl.cc_type,
+                pl.tp_operation,
+                pl.cc_name,
+                pl.cc_number,
+                pl.cc_expmonth,
+                pl.cc_expyear,
+                pl.amount,
+                pl.emv_key_date,
+                pl.id_url,
+                pl.email,
+                pl.payment_type,
+                pl.promocion,
+                pl.number_tkn,
+                pl.cc_mask,
+                pl.raw_response,
+                pl.fecha_registro,
+                e.nombre_empresa AS empresa_nombre
+            FROM pagos_liga pl
+            LEFT JOIN pagos_generadas pg ON pl.reference = pg.reference
+            LEFT JOIN empresas e ON pg.empresa_id = e.id
             $where 
-            ORDER BY fecha_registro DESC 
+            ORDER BY pl.fecha_registro DESC 
             LIMIT ? OFFSET ?";
     
     $stmt = $conn->prepare($sql);
@@ -399,7 +404,6 @@ if ($action === 'get_paypal') {
     
     $stmt = $conn->prepare($sql);
     
-    // Preparar parámetros
     if (!empty($params)) {
         $params_with_limit = array_merge($params, [$registros_por_pagina, $offset]);
         $types_with_limit = $types . "ii";

@@ -70,7 +70,6 @@ try {
     // Estadísticas de pagos con liga
     if ($liga_table_exists) {
         try {
-            // Obtener los valores distintos de response
             $stmt = $pdo->query("SELECT DISTINCT response FROM pagos_liga WHERE response IS NOT NULL");
             $responses = $stmt->fetchAll();
             $response_values = array_column($responses, 'response');
@@ -78,7 +77,6 @@ try {
             if (!empty($response_values)) {
                 $completed_values = [];
                 $failed_values = [];
-                $other_values = [];
                 
                 foreach ($response_values as $resp) {
                     $resp_lower = strtolower(trim($resp));
@@ -86,17 +84,13 @@ try {
                         $completed_values[] = $resp;
                     } elseif (in_array($resp_lower, ['denied', 'd', 'declined', 'rejected', 'fallido', 'error', '0', 'failed'])) {
                         $failed_values[] = $resp;
-                    } else {
-                        $other_values[] = $resp;
                     }
                 }
                 
-                // Construir la consulta de manera más segura
                 $sql_stats_liga = "SELECT 
                     COUNT(*) as total_pagos,
                     COALESCE(SUM(amount), 0) as total_monto,";
                 
-                // Completados
                 if (!empty($completed_values)) {
                     $placeholders = implode(',', array_fill(0, count($completed_values), '?'));
                     $sql_stats_liga .= "
@@ -106,7 +100,6 @@ try {
                     $sql_stats_liga .= " 0 as completados, 0 as monto_completados,";
                 }
                 
-                // Fallidos
                 if (!empty($failed_values)) {
                     $placeholders_failed = implode(',', array_fill(0, count($failed_values), '?'));
                     $sql_stats_liga .= "
@@ -115,7 +108,6 @@ try {
                     $sql_stats_liga .= " 0 as fallidos,";
                 }
                 
-                // Pendientes - todos los demás
                 $pendientes_condition = "";
                 $all_placeholders = [];
                 
@@ -137,7 +129,6 @@ try {
                     SUM(CASE WHEN ($pendientes_condition) OR response IS NULL THEN 1 ELSE 0 END) as pendientes
                     FROM pagos_liga";
                 
-                // Preparar parámetros
                 $params = [];
                 if (!empty($completed_values)) {
                     $params = array_merge($params, $completed_values);
@@ -164,7 +155,6 @@ try {
                     ];
                 }
             } else {
-                // No hay valores de response
                 $sql_stats_liga = "SELECT 
                     COUNT(*) as total_pagos,
                     COALESCE(SUM(amount), 0) as total_monto,
@@ -190,7 +180,6 @@ try {
             }
         } catch (PDOException $e) {
             error_log("Error en estadísticas de liga: " . $e->getMessage());
-            // Fallback a consulta simple
             $sql_stats_liga = "SELECT 
                 COUNT(*) as total_pagos,
                 COALESCE(SUM(amount), 0) as total_monto,
@@ -219,7 +208,6 @@ try {
     // Estadísticas de transferencias SPEI recibidas
     if ($spei_table_exists) {
         try {
-            // Usar tabla pagos_spei_recibidos
             $sql_stats_spei = "SELECT 
                 COUNT(*) as total_transacciones,
                 COALESCE(SUM(monto_recibido), 0) as total_monto,
@@ -267,7 +255,6 @@ try {
     $tipo_mensaje = "danger";
     error_log("Error en pagos.php: " . $e->getMessage());
     
-    // Asegurar que $estadisticas tenga valores por defecto en caso de error
     $estadisticas = [
         'total_pagos' => 0,
         'total_monto' => 0,
@@ -628,7 +615,7 @@ function truncarTexto($texto, $longitud = 30)
                                         <label class="form-label">Buscar en Liga:</label>
                                         <div class="input-group">
                                             <input type="text" id="busquedaLiga" class="form-control" 
-                                                placeholder="Referencia, email, nombre, folio, autorización...">
+                                                placeholder="Referencia, email, nombre, folio, autorización, empresa...">
                                             <button type="button" id="btnBuscarLiga" class="btn btn-primary">
                                                 <i class="fas fa-search"></i>
                                             </button>
@@ -658,6 +645,7 @@ function truncarTexto($texto, $longitud = 30)
                                                     <th>Fecha</th>
                                                     <th>Nombre</th>
                                                     <th>Email</th>
+                                                    <th>Empresa</th>
                                                     <th>Monto</th>
                                                     <th>Estado</th>
                                                     <th>Referencia</th>
@@ -668,7 +656,7 @@ function truncarTexto($texto, $longitud = 30)
                                             </thead>
                                             <tbody id="ligaTablaBody">
                                                 <tr>
-                                                    <td colspan="10" class="text-center py-4">
+                                                    <td colspan="11" class="text-center py-4">
                                                         <div class="text-muted">
                                                             <i class="fas fa-link fa-3x d-block mb-3"></i>
                                                             Selecciona filtros para cargar los datos

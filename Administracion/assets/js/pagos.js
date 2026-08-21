@@ -110,7 +110,7 @@
         if (data.pagos.length === 0) {
             tbody.html(`
                 <tr>
-                    <td colspan="10" class="text-center py-4">
+                    <td colspan="11" class="text-center py-4">
                         <div class="text-muted">
                             <i class="fas fa-link fa-3x d-block mb-3"></i>
                             No se encontraron pagos con Liga
@@ -133,6 +133,7 @@
             const authEscaped = escapeHtml(pago.auth || '');
             const ccMaskEscaped = escapeHtml(pago.cc_mask || '');
             const ccTypeEscaped = escapeHtml(pago.cc_type || '');
+            const empresaNombre = escapeHtml(pago.empresa_nombre || '');
             
             const rawResponseJson = pago.raw_response ? JSON.stringify(pago.raw_response) : '{}';
             
@@ -142,6 +143,7 @@
                     <td>${formatearFecha(pago.fecha_registro)}</td>
                     <td>${ccNameEscaped}</td>
                     <td>${emailEscaped ? `<a href="mailto:${emailEscaped}">${truncarTexto(emailEscaped, 20)}</a>` : 'N/A'}</td>
+                    <td>${empresaNombre ? `<span class="badge bg-primary">${truncarTexto(empresaNombre, 20)}</span>` : '<span class="text-muted">N/A</span>'}</td>
                     <td><span class="monto-positivo">${montoFormateado}</span></td>
                     <td><span class="badge bg-${estadoClass} badge-estado">${estadoText}</span></td>
                     <td>${referenceEscaped ? truncarTexto(referenceEscaped, 10) : 'N/A'}</td>
@@ -165,7 +167,8 @@
                             data-cd-error="${escapeHtml(pago.cd_error || '')}"
                             data-nb-error="${escapeHtml(pago.nb_error || '')}"
                             data-nb-company="${escapeHtml(pago.nb_company || '')}"
-                            data-nb-merchant="${escapeHtml(pago.nb_merchant || '')}">
+                            data-nb-merchant="${escapeHtml(pago.nb_merchant || '')}"
+                            data-empresa-nombre="${empresaNombre}">
                             <i class="fas fa-eye"></i>
                         </button>
                     </td>
@@ -205,6 +208,7 @@
             const cdResponseEscaped = escapeHtml(pago.cd_response || '');
             const cdErrorEscaped = escapeHtml(pago.cd_error || '');
             const nbErrorEscaped = escapeHtml(pago.nb_error || '');
+            const empresaNombre = escapeHtml(pago.empresa_nombre || '');
             
             const rawResponseJson = pago.raw_response ? JSON.stringify(pago.raw_response) : '{}';
             
@@ -226,6 +230,12 @@
                             <span class="pago-label"><i class="fas fa-envelope me-1"></i> Email:</span>
                             <span class="pago-value">${emailEscaped ? truncarTexto(emailEscaped, 25) : 'N/A'}</span>
                         </div>
+                        ${empresaNombre ? `
+                        <div class="pago-info-row">
+                            <span class="pago-label"><i class="fas fa-building me-1"></i> Empresa:</span>
+                            <span class="pago-value"><span class="badge bg-primary">${truncarTexto(empresaNombre, 25)}</span></span>
+                        </div>
+                        ` : ''}
                         <div class="pago-info-row">
                             <span class="pago-label"><i class="fas fa-money-bill-wave me-1"></i> Monto:</span>
                             <span class="pago-value pago-monto">${montoFormateado}</span>
@@ -264,7 +274,8 @@
                             data-raw-response='${rawResponseJson.replace(/'/g, "\\'")}'
                             data-cd-response='${cdResponseEscaped}'
                             data-cd-error='${cdErrorEscaped}'
-                            data-nb-error='${nbErrorEscaped}'>
+                            data-nb-error='${nbErrorEscaped}'
+                            data-empresa-nombre="${empresaNombre}">
                             <i class="fas fa-eye me-1"></i>Ver detalle
                         </button>
                     </div>
@@ -292,7 +303,6 @@
         }
         
         data.transacciones.forEach(trans => {
-            // Determinar estado según el campo 'estado'
             const estadoClass = getEstadoClass(trans.estado);
             const estadoText = getEstadoText(trans.estado);
             
@@ -302,7 +312,6 @@
             const autorizacionEscaped = escapeHtml(trans.autorizacion || 'N/A');
             const nombreEmpresaEscaped = escapeHtml(trans.nombre_empresa || '');
             
-            // Mostrar mensaje (priorizar nombre_empresa si existe)
             const mensajeMostrar = nombreEmpresaEscaped || 'Sin información';
             
             tbody.append(`
@@ -573,7 +582,7 @@
 
     function getEstadoClass(estado) {
         const estadoLower = String(estado).toLowerCase();
-        if (['completed', 'approved', 'a', 'aprobado', 'success', 'confirmado'].includes(estadoLower)) {
+        if (['completed', 'approved', 'a', 'aprobado', 'completado', 'success', 'confirmado'].includes(estadoLower)) {
             return 'success';
         }
         if (['pending', 'p', 'pendiente'].includes(estadoLower)) {
@@ -694,6 +703,12 @@
                                         <th class="text-muted">Fecha:</th>
                                         <td>${datos.fecha}</td>
                                     </tr>
+                                    ${datos.empresa_nombre ? `
+                                    <tr>
+                                        <th class="text-muted">Empresa:</th>
+                                        <td><span class="badge bg-primary">${escapeHtml(datos.empresa_nombre)}</span></td>
+                                    </tr>
+                                    ` : ''}
                                 </table>
                             </div>
                         </div>
@@ -911,7 +926,7 @@
     function mostrarErrorLiga(mensaje) {
         $('#ligaTablaBody').html(`
             <tr>
-                <td colspan="10" class="text-center py-4">
+                <td colspan="11" class="text-center py-4">
                     <div class="text-danger">${mensaje}</div>
                 </td>
             </tr>
@@ -1068,7 +1083,8 @@
                 cd_error: button.data('cd-error'),
                 nb_error: button.data('nb-error'),
                 nb_company: button.data('nb-company'),
-                nb_merchant: button.data('nb-merchant')
+                nb_merchant: button.data('nb-merchant'),
+                empresa_nombre: button.data('empresa-nombre') || ''
             };
             
             const contenido = generarContenidoModalLiga(datos);
