@@ -227,6 +227,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuración de Comisiones - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
+        <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -234,24 +235,14 @@ try {
             --primary-color: <?php echo $color_primario; ?>;
             --secondary-color: <?php echo $color_secundario; ?>;
         }
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
-        .navbar { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); }
-        .card { border: none; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 1.5rem; }
-        .badge-area { font-size: 0.75rem; padding: 4px 10px; }
-        .suma-indicador { font-weight: bold; }
-        .suma-ok { color: #198754; }
-        .suma-neutral { color: #6c757d; }
-        .porcentaje-input { width: 100px; }
-        .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); }
-        .btn-primary:hover { background-color: var(--secondary-color); border-color: var(--secondary-color); }
-        .nav-tabs .nav-link.active { color: var(--primary-color); font-weight: 600; }
     </style>
+    <link rel="stylesheet" href="css/crm-theme.css">
 </head>
 <body>
     <nav class="navbar navbar-dark mb-4">
         <div class="container-fluid">
             <span class="navbar-brand"><i class="fas fa-percentage me-2"></i>Configuración de Comisiones</span>
-            <a href="Configuracion" class="btn btn-outline-light btn-sm"><i class="fas fa-arrow-left me-1"></i>Volver a Configuración</a>
+            <a href="Configuracion" class="btn btn-outline-light btn-sm btn-config"><i class="fas fa-arrow-left me-1"></i>Volver a Configuración</a>
         </div>
     </nav>
 

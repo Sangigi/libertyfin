@@ -259,1144 +259,303 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Gastos - <?php echo safe_html_gasto($_SESSION['empresa_nombre'] ?? ''); ?></title>
+    <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: <?php echo htmlspecialchars($color_primario); ?>;
-            --secondary-color: <?php echo htmlspecialchars($color_secundario); ?>;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding-top: 56px;
-            overflow-x: hidden;
-        }
-
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .navbar-brand img {
-            height: 35px;
-            width: auto;
-            max-width: 120px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-
-        .navbar-brand span {
-            font-size: 0.9rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-        }
-
-        @media (max-width: 576px) {
-            .navbar-brand span {
-                max-width: 100px;
-                font-size: 0.8rem;
-            }
-            
-            .navbar-brand img {
-                height: 30px;
-            }
-        }
-
-        /* Sidebar Desktop */
-        .sidebar-desktop {
-            background: #2c3e50;
-            color: white;
-            min-height: calc(100vh - 56px);
-            position: fixed;
-            top: 56px;
-            left: 0;
-            width: 260px;
-            z-index: 100;
-            overflow-y: auto;
-            transition: transform 0.3s ease;
-        }
-
-        /* Sidebar Mobile */
-        .sidebar-mobile {
-            background: #2c3e50;
-            color: white;
-            min-height: calc(100vh - 56px);
-            position: fixed;
-            top: 56px;
-            left: 0;
-            width: 280px;
-            z-index: 1000;
-            transition: transform 0.3s ease-in-out;
-            transform: translateX(-100%);
-            overflow-y: auto;
-        }
-
-        .sidebar-mobile.show {
-            transform: translateX(0);
-        }
-
-        .sidebar-desktop .nav-link,
-        .sidebar-mobile .nav-link {
-            color: #ecf0f1;
-            padding: 12px 20px;
-            border-left: 3px solid transparent;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .sidebar-desktop .nav-link:hover,
-        .sidebar-mobile .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar-desktop .nav-link.active,
-        .sidebar-mobile .nav-link.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar-desktop .nav-link i,
-        .sidebar-mobile .nav-link i {
-            width: 24px;
-            margin-right: 10px;
-            text-align: center;
-        }
-
-        /* Main Content */
-        .main-content {
-            transition: margin-left 0.3s ease;
-            width: 100%;
-        }
-
-        @media (min-width: 992px) {
-            .main-content {
-                margin-left: 260px !important;
-                width: calc(100% - 260px) !important;
-            }
-        }
-
-        @media (max-width: 991.98px) {
-            .main-content {
-                margin-left: 0 !important;
-                width: 100% !important;
-            }
-        }
-
-        /* Cards y estadísticas */
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-            transition: transform 0.2s ease;
-            margin-bottom: 1rem;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-        }
-
-        .stat-card {
-            border-left: 4px solid var(--primary-color);
-            background: white;
-        }
-
-        .stat-card .card-body {
-            padding: 1.25rem;
-        }
-
-        .stat-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0;
-        }
-
-        @media (max-width: 576px) {
-            .stat-card h3 {
-                font-size: 1.2rem;
-            }
-            
-            .stat-card .card-body {
-                padding: 1rem;
-            }
-            
-            .stat-card h6 {
-                font-size: 0.75rem;
-            }
-        }
-
-        /* Badges de estado */
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            display: inline-block;
-        }
-
-        .status-completada {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-pendiente {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .status-cancelada {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        /* Método de pago badges */
-        .metodo-pago-badge {
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 0.7rem;
-            font-weight: 500;
-            display: inline-block;
-        }
-
-        .metodo-pago-color-efectivo {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .metodo-pago-color-tarjeta {
-            background: #cce7ff;
-            color: #004085;
-        }
-
-        .metodo-pago-color-transferencia {
-            background: #e2e3e5;
-            color: #383d41;
-        }
-
-        /* Productos badge */
-        .productos-badge {
-            background: #f0f0f0;
-            color: #2c3e50;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.7rem;
-            display: inline-block;
-            max-width: 200px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Tabla responsive */
-        .table-responsive-custom {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .table th,
-        .table td {
-            white-space: nowrap;
-            vertical-align: middle;
-        }
-
-        @media (max-width: 768px) {
-            .table th,
-            .table td {
-                padding: 0.5rem;
-                font-size: 0.8rem;
-            }
-        }
-
-        /* Tarjetas móviles */
-        .mobile-venta-card {
-            border-left: 4px solid var(--primary-color);
-            margin-bottom: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .mobile-venta-card.venta-grande {
-            border-left-color: #e74c3c;
-        }
-
-        .mobile-venta-card:active {
-            transform: scale(0.98);
-        }
-
-        .venta-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1rem;
-            flex-shrink: 0;
-        }
-
-        /* Botones */
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        .btn-success {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-success:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        .btn-danger-venta {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            color: white;
-        }
-
-        .btn-danger-venta:hover {
-            background-color: #c82333;
-            border-color: #bd2130;
-            color: white;
-        }
-
-        @media (max-width: 576px) {
-            .btn {
-                padding: 0.375rem 0.75rem;
-                font-size: 0.875rem;
-            }
-            
-            .mobile-actions {
-                display: flex;
-                gap: 0.5rem;
-                margin-top: 0.75rem;
-                flex-wrap: wrap;
-            }
-            
-            .mobile-actions .btn {
-                flex: 1;
-                padding: 0.375rem 0.5rem;
-                font-size: 0.75rem;
-                min-width: 80px;
-            }
-            
-            .modal-footer {
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
-            
-            .modal-footer .btn {
-                flex: 1;
-                min-width: 100px;
-                font-size: 0.8rem;
-            }
-        }
-
-        /* Filtros */
-        .filtros-avanzados {
-            background: white;
-            padding: 1.25rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .filtros-mobile {
-            background: white;
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .filtros-activos {
-            background: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Paginación */
-        .pagination-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1.5rem;
-            padding-top: 1rem;
-            border-top: 1px solid #dee2e6;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        @media (max-width: 576px) {
-            .pagination-container {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .pagination {
-                margin-bottom: 0;
-            }
-        }
-
-        /* Overlay y área de swipe */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
-
-        .sidebar-overlay.show {
-            display: block;
-        }
-
-        .swipe-sensitive-area {
-            position: fixed;
-            top: 56px;
-            left: 0;
-            width: 15px;
-            height: calc(100vh - 56px);
-            z-index: 1100;
-        }
-
-        @media (min-width: 992px) {
-            .swipe-sensitive-area {
-                display: none;
-            }
-        }
-
-        /* Botón hamburguesa */
-        .hamburger-swipe-area {
-            position: relative;
-            width: 28px;
-            height: 28px;
-            background: transparent;
-            border: none;
-            padding: 0;
-            cursor: pointer;
-        }
-
-        .hamburger-swipe-area span {
-            display: block;
-            width: 100%;
-            height: 2px;
-            background: white;
-            margin: 5px 0;
-            transition: all 0.3s ease;
-            border-radius: 2px;
-        }
-
-        .hamburger-swipe-area.active span:nth-child(1) {
-            transform: rotate(45deg) translate(5px, 5px);
-        }
-
-        .hamburger-swipe-area.active span:nth-child(2) {
-            opacity: 0;
-        }
-
-        .hamburger-swipe-area.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(5px, -5px);
-        }
-
-        /* Utilidades */
-        .info-text {
-            font-size: 0.75rem;
-            color: #6c757d;
-        }
-
-        .monto-venta {
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-
-        .cliente-badge {
-            background: #e8f4fd;
-            color: #2c3e50;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            display: inline-block;
-        }
-
-        .ticket-number {
-            font-family: monospace;
-            font-size: 0.7rem;
-            color: #6c757d;
-        }
-
-        .descuento-text {
-            color: #dc3545;
-            font-size: 0.7rem;
-        }
-
-        .clickable-row,
-        .clickable-card {
-            cursor: pointer;
-        }
-
-        .clickable-row:hover {
-            background-color: rgba(0, 0, 0, 0.03);
-        }
-
-        /* Scroll suave */
-        html {
-            scroll-behavior: smooth;
-        }
-
-        /* Ajustes para dispositivos muy pequeños */
-        @media (max-width: 380px) {
-            .stats-row .col-6 {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-            }
-            
-            .mobile-venta-card .card-body {
-                padding: 0.75rem;
-            }
-            
-            .venta-avatar {
-                width: 32px;
-                height: 32px;
-                font-size: 0.8rem;
-            }
-        }
-
-        /* Botón eliminar en modal */
-        .btn-eliminar-venta {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            color: white;
-            transition: all 0.2s ease;
-        }
-
-        .btn-eliminar-venta:hover {
-            background-color: #c82333;
-            border-color: #bd2130;
-            color: white;
-            transform: scale(1.02);
-        }
-
-        .btn-eliminar-venta:active {
-            transform: scale(0.95);
-        }
-
-        .btn-eliminar-venta:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        /* Estilo para la descripción en el modal */
-        .descripcion-badge {
-            background: #e8f4fd;
-            color: #2c3e50;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            white-space: normal;
-            word-wrap: break-word;
-            max-width: 100%;
-            display: inline-block;
-            border-left: 3px solid var(--primary-color);
-        }
-
-        /* Productos en móvil */
-        .productos-mobile {
-            font-size: 0.75rem;
-            color: #6c757d;
-            background: #f8f9fa;
-            padding: 4px 8px;
-            border-radius: 4px;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-    </style>
-    <style>
-        .stat-card {
-            border-radius: 12px;
-            padding: 20px;
-            color: #fff;
-            height: 100%;
-        }
-        .stat-card .stat-value {
-            font-size: 1.6rem;
-            font-weight: 700;
-        }
-        .stat-card .stat-label {
-            font-size: 0.85rem;
-            opacity: 0.9;
-        }
-        .stat-card.bg-total { background: linear-gradient(135deg, #6c5ce7, #a29bfe); }
-        .stat-card.bg-auto { background: linear-gradient(135deg, #e17055, #fab1a0); }
-        .stat-card.bg-manual { background: linear-gradient(135deg, #00b894, #55efc4); color: #063d33; }
-        .stat-card.bg-count { background: linear-gradient(135deg, #0984e3, #74b9ff); }
-
-        .badge-tipo-automatico {
-            background-color: #ffeaa7;
-            color: #b7791f;
-        }
-        .badge-tipo-manual {
-            background-color: #dfe6e9;
-            color: #2d3436;
-        }
-        .gasto-mobile-card {
-            border-radius: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/crm-theme.css">
 </head>
 
 <body>
-    <!-- Overlay para sidebar móvil -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <!-- Área sensible al swipe -->
-    <div class="swipe-sensitive-area" id="swipeArea"></div>
-
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-        <div class="container-fluid px-2 px-sm-3">
-            <button class="navbar-toggler me-2 d-lg-none" type="button" id="sidebarToggleMobile">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
+<?php include 'includes/navbar.php'; ?>
 
-            <a class="navbar-brand d-flex align-items-center" href="#">
-                <?php if ($logo_src_base64): ?>
-                    <img src="<?php echo $logo_src_base64; ?>"
-                        alt="<?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>"
-                        class="me-2">
-                    <span><?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></span>
-                <?php elseif ($logo_empresa && file_exists($logo_empresa)): ?>
-                    <img src="<?php echo htmlspecialchars($logo_empresa); ?>"
-                        alt="<?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>"
-                        class="me-2"
-                        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
-                    <i class="fas fa-cash-register me-2" style="display: none;"></i>
-                    <span><?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></span>
-                <?php else: ?>
-                    <i class="fas fa-cash-register me-2"></i>
-                    <span><?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></span>
-                <?php endif; ?>
-            </a>
+    <!-- Backdrop para móvil -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
-            <div class="ms-auto">
-                <div class="dropdown">
-                    <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle me-1"></i>
-                        <span class="d-none d-sm-inline"><?php echo safe_html_gasto($_SESSION['usuario_nombre'] ?? ''); ?></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><span class="dropdown-item-text">
-                                <small>Empresa: <?php echo safe_html_gasto($_SESSION['empresa_nombre'] ?? ''); ?></small>
-                            </span></li>
-                        <li><span class="dropdown-item-text">
-                                <small>Rol: <?php echo safe_html_gasto($_SESSION['usuario_rol'] ?? ''); ?></small>
-                            </span></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar (exactamente igual a dashboard.php) -->
+             <?php include 'includes/sidebar.php'; ?>
 
-    <div class="container-fluid p-0">
-        <div class="row g-0">
-            <!-- Sidebar Desktop -->
-            <div class="sidebar-desktop d-none d-lg-block">
-                <div class="pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="dashboard.php">
-                                <i class="fas fa-tachometer-alt"></i>
-                                Inicio
-                            </a>
-                        </li>
-                        <?php if (($_SESSION['usuario_rol'] ?? '') === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="usuarios.php">
-                                    <i class="fas fa-user-cog"></i>
-                                    Usuarios
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="caja.php">
-                                <i class="fas fa-cash-register"></i>
-                                Caja
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="productos.php">
-                                <i class="fas fa-boxes"></i>
-                                Productos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="clientes.php">
-                                <i class="fas fa-users"></i>
-                                Clientes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="ventas_lista.php">
-                                <i class="fas fa-receipt"></i>
-                                Ventas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="caja_historial.php">
-                                <i class="fas fa-cash-register"></i>
-                                Cortes de Caja
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="gastos.php">
-                                <i class="fas fa-money-bill-wave"></i>
-                                Gastos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="proveedores.php">
-                                <i class="fas fa-truck"></i>
-                                Proveedores
-                            </a>
-                        </li>
-                        <?php if ($empresa_plan !== 'basico' && $_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="sucursales.php">
-                                    <i class="fas fa-store"></i>
-                                    Sucursales
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin' && $_SESSION['sucursal_id'] == 1 && $timbres_disponibles > 0) : ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="Facturacion/inicio.php">
-                                    <i class="fas fa-file-invoice-dollar"></i>
-                                    Facturación
-                                    <?php if ($timbres_disponibles > 0): ?>
-                                        <span class="badge bg-success ms-2"><?php echo $timbres_disponibles; ?></span>
-                                    <?php endif; ?>
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="reportes.php">
-                                <i class="fas fa-chart-bar"></i>
-                                Reportes
-                            </a>
-                        </li>
-                        <?php if ($empresa_plan === 'premium'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="../EmidaServicios/inicio.php">
-                                    <img src="../images/emidalogo.png" alt="" style="width: 20px; height: 20px; margin-right: 10px;">
-                                    Emida Servicios
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <?php if (($_SESSION['usuario_rol'] ?? '') === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="comisiones_config.php">
-                                    <i class="fas fa-percentage"></i>
-                                    Comisiones
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="configuracion.php">
-                                    <i class="fas fa-cogs"></i>
-                                    Configuración
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
-            </div>
-
-            
-            <!-- Sidebar Mobile -->
-            <div class="sidebar-mobile d-lg-none" id="sidebarMobile">
-                <div class="pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="dashboard.php">
-                                <i class="fas fa-tachometer-alt"></i>
-                                Dashboard
-                            </a>
-                        </li>
-                        <?php if (($_SESSION['usuario_rol'] ?? '') === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="usuarios.php">
-                                    <i class="fas fa-user-cog"></i>
-                                    Usuarios
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="caja.php">
-                                <i class="fas fa-cash-register"></i>
-                                Caja
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="productos.php">
-                                <i class="fas fa-boxes"></i>
-                                Productos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="clientes.php">
-                                <i class="fas fa-users"></i>
-                                Clientes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="ventas_lista.php">
-                                <i class="fas fa-receipt"></i>
-                                Ventas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="caja_historial.php">
-                                <i class="fas fa-cash-register"></i>
-                                Cortes de Caja
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="gastos.php">
-                                <i class="fas fa-money-bill-wave"></i>
-                                Gastos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="proveedores.php">
-                                <i class="fas fa-truck"></i>
-                                Proveedores
-                            </a>
-                        </li>
-                        <?php if ($empresa_plan !== 'basico' && $_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="sucursales.php">
-                                    <i class="fas fa-store"></i>
-                                    Sucursales
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="reportes.php">
-                                <i class="fas fa-chart-bar"></i>
-                                Reportes
-                            </a>
-                        </li>
-                        <?php if ($empresa_plan === 'premium'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="../EmidaServicios/inicio.php">
-                                    <img src="../images/emidalogo.png" alt="" style="width: 20px; height: 20px; margin-right: 10px;">
-                                    Emida Servicios
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <?php if (($_SESSION['usuario_rol'] ?? '') === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="comisiones_config.php">
-                                    <i class="fas fa-percentage"></i>
-                                    Comisiones
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="configuracion.php">
-                                    <i class="fas fa-cogs"></i>
-                                    Configuración
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
-            </div>
-
-            
             <!-- Main Content -->
-            <main class="main-content">
-                <div class="container-fluid px-3 px-sm-4 py-4">
-                    <!-- Header -->
-                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-                        <h2 class="mb-0 fs-4 fs-md-3">
-                            <i class="fas fa-money-bill-wave me-2"></i>
-                            Gastos
-                        </h2>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalGasto" onclick="prepararNuevoGasto()">
-                            <i class="fas fa-plus me-1"></i>Nuevo Gasto
-                        </button>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4" id="mainContent">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                    <h2 class="mb-0 fs-4 fs-md-3">
+                        <i class="fas fa-money-bill-wave me-2"></i>
+                        Gastos
+                    </h2>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalGasto" onclick="prepararNuevoGasto()">
+                        <i class="fas fa-plus me-1"></i>Nuevo Gasto
+                    </button>
+                </div>
+
+                <?php if (!empty($mensaje)): ?>
+                    <div class="alert alert-<?php echo $tipo_mensaje === 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert">
+                        <?php echo safe_html_gasto($mensaje); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
+                <?php endif; ?>
 
-                    <?php if (!empty($mensaje)): ?>
-                        <div class="alert alert-<?php echo $tipo_mensaje === 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert">
-                            <?php echo safe_html_gasto($mensaje); ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    <?php endif; ?>
-
-                    <!-- Tarjetas de estadísticas -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-6 col-lg-3">
-                            <div class="stat-card bg-total">
-                                <div class="stat-label"><i class="fas fa-wallet me-1"></i>Total del periodo</div>
-                                <div class="stat-value">$<?php echo number_format($stats_gastos['monto_total'], 2); ?></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-lg-3">
-                            <div class="stat-card bg-auto">
-                                <div class="stat-label"><i class="fas fa-robot me-1"></i>Automáticos (costo de venta)</div>
-                                <div class="stat-value">$<?php echo number_format($stats_gastos['monto_automatico'], 2); ?></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-lg-3">
-                            <div class="stat-card bg-manual">
-                                <div class="stat-label"><i class="fas fa-hand-holding-usd me-1"></i>Manuales</div>
-                                <div class="stat-value">$<?php echo number_format($stats_gastos['monto_manual'], 2); ?></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-lg-3">
-                            <div class="stat-card bg-count">
-                                <div class="stat-label"><i class="fas fa-list me-1"></i># Registros</div>
-                                <div class="stat-value"><?php echo (int)$stats_gastos['total_gastos']; ?></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Filtros -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <form method="GET" id="filtrosForm">
-                                <input type="hidden" name="pagina" value="1">
-                                <div class="row g-3">
-                                    <div class="col-6 col-md-2">
-                                        <label class="form-label small">Fecha Desde</label>
-                                        <input type="date" class="form-control form-control-sm" name="fecha_desde" value="<?php echo safe_html_gasto($filtro_fecha_desde); ?>">
+                <!-- Tarjetas de estadísticas -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-title text-muted mb-1 small">Total del periodo</h6>
+                                        <h3 class="mb-0 text-primary">$<?php echo number_format($stats_gastos['monto_total'], 2); ?></h3>
                                     </div>
-                                    <div class="col-6 col-md-2">
-                                        <label class="form-label small">Fecha Hasta</label>
-                                        <input type="date" class="form-control form-control-sm" name="fecha_hasta" value="<?php echo safe_html_gasto($filtro_fecha_hasta); ?>">
-                                    </div>
-                                    <div class="col-6 col-md-2">
-                                        <label class="form-label small">Categoría</label>
-                                        <select class="form-select form-select-sm" name="categoria">
-                                            <option value="">Todas</option>
-                                            <?php foreach ($categorias_usadas as $cat): ?>
-                                                <option value="<?php echo safe_html_gasto($cat); ?>" <?php echo $filtro_categoria === $cat ? 'selected' : ''; ?>>
-                                                    <?php echo safe_html_gasto($cat); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-6 col-md-2">
-                                        <label class="form-label small">Tipo</label>
-                                        <select class="form-select form-select-sm" name="tipo">
-                                            <option value="">Todos</option>
-                                            <option value="manual" <?php echo $filtro_tipo === 'manual' ? 'selected' : ''; ?>>Manual</option>
-                                            <option value="automatico" <?php echo $filtro_tipo === 'automatico' ? 'selected' : ''; ?>>Automático</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-6 col-md-2">
-                                        <label class="form-label small">Sucursal</label>
-                                        <select class="form-select form-select-sm" name="sucursal">
-                                            <option value="">Todas</option>
-                                            <?php foreach ($sucursales as $sucursal): ?>
-                                                <option value="<?php echo $sucursal['id']; ?>" <?php echo $filtro_sucursal == $sucursal['id'] ? 'selected' : ''; ?>>
-                                                    <?php echo safe_html_gasto($sucursal['nombre']); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-6 col-md-2">
-                                        <label class="form-label small">Orden</label>
-                                        <select class="form-select form-select-sm" name="orden">
-                                            <option value="desc" <?php echo $filtro_orden === 'desc' ? 'selected' : ''; ?>>Más reciente primero</option>
-                                            <option value="asc" <?php echo $filtro_orden === 'asc' ? 'selected' : ''; ?>>Más antiguo primero</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-12">
-                                        <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-                                        <a href="gastos.php" class="btn btn-outline-secondary btn-sm">Limpiar</a>
-                                    </div>
+                                    <i class="fas fa-wallet fa-2x text-primary opacity-25"></i>
                                 </div>
-                            </form>
+                            </div>
                         </div>
                     </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-title text-muted mb-1 small">Automáticos</h6>
+                                        <h3 class="mb-0 text-info">$<?php echo number_format($stats_gastos['monto_automatico'], 2); ?></h3>
+                                    </div>
+                                    <i class="fas fa-robot fa-2x text-info opacity-25"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-title text-muted mb-1 small">Manuales</h6>
+                                        <h3 class="mb-0 text-success">$<?php echo number_format($stats_gastos['monto_manual'], 2); ?></h3>
+                                    </div>
+                                    <i class="fas fa-hand-holding-usd fa-2x text-success opacity-25"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-title text-muted mb-1 small">Registros</h6>
+                                        <h3 class="mb-0 text-warning"><?php echo (int)$stats_gastos['total_gastos']; ?></h3>
+                                    </div>
+                                    <i class="fas fa-list fa-2x text-warning opacity-25"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                    <!-- Tabla desktop -->
-                    <div class="card d-none d-md-block">
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0" id="gastosTable">
-                                    <thead class="table-light">
+                <!-- Filtros -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form method="GET" id="filtrosForm">
+                            <input type="hidden" name="pagina" value="1">
+                            <div class="row g-3">
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label small">Fecha Desde</label>
+                                    <input type="date" class="form-control form-control-sm" name="fecha_desde" value="<?php echo safe_html_gasto($filtro_fecha_desde); ?>">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label small">Fecha Hasta</label>
+                                    <input type="date" class="form-control form-control-sm" name="fecha_hasta" value="<?php echo safe_html_gasto($filtro_fecha_hasta); ?>">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label small">Categoría</label>
+                                    <select class="form-select form-select-sm" name="categoria">
+                                        <option value="">Todas</option>
+                                        <?php foreach ($categorias_usadas as $cat): ?>
+                                            <option value="<?php echo safe_html_gasto($cat); ?>" <?php echo $filtro_categoria === $cat ? 'selected' : ''; ?>>
+                                                <?php echo safe_html_gasto($cat); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label small">Tipo</label>
+                                    <select class="form-select form-select-sm" name="tipo">
+                                        <option value="">Todos</option>
+                                        <option value="manual" <?php echo $filtro_tipo === 'manual' ? 'selected' : ''; ?>>Manual</option>
+                                        <option value="automatico" <?php echo $filtro_tipo === 'automatico' ? 'selected' : ''; ?>>Automático</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label small">Sucursal</label>
+                                    <select class="form-select form-select-sm" name="sucursal">
+                                        <option value="">Todas</option>
+                                        <?php foreach ($sucursales as $sucursal): ?>
+                                            <option value="<?php echo $sucursal['id']; ?>" <?php echo $filtro_sucursal == $sucursal['id'] ? 'selected' : ''; ?>>
+                                                <?php echo safe_html_gasto($sucursal['nombre']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label small">Orden</label>
+                                    <select class="form-select form-select-sm" name="orden">
+                                        <option value="desc" <?php echo $filtro_orden === 'desc' ? 'selected' : ''; ?>>Más reciente primero</option>
+                                        <option value="asc" <?php echo $filtro_orden === 'asc' ? 'selected' : ''; ?>>Más antiguo primero</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+                                    <a href="gastos.php" class="btn btn-outline-secondary btn-sm">Limpiar</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Tabla desktop -->
+                <div class="card d-none d-md-block">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="gastosTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Concepto</th>
+                                        <th>Proveedor</th>
+                                        <th>Categoría</th>
+                                        <th>Tipo</th>
+                                        <th>Sucursal</th>
+                                        <th>Monto</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (empty($gastos)): ?>
                                         <tr>
-                                            <th>Fecha</th>
-                                            <th>Concepto</th>
-                                            <th>Proveedor</th>
-                                            <th>Categoría</th>
-                                            <th>Tipo</th>
-                                            <th>Sucursal</th>
-                                            <th>Monto</th>
-                                            <th></th>
+                                            <td colspan="8" class="text-center py-5 text-muted">
+                                                <i class="fas fa-receipt fa-3x mb-3 d-block"></i>
+                                                No hay gastos registrados con estos filtros.
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if (empty($gastos)): ?>
+                                    <?php else: ?>
+                                        <?php foreach ($gastos as $gasto): ?>
                                             <tr>
-                                                <td colspan="8" class="text-center py-5 text-muted">
-                                                    <i class="fas fa-receipt fa-3x mb-3 d-block"></i>
-                                                    No hay gastos registrados con estos filtros.
+                                                <td><?php echo date('d/m/Y H:i', strtotime($gasto['fecha'])); ?></td>
+                                                <td>
+                                                    <div class="fw-bold"><?php echo safe_html_gasto($gasto['concepto']); ?></div>
+                                                    <?php if (!empty($gasto['codigo_venta'])): ?>
+                                                        <small class="text-muted">Venta: <?php echo safe_html_gasto($gasto['codigo_venta']); ?></small>
+                                                    <?php endif; ?>
+                                                    <?php if (!empty($gasto['numero_referencia'])): ?>
+                                                        <small class="text-muted d-block">Ref: <?php echo safe_html_gasto($gasto['numero_referencia']); ?></small>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td><?php echo safe_html_gasto($gasto['proveedor'] ?? '-'); ?></td>
+                                                <td><?php echo safe_html_gasto($gasto['categoria']); ?></td>
+                                                <td>
+                                                    <?php if ($gasto['tipo'] === 'automatico'): ?>
+                                                        <span class="badge bg-info">Automático</span>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-success">Manual</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td><?php echo safe_html_gasto($gasto['sucursal_nombre'] ?? '-'); ?></td>
+                                                <td class="fw-bold text-danger">-$<?php echo number_format($gasto['monto'], 2); ?></td>
+                                                <td class="text-end">
+                                                    <?php if ($gasto['tipo'] === 'manual'): ?>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick='prepararEditarGasto(<?php echo json_encode($gasto); ?>)'>
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmarEliminarGasto(<?php echo (int)$gasto['id']; ?>)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    <?php else: ?>
+                                                        <span class="text-muted small" title="Los gastos automáticos se eliminan junto con su venta">
+                                                            <i class="fas fa-lock"></i>
+                                                        </span>
+                                                    <?php endif; ?>
                                                 </td>
                                             </tr>
-                                        <?php else: ?>
-                                            <?php foreach ($gastos as $gasto): ?>
-                                                <tr>
-                                                    <td><?php echo date('d/m/Y H:i', strtotime($gasto['fecha'])); ?></td>
-                                                    <td>
-                                                        <div class="fw-bold"><?php echo safe_html_gasto($gasto['concepto']); ?></div>
-                                                        <?php if (!empty($gasto['codigo_venta'])): ?>
-                                                            <small class="text-muted">Venta: <?php echo safe_html_gasto($gasto['codigo_venta']); ?></small>
-                                                        <?php endif; ?>
-                                                        <?php if (!empty($gasto['numero_referencia'])): ?>
-                                                            <small class="text-muted d-block">Ref: <?php echo safe_html_gasto($gasto['numero_referencia']); ?></small>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td><?php echo safe_html_gasto($gasto['proveedor'] ?? '-'); ?></td>
-                                                    <td><?php echo safe_html_gasto($gasto['categoria']); ?></td>
-                                                    <td>
-                                                        <?php if ($gasto['tipo'] === 'automatico'): ?>
-                                                            <span class="badge badge-tipo-automatico">Automático</span>
-                                                        <?php else: ?>
-                                                            <span class="badge badge-tipo-manual">Manual</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td><?php echo safe_html_gasto($gasto['sucursal_nombre'] ?? '-'); ?></td>
-                                                    <td class="fw-bold text-danger">-$<?php echo number_format($gasto['monto'], 2); ?></td>
-                                                    <td class="text-end">
-                                                        <?php if ($gasto['tipo'] === 'manual'): ?>
-                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick='prepararEditarGasto(<?php echo json_encode($gasto); ?>)'>
-                                                                <i class="fas fa-edit"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmarEliminarGasto(<?php echo (int)$gasto['id']; ?>)">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
-                                                        <?php else: ?>
-                                                            <span class="text-muted small" title="Los gastos automáticos se eliminan junto con su venta">
-                                                                <i class="fas fa-lock"></i>
-                                                            </span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Cards móvil -->
-                    <div class="d-md-none" id="gastosMobile">
-                        <?php if (empty($gastos)): ?>
-                            <div class="text-center py-5 text-muted">
-                                <i class="fas fa-receipt fa-3x mb-3 d-block"></i>
-                                No hay gastos registrados con estos filtros.
-                            </div>
-                        <?php else: ?>
-                            <?php foreach ($gastos as $gasto): ?>
-                                <div class="card gasto-mobile-card mb-3">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-1">
-                                            <h6 class="fw-bold mb-0"><?php echo safe_html_gasto($gasto['concepto']); ?></h6>
-                                            <?php if ($gasto['tipo'] === 'automatico'): ?>
-                                                <span class="badge badge-tipo-automatico">Automático</span>
-                                            <?php else: ?>
-                                                <span class="badge badge-tipo-manual">Manual</span>
-                                            <?php endif; ?>
-                                        </div>
-                                        <p class="text-muted small mb-1"><?php echo date('d/m/Y H:i', strtotime($gasto['fecha'])); ?> · <?php echo safe_html_gasto($gasto['categoria']); ?></p>
-                                        <?php if (!empty($gasto['proveedor'])): ?>
-                                            <p class="text-muted small mb-1">Proveedor: <?php echo safe_html_gasto($gasto['proveedor']); ?></p>
+                <!-- Cards móvil -->
+                <div class="d-md-none" id="gastosMobile">
+                    <?php if (empty($gastos)): ?>
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-receipt fa-3x mb-3 d-block"></i>
+                            No hay gastos registrados con estos filtros.
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($gastos as $gasto): ?>
+                            <div class="card gasto-mobile-card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <h6 class="fw-bold mb-0"><?php echo safe_html_gasto($gasto['concepto']); ?></h6>
+                                        <?php if ($gasto['tipo'] === 'automatico'): ?>
+                                            <span class="badge bg-info">Automático</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-success">Manual</span>
                                         <?php endif; ?>
-                                        <?php if (!empty($gasto['numero_referencia'])): ?>
-                                            <p class="text-muted small mb-1">Ref: <?php echo safe_html_gasto($gasto['numero_referencia']); ?></p>
+                                    </div>
+                                    <p class="text-muted small mb-1"><?php echo date('d/m/Y H:i', strtotime($gasto['fecha'])); ?> · <?php echo safe_html_gasto($gasto['categoria']); ?></p>
+                                    <?php if (!empty($gasto['proveedor'])): ?>
+                                        <p class="text-muted small mb-1">Proveedor: <?php echo safe_html_gasto($gasto['proveedor']); ?></p>
+                                    <?php endif; ?>
+                                    <?php if (!empty($gasto['numero_referencia'])): ?>
+                                        <p class="text-muted small mb-1">Ref: <?php echo safe_html_gasto($gasto['numero_referencia']); ?></p>
+                                    <?php endif; ?>
+                                    <?php if (!empty($gasto['codigo_venta'])): ?>
+                                        <p class="text-muted small mb-1">Venta: <?php echo safe_html_gasto($gasto['codigo_venta']); ?></p>
+                                    <?php endif; ?>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span class="fw-bold text-danger">-$<?php echo number_format($gasto['monto'], 2); ?></span>
+                                        <?php if ($gasto['tipo'] === 'manual'): ?>
+                                            <div>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick='prepararEditarGasto(<?php echo json_encode($gasto); ?>)'>
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmarEliminarGasto(<?php echo (int)$gasto['id']; ?>)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
                                         <?php endif; ?>
-                                        <?php if (!empty($gasto['codigo_venta'])): ?>
-                                            <p class="text-muted small mb-1">Venta: <?php echo safe_html_gasto($gasto['codigo_venta']); ?></p>
-                                        <?php endif; ?>
-                                        <div class="d-flex justify-content-between align-items-center mt-2">
-                                            <span class="fw-bold text-danger">-$<?php echo number_format($gasto['monto'], 2); ?></span>
-                                            <?php if ($gasto['tipo'] === 'manual'): ?>
-                                                <div>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick='prepararEditarGasto(<?php echo json_encode($gasto); ?>)'>
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmarEliminarGasto(<?php echo (int)$gasto['id']; ?>)">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
                                     </div>
                                 </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Paginación -->
-                    <?php if ($total_paginas > 1): ?>
-                        <nav class="mt-4">
-                            <ul class="pagination justify-content-center flex-wrap">
-                                <?php if ($pagina_actual > 1): ?>
-                                    <li class="page-item"><a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['pagina' => $pagina_actual - 1])); ?>"><i class="fas fa-chevron-left"></i></a></li>
-                                <?php endif; ?>
-                                <?php
-                                $inicio = max(1, $pagina_actual - 2);
-                                $fin = min($total_paginas, $pagina_actual + 2);
-                                for ($i = $inicio; $i <= $fin; $i++): ?>
-                                    <li class="page-item <?php echo $i == $pagina_actual ? 'active' : ''; ?>">
-                                        <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['pagina' => $i])); ?>"><?php echo $i; ?></a>
-                                    </li>
-                                <?php endfor; ?>
-                                <?php if ($pagina_actual < $total_paginas): ?>
-                                    <li class="page-item"><a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['pagina' => $pagina_actual + 1])); ?>"><i class="fas fa-chevron-right"></i></a></li>
-                                <?php endif; ?>
-                            </ul>
-                        </nav>
+                            </div>
+                        <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
+
+                <!-- Paginación -->
+                <?php if ($total_paginas > 1): ?>
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center flex-wrap">
+                            <?php if ($pagina_actual > 1): ?>
+                                <li class="page-item"><a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['pagina' => $pagina_actual - 1])); ?>"><i class="fas fa-chevron-left"></i></a></li>
+                            <?php endif; ?>
+                            <?php
+                            $inicio = max(1, $pagina_actual - 2);
+                            $fin = min($total_paginas, $pagina_actual + 2);
+                            for ($i = $inicio; $i <= $fin; $i++): ?>
+                                <li class="page-item <?php echo $i == $pagina_actual ? 'active' : ''; ?>">
+                                    <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['pagina' => $i])); ?>"><?php echo $i; ?></a>
+                                </li>
+                            <?php endfor; ?>
+                            <?php if ($pagina_actual < $total_paginas): ?>
+                                <li class="page-item"><a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['pagina' => $pagina_actual + 1])); ?>"><i class="fas fa-chevron-right"></i></a></li>
+                            <?php endif; ?>
+                        </ul>
+                    </nav>
+                <?php endif; ?>
             </main>
         </div>
     </div>
@@ -1488,67 +647,123 @@ $is_admin = isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'adm
         <input type="hidden" name="accion" value="eliminar_gasto">
         <input type="hidden" name="gasto_id" id="eliminar_gasto_id" value="">
     </form>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Sidebar móvil
-            const sidebarMobile = document.getElementById('sidebarMobile');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-            const hamburgerBtn = document.getElementById('sidebarToggleMobile');
-            const swipeArea = document.getElementById('swipeArea');
-
-            let touchStartX = 0;
-            let isOpen = false;
-            const SWIPE_THRESHOLD = 50;
+            // =============================================
+            // FUNCIONALIDAD DE SIDEBAR (igual que dashboard.php)
+            // =============================================
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
 
             function openSidebar() {
-                if (sidebarMobile && !isOpen) {
-                    sidebarMobile.classList.add('show');
-                    sidebarOverlay.classList.add('show');
+                if (sidebar && !sidebar.classList.contains('show')) {
+                    sidebar.classList.add('show');
+                    sidebarBackdrop.classList.add('show');
                     document.body.style.overflow = 'hidden';
-                    isOpen = true;
-                    if (hamburgerBtn) hamburgerBtn.classList.add('active');
                 }
             }
 
             function closeSidebar() {
-                if (sidebarMobile && isOpen) {
-                    sidebarMobile.classList.remove('show');
-                    sidebarOverlay.classList.remove('show');
+                if (sidebar && sidebar.classList.contains('show')) {
+                    sidebar.classList.remove('show');
+                    sidebarBackdrop.classList.remove('show');
                     document.body.style.overflow = '';
-                    isOpen = false;
-                    if (hamburgerBtn) hamburgerBtn.classList.remove('active');
                 }
             }
 
-            if (hamburgerBtn) {
-                hamburgerBtn.addEventListener('click', function(e) {
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    isOpen ? closeSidebar() : openSidebar();
-                });
-            }
-
-            if (sidebarOverlay) {
-                sidebarOverlay.addEventListener('click', closeSidebar);
-            }
-
-            if (swipeArea) {
-                swipeArea.addEventListener('touchstart', function(e) {
-                    touchStartX = e.changedTouches[0].screenX;
-                });
-
-                swipeArea.addEventListener('touchend', function(e) {
-                    const touchEndX = e.changedTouches[0].screenX;
-                    const deltaX = touchEndX - touchStartX;
-
-                    if (deltaX > SWIPE_THRESHOLD && !isOpen) {
-                        openSidebar();
-                    } else if (deltaX < -SWIPE_THRESHOLD && isOpen) {
+                    if (sidebar.classList.contains('show')) {
                         closeSidebar();
+                    } else {
+                        openSidebar();
                     }
                 });
             }
+
+            if (sidebarBackdrop) {
+                sidebarBackdrop.addEventListener('click', closeSidebar);
+            }
+
+            // Cerrar sidebar al hacer clic en un enlace (en móvil)
+            const sidebarLinks = document.querySelectorAll('#sidebar .nav-link');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 768) {
+                        closeSidebar();
+                    }
+                });
+            });
+
+            // Ajustar en redimensionamiento
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 768) {
+                    closeSidebar();
+                }
+            });
+
+            // =============================================
+            // SWIPE AUTOMÁTICO (igual que dashboard.php)
+            // =============================================
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            let isTouchActive = false;
+            const SWIPE_THRESHOLD = 50;
+            const SWIPE_EDGE_ZONE = 30;
+            const VERTICAL_THRESHOLD = 30;
+
+            document.addEventListener('touchstart', function(e) {
+                if (window.innerWidth >= 768) return;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchEndX = touchStartX;
+                touchEndY = touchStartY;
+                isTouchActive = true;
+            });
+
+            document.addEventListener('touchmove', function(e) {
+                if (!isTouchActive) return;
+                touchEndX = e.touches[0].clientX;
+                touchEndY = e.touches[0].clientY;
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchend', function(e) {
+                if (!isTouchActive) return;
+                isTouchActive = false;
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+
+                if (Math.abs(deltaY) > VERTICAL_THRESHOLD) return;
+
+                const isSidebarOpen = sidebar && sidebar.classList.contains('show');
+
+                if (deltaX > SWIPE_THRESHOLD) {
+                    if (touchStartX <= SWIPE_EDGE_ZONE && !isSidebarOpen) {
+                        openSidebar();
+                    }
+                } else if (deltaX < -SWIPE_THRESHOLD) {
+                    if (isSidebarOpen) {
+                        closeSidebar();
+                    }
+                }
+
+                touchStartX = 0;
+                touchStartY = 0;
+                touchEndX = 0;
+                touchEndY = 0;
+            });
         });
 
         // Preparar modal para nuevo gasto

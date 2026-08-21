@@ -53,12 +53,28 @@ class Config {
             'spei' => [
                 'user' => getenv('SPEI_USER') ?: '',
                 'password' => getenv('SPEI_PASSWORD') ?: '',
+                'user_sanbox' => getenv('SPEI_USER_SAND') ?: '',    // ✓ Ahora es USER
+                'password_sanbox' => getenv('SPEI_PASSWORD_SAND') ?: '', // ✓ Ahora es PASSWORD
                 'integration_id' => getenv('SPEI_INTEGRATION_ID') ?: '',
                 'business_id' => getenv('SPEI_BUSINESS_ID') ?: '',
-                'url_generar' => getenv('SPEI_URL_GENERAR') ?: 'https://pagadetodo.mx/Pagadetodo/Service/GenerarClabeIndi',
+                'url_generar' => getenv('SPEI_URL_GENERAR') ?: 'https://pagadetodo.mx/Pagadetodo/Service/GenerarLigaIndi',
+                'url_generar_ligatdc' => getenv('SPEI_URL_GENERAR_LIGA') ?: 'https://pagadetodo.mx/Pagadetodo/Service/GenerarClabeIndi',
+                'url_generar_liga_dom' => getenv('DOM_URL_GENERAR_LIGA') ?: 'https://pagadetodo.mx/Pagadetodo/Service/GenerarLigaDomiciliacionInd',
+		'url_pagar_dom' => getenv('DOMICILIACION_PAGAR') ?: 'https://pagadetodo.mx/Pagadetodo/Service/PagarDomiciliacionIndi',
+
                 'url_sandbox' => getenv('SPEI_URL_SANDBOX') ?: 'https://pagadetodo.mx/Sandbox/Login.aspx',
                 'timeout' => (int) (getenv('SPEI_TIMEOUT') ?: 30),
                 'dias_vigencia' => (int) (getenv('SPEI_DIAS_VIGENCIA') ?: 1)
+            ],
+            'domicilacion' => [
+                'user_dom' => getenv('DOMICILIACION_USER') ?: '',
+                'password_dom' => getenv('DOMICILIACION_PASS') ?: '',
+                'integration_id_dom' => getenv('DOMICILIACION_INTEGRATION_ID') ?: '',
+                'business_id_dom' => getenv('DOMICILIACION_INTEGRATION_BUSINESS_ID') ?: '',
+                'url_generar_liga_dom' => getenv('DOMI_URL_GENERAR_LIGA') ?: 'https://pagadetodo.mx/Pagadetodo/Service/GenerarLigaDomiciliacionIndi',
+		        'url_pago_dom' => getenv('DOMI_PAGAR') ?: 'https://pagadetodo.mx/Pagadetodo/Service/PagarDomiciliacionIndi',
+                'url_cancelar_dom' => getenv('DOMI_CANCELAR') ?: '',
+                'dias_vigencia_dom' => (int) (getenv('DOMICILIACION_DIAS_VIGENCIA') ?: 2)
             ]
         ];
         
@@ -113,6 +129,12 @@ class Config {
     public function getSpeiConfig() {
         return $this->config['spei'];
     }
+
+    public function getDomiciliacionDonfig(){
+        return $this->config['domicilacion'];
+    }
+
+
 }
 
 // Función helper para acceder a la configuración fácilmente
@@ -123,6 +145,14 @@ function config($key, $default = null) {
 // Función helper para obtener configuración SPEI
 function speiConfig($key = null, $default = null) {
     $config = Config::getInstance()->getSpeiConfig();
+    if ($key === null) {
+        return $config;
+    }
+    return $config[$key] ?? $default;
+}
+
+function domiciliacionConfig($key = null, $default = null) {
+    $config = Config::getInstance()->getDomiciliacionDonfig();
     if ($key === null) {
         return $config;
     }

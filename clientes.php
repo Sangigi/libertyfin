@@ -1,5 +1,5 @@
 <?php
-//clientes.php
+// clientes.php
 
 session_start();
 
@@ -20,9 +20,10 @@ $conn_main = getDBConnection();
 $empresa_plan = "prueba";
 $timbres_totales = 0;
 $timbres_disponibles = 0;
+$terminal_emida = null;
 
 if ($conn_main) {
-    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?";
+    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida FROM empresas WHERE id = ?";
     $stmt_empresa = $conn_main->prepare($sql_empresa);
     $stmt_empresa->execute([$_SESSION['empresa_id']]);
     $result_empresa = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
@@ -31,9 +32,10 @@ if ($conn_main) {
         $empresa_plan = $result_empresa['plan'];
         $timbres_totales = $result_empresa['timbres_totales'] ?? 0;
         $timbres_disponibles = $result_empresa['timbres_disponibles'] ?? 0;
+        $terminal_emida = $result_empresa['terminal_emida'] ?? null;
     }
     $stmt_empresa = null;
-    $conn_main = null;
+    // No cerramos $conn_main aquí porque se necesita para getNotificationStatus
 }
 
 // Guardar el plan en la sesión
@@ -206,6 +208,15 @@ try {
     ";
     $result_con_compras = $conn->query($sql_con_compras);
     $clientes_con_compras = $result_con_compras->fetchAll(PDO::FETCH_ASSOC);
+
+    // Notificaciones (opcional) - se necesita para el sidebar
+    $notification_status = null;
+    if (file_exists(__DIR__ . '/../EmidaServicios/config.php')) {
+        require_once __DIR__ . '/../EmidaServicios/config.php';
+        if (function_exists('getNotificationStatus')) {
+            $notification_status = getNotificationStatus($conn_main);
+        }
+    }
     
 } catch (Exception $e) {
     die("Error: " . $e->getMessage());
@@ -474,7 +485,6 @@ function eliminarCliente($conn)
     exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 
@@ -482,615 +492,27 @@ function eliminarCliente($conn)
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Clientes - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
-     <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        :root {
-            --primary-color: <?php echo $_SESSION['color_primario']; ?>;
-            --secondary-color: <?php echo $_SESSION['color_secundario']; ?>;
-            --bs-success: var(--primary-color) !important;
-            --bs-success-rgb: 39, 174, 96 !important;
-        }
-
-        .btn-success {
-            --bs-btn-bg: var(--primary-color) !important;
-            --bs-btn-border-color: var(--primary-color) !important;
-            --bs-btn-hover-bg: var(--secondary-color) !important;
-            --bs-btn-hover-border-color: var(--secondary-color) !important;
-        }
-
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: pan-y;
-            overflow-x: hidden;
-        }
-
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .navbar-brand img {
-            height: 40px;
-            width: auto;
-            max-width: 120px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-
-        .sidebar {
-            background: #2c3e50;
-            color: white;
-            min-height: calc(100vh - 56px);
-            transition: transform 0.3s ease-out;
-            will-change: transform;
-            transform: translateX(-100%);
-            z-index: 1050;
-        }
-
-        .sidebar .nav-link {
-            color: #ecf0f1;
-            padding: 12px 20px;
-            border-left: 3px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar .nav-link.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar .nav-link i {
-            width: 20px;
-            margin-right: 10px;
-        }
-
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-            margin-bottom: 1rem;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-        }
-
-        .stat-card {
-            border-left: 4px solid var(--primary-color);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .stat-card:active {
-            transform: scale(0.98);
-        }
-
-        .stat-card .card-body {
-            padding: 1.5rem;
-        }
-
-        .client-list-modal {
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-        .client-list-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background-color 0.2s;
-        }
-        .client-list-item:hover {
-            background-color: #f8f9fa;
-        }
-        .client-list-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #9b59b6, #8e44ad);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            margin-right: 15px;
-            flex-shrink: 0;
-        }
-        .client-list-info {
-            flex: 1;
-        }
-        .client-list-name {
-            font-weight: 600;
-            margin-bottom: 2px;
-            color: #2c3e50;
-        }
-        .client-list-contact {
-            font-size: 0.75rem;
-            color: #6c757d;
-        }
-        .client-list-badge {
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-            background: #e8f4fd;
-            color: #2c3e50;
-        }
-
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-
-        .status-active {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .search-box {
-            position: relative;
-        }
-
-        .search-box .form-control {
-            padding-left: 40px;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-        }
-
-        .cliente-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #9b59b6, #8e44ad);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1rem;
-        }
-
-        .contacto-info {
-            font-size: 0.875rem;
-            color: #6c757d;
-        }
-
-        .ventas-badge {
-            background: #e8f4fd;
-            color: #2c3e50;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .monto-ventas {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #27ae60;
-        }
-
-        .pagination-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1rem;
-            padding: 1rem 0;
-            border-top: 1px solid #dee2e6;
-        }
-
-        .pagination-info {
-            color: #6c757d;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .pagination {
-            margin-bottom: 0;
-        }
-
-        .pagination .page-link {
-            color: #495057;
-            border: 1px solid #dee2e6;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .pagination .page-link:hover {
-            background-color: #e9ecef;
-            border-color: #dee2e6;
-            color: #495057;
-        }
-
-        .pagination .page-item.active .page-link {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white !important;
-        }
-
-        .pagination .page-item.disabled .page-link {
-            color: #6c757d;
-            background-color: #f8f9fa;
-            border-color: #dee2e6;
-            opacity: 0.6;
-        }
-
-        /* Fila clickeable */
-        .clickable-row {
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        .clickable-row:hover {
-            background-color: rgba(0, 0, 0, 0.05) !important;
-        }
-
-        /* Tarjeta clickeable para móvil */
-        .clickable-card {
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .clickable-card:active {
-            transform: scale(0.98);
-        }
-
-        .sidebar-toggle {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.25rem;
-            padding: 0.5rem;
-            margin-right: 1rem;
-        }
-
-        .btn-delete {
-            color: #dc3545;
-            border-color: #dc3545;
-        }
-        .btn-delete:hover {
-            background-color: #dc3545;
-            color: white;
-            border-color: #dc3545;
-        }
-
-        /* Responsive */
-        @media (max-width: 767.98px) {
-            .sidebar-toggle {
-                display: block;
-            }
-
-            .sidebar {
-                position: fixed;
-                top: 56px;
-                left: 0;
-                width: 280px;
-                height: calc(100vh - 56px);
-                overflow-y: auto;
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
-            }
-
-            .sidebar.show {
-                transform: translateX(0);
-            }
-
-            .sidebar-overlay {
-                position: fixed;
-                top: 56px;
-                left: 0;
-                width: 100%;
-                height: calc(100vh - 56px);
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 1045;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-            }
-
-            .sidebar-overlay.show {
-                opacity: 1;
-            }
-
-            main {
-                margin-left: 0 !important;
-                padding: 1rem !important;
-            }
-
-            body.sidebar-open {
-                overflow: hidden;
-            }
-
-            .stat-card .card-body {
-                padding: 1rem;
-            }
-
-            .stats-number {
-                font-size: 1.5rem;
-            }
-
-            .table-responsive {
-                font-size: 0.875rem;
-            }
-
-            .mobile-cliente-card {
-                border-left: 4px solid #9b59b6;
-                margin-bottom: 1rem;
-            }
-
-            .pagination-container {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-
-            .pagination {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-
-            .pagination .page-link {
-                padding: 0.375rem 0.75rem;
-                font-size: 0.8rem;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .sidebar {
-                transform: translateX(0) !important;
-            }
-        }
-
-        @media (max-width: 575.98px) {
-            .col-md-2 {
-                flex: 0 0 50%;
-                max-width: 50%;
-            }
-
-            .stats-number {
-                font-size: 1.3rem;
-            }
-
-            .pagination .page-link {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.75rem;
-            }
-        }
-
-        .metric-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-        }
-
-        .metric-label {
-            font-size: 0.875rem;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .rfc-badge {
-            background: #f8f9fa;
-            color: #495057;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-family: monospace;
-        }
-
-        .cliente-frecuente {
-            border-left: 4px solid #f39c12 !important;
-        }
-
-        .cliente-premium {
-            border-left: 4px solid #e74c3c !important;
-        }
-
-        .swipe-indicator {
-            position: fixed;
-            top: 56px;
-            left: 0;
-            width: 30px;
-            height: calc(100vh - 56px);
-            background: rgba(39, 174, 96, 0.1);
-            z-index: 9999;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        @media (max-width: 767.98px) {
-            main {
-                transition: none !important;
-                transform: none !important;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="css/crm-theme.css">
 </head>
 
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <button class="sidebar-toggle" type="button" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
+    <!-- ========== NAVBAR INCLUIDO DESDE includes/navbar.php ========== -->
+    <?php include 'includes/navbar.php'; ?>
 
-            <a class="navbar-brand d-flex align-items-center" href="Inicio">
-                <?php if ($logo_src_base64): ?>
-                    <img src="<?php echo $logo_src_base64; ?>"
-                        alt="<?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>"
-                        class="me-2">
-                    <span><?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></span>
-                <?php elseif ($logo_empresa && file_exists($logo_empresa)): ?>
-                    <img src="<?php echo htmlspecialchars($logo_empresa); ?>"
-                        alt="<?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>"
-                        class="me-2"
-                        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
-                    <i class="fas fa-cash-register me-2" style="display: none;"></i>
-                    <span><?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></span>
-                <?php else: ?>
-                    <i class="fas fa-cash-register me-2"></i>
-                    <span><?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></span>
-                <?php endif; ?>
-            </a>
-
-            <div class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle me-1"></i>
-                        <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><span class="dropdown-item-text">
-                                <small>Empresa: <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></small>
-                            </span></li>
-                        <li><span class="dropdown-item-text">
-                                <small>Rol: <?php echo htmlspecialchars($_SESSION['usuario_rol']); ?></small>
-                            </span></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
-                    </ul>
-                </li>
-            </div>
-        </div>
-    </nav>
+    <!-- Backdrop para móvil -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar" id="sidebar">
-                <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="Inicio">
-                                <i class="fas fa-tachometer-alt"></i>
-                                Dashboard
-                            </a>
-                        </li>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="Usuarios">
-                                    <i class="fas fa-user-cog"></i>
-                                    Usuarios
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Caja">
-                                <i class="fas fa-cash-register"></i>
-                                Caja
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Productos">
-                                <i class="fas fa-boxes"></i>
-                                Productos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="Clientes">
-                                <i class="fas fa-users"></i>
-                                Clientes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Ventas">
-                                <i class="fas fa-receipt"></i>
-                                Ventas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="CortesCaja">
-                                <i class="fas fa-cash-register"></i>
-                                Cortes de Caja
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Proveedores">
-                                <i class="fas fa-truck"></i>
-                                Proveedores
-                            </a>
-                        </li>
-                        <?php if ($empresa_plan !== 'basico' && $_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="Sucursales">
-                                    <i class="fas fa-store"></i>
-                                    Sucursales
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin' && $_SESSION['sucursal_id'] == 1 && $timbres_disponibles > 0) : ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="Facturacion/inicio.php">
-                                    <i class="fas fa-file-invoice-dollar"></i>
-                                    Facturación
-                                    <?php if ($timbres_disponibles > 0): ?>
-                                        <span class="badge bg-success ms-2" style="font-size: 0.65rem;">
-                                            <?php echo $timbres_disponibles; ?> timbres
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="badge bg-warning ms-2" style="font-size: 0.65rem;">
-                                            Sin timbres
-                                        </span>
-                                    <?php endif; ?>
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Reportes">
-                                <i class="fas fa-chart-bar"></i>
-                                Reportes
-                            </a>
-                        </li>
-                         <?php if ($empresa_plan === 'premium'): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="../EmidaServicios/inicio.php">
-                                <img src="../images/emidalogo.png" alt="" style="width: 20px; height: 20px; margin-right: 10px; object-fit: contain;">
-                                Emida Servicios
-                            </a>
-                        </li>
-                         <?php endif; ?>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="comisiones_config.php">
-                                    <i class="fas fa-percentage"></i>
-                                    Comisiones
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="Configuracion">
-                                    <i class="fas fa-cogs"></i>
-                                    Configuración
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
-            </div>
+            <!-- ========== SIDEBAR INCLUIDO DESDE includes/sidebar.php ========== -->
+            <?php include 'includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4" id="mainContent">
@@ -1194,7 +616,7 @@ function eliminarCliente($conn)
                     </div>
                 </div>
 
-                <!-- Vista de Tabla (Desktop) - SIN columna de acciones -->
+                <!-- Vista de Tabla (Desktop) -->
                 <div class="d-none d-lg-block">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -1353,7 +775,7 @@ function eliminarCliente($conn)
                     </div>
                 </div>
 
-                <!-- Vista de Tarjetas (Móvil) - SIN botones de acción -->
+                <!-- Vista de Tarjetas (Móvil) -->
                 <div class="d-lg-none">
                     <div class="row" id="mobileClientes">
                         <?php if (empty($clientes)): ?>
@@ -1845,7 +1267,6 @@ function eliminarCliente($conn)
         // Evento para filas clickeables (escritorio)
         document.querySelectorAll('.clickable-row').forEach(row => {
             row.addEventListener('click', function(e) {
-                // Evitar que se active si se hizo clic en un enlace o botón dentro de la fila
                 if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('a') || e.target.closest('button')) {
                     return;
                 }
@@ -1870,7 +1291,6 @@ function eliminarCliente($conn)
         // Evento para tarjetas clickeables (móvil)
         document.querySelectorAll('.clickable-card').forEach(card => {
             card.addEventListener('click', function(e) {
-                // Evitar que se active si se hizo clic en un botón dentro de la tarjeta
                 if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
                     return;
                 }
@@ -1895,73 +1315,46 @@ function eliminarCliente($conn)
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
             const sidebarToggle = document.getElementById('sidebarToggle');
-            let overlay = null;
+            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
 
-            function openSidebar() {
-                if (!sidebar) return;
-
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.className = 'sidebar-overlay';
-                    overlay.style.cssText = `
-                        position: fixed;
-                        top: 56px;
-                        left: 0;
-                        width: 100%;
-                        height: calc(100vh - 56px);
-                        background: rgba(0, 0, 0, 0.5);
-                        z-index: 1045;
-                        opacity: 0;
-                        transition: opacity 0.3s ease;
-                    `;
-                    document.body.appendChild(overlay);
-
-                    overlay.addEventListener('click', closeSidebar);
-                    overlay.addEventListener('touchstart', closeSidebar);
-                }
-
-                sidebar.style.transition = 'transform 0.3s ease-out';
-                sidebar.style.transform = 'translateX(0)';
-                document.body.classList.add('sidebar-open');
-
-                setTimeout(() => {
-                    if (overlay) overlay.style.opacity = '1';
-                }, 10);
-            }
-
-            function closeSidebar() {
-                if (!sidebar) return;
-
-                sidebar.style.transition = 'transform 0.3s ease-out';
-                sidebar.style.transform = 'translateX(-100%)';
-                document.body.classList.remove('sidebar-open');
-
-                if (overlay) {
-                    overlay.style.opacity = '0';
-                    setTimeout(() => {
-                        if (overlay && overlay.parentNode) {
-                            overlay.parentNode.removeChild(overlay);
-                            overlay = null;
-                        }
-                    }, 300);
+            // Funciones de apertura/cierre del sidebar (se usan también en el swipe)
+            function openSidebarAuto() {
+                if (sidebar && sidebarBackdrop) {
+                    sidebar.classList.add('show');
+                    sidebarBackdrop.classList.add('show');
+                    document.body.style.overflow = 'hidden';
                 }
             }
 
+            function closeSidebarAuto() {
+                if (sidebar && sidebarBackdrop) {
+                    sidebar.classList.remove('show');
+                    sidebarBackdrop.classList.remove('show');
+                    document.body.style.overflow = '';
+                }
+            }
+
+            // Toggle manual con el botón hamburguesa
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    if (sidebar.style.transform === 'translateX(0px)' || sidebar.classList.contains('show')) {
-                        closeSidebar();
+                    if (sidebar.classList.contains('show')) {
+                        closeSidebarAuto();
                     } else {
-                        openSidebar();
+                        openSidebarAuto();
                     }
                 });
             }
 
+            if (sidebarBackdrop) {
+                sidebarBackdrop.addEventListener('click', closeSidebarAuto);
+            }
+
+            // Cerrar sidebar al hacer clic en un enlace (en móvil)
             document.querySelectorAll('#sidebar .nav-link').forEach(link => {
                 link.addEventListener('click', function() {
                     if (window.innerWidth < 768) {
-                        closeSidebar();
+                        closeSidebarAuto();
                     }
                 });
             });
@@ -1969,45 +1362,55 @@ function eliminarCliente($conn)
             // SWIPE PARA SIDEBAR
             let touchStartX = 0;
             let touchStartY = 0;
-            let isSwiping = false;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            let isTouchActive = false;
             const SWIPE_THRESHOLD = 50;
             const SWIPE_EDGE_ZONE = 30;
+            const VERTICAL_THRESHOLD = 30;
 
             document.addEventListener('touchstart', function(e) {
                 if (window.innerWidth >= 768) return;
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
-                isSwiping = true;
+                touchEndX = touchStartX;
+                touchEndY = touchStartY;
+                isTouchActive = true;
             });
 
             document.addEventListener('touchmove', function(e) {
-                if (!isSwiping) return;
-                const touchX = e.touches[0].clientX;
-                const touchY = e.touches[0].clientY;
-                const deltaX = touchX - touchStartX;
-                const deltaY = touchY - touchStartY;
+                if (!isTouchActive) return;
+                touchEndX = e.touches[0].clientX;
+                touchEndY = e.touches[0].clientY;
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
                 if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
                     e.preventDefault();
                 }
             }, { passive: false });
 
             document.addEventListener('touchend', function(e) {
-                if (!isSwiping) return;
-                const touchEndX = e.changedTouches[0].clientX;
+                if (!isTouchActive) return;
+                isTouchActive = false;
                 const deltaX = touchEndX - touchStartX;
-                if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-                    if (deltaX > 0 && touchStartX <= SWIPE_EDGE_ZONE) {
-                        openSidebar();
-                    } else if (deltaX < 0 && sidebar.style.transform === 'translateX(0px)') {
-                        closeSidebar();
-                    }
+                const deltaY = touchEndY - touchStartY;
+                if (Math.abs(deltaY) > VERTICAL_THRESHOLD) return;
+                const isSidebarOpen = sidebar && sidebar.classList.contains('show');
+                if (deltaX > SWIPE_THRESHOLD && touchStartX <= SWIPE_EDGE_ZONE && !isSidebarOpen) {
+                    openSidebarAuto();
+                } else if (deltaX < -SWIPE_THRESHOLD && isSidebarOpen) {
+                    closeSidebarAuto();
                 }
-                isSwiping = false;
+                touchStartX = 0;
+                touchStartY = 0;
+                touchEndX = 0;
+                touchEndY = 0;
             });
 
+            // Cerrar sidebar al redimensionar a escritorio
             window.addEventListener('resize', function() {
                 if (window.innerWidth >= 768) {
-                    closeSidebar();
+                    closeSidebarAuto();
                 }
             });
 
@@ -2028,31 +1431,6 @@ function eliminarCliente($conn)
                     });
                 });
             }
-
-            // Editar cliente (botones de edición existentes - se mantienen por compatibilidad)
-            document.querySelectorAll('.edit-cliente-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const clienteId = this.getAttribute('data-id');
-                    const clienteNombre = this.getAttribute('data-nombre');
-                    const clienteEmail = this.getAttribute('data-email');
-                    const clienteTelefono = this.getAttribute('data-telefono');
-                    const clienteDireccion = this.getAttribute('data-direccion');
-                    const clienteRfc = this.getAttribute('data-rfc');
-
-                    document.getElementById('modalTitle').textContent = 'Editar Cliente';
-                    document.getElementById('formAction').value = 'editar';
-                    document.getElementById('clienteId').value = clienteId;
-                    document.getElementById('nombre').value = clienteNombre;
-                    document.getElementById('rfc').value = clienteRfc;
-                    document.getElementById('email').value = clienteEmail;
-                    document.getElementById('telefono').value = clienteTelefono;
-                    document.getElementById('direccion').value = clienteDireccion;
-                    
-                    const modalElement = document.getElementById('clienteModal');
-                    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
-                    modal.show();
-                });
-            });
 
             // Resetear formulario al abrir modal para nuevo cliente
             document.getElementById('nuevoClienteBtn').addEventListener('click', function() {
@@ -2123,5 +1501,4 @@ function eliminarCliente($conn)
         });
     </script>
 </body>
-
 </html>

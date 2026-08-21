@@ -539,265 +539,19 @@ function crearBackupPHP($conn, $backup_file)
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuración - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
+        <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: <?php echo getConfigValue($config, 'color_primario', '#27ae60'); ?>;
-            --secondary-color: <?php echo getConfigValue($config, 'color_secundario', '#2ecc71'); ?>;
-            --preview-primary: <?php echo getConfigValue($config, 'color_primario', '#27ae60'); ?>;
-            --preview-secondary: <?php echo getConfigValue($config, 'color_secundario', '#2ecc71'); ?>;
-        }
 
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .navbar-brand img {
-            height: 40px;
-            width: auto;
-            max-width: 120px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-
-        .sidebar {
-            background: #2c3e50;
-            color: white;
-            min-height: calc(100vh - 56px);
-            transition: all 0.3s ease;
-        }
-
-        .sidebar .nav-link {
-            color: #ecf0f1;
-            padding: 12px 20px;
-            border-left: 3px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar .nav-link.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar .nav-link i {
-            width: 20px;
-            margin-right: 10px;
-        }
-
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-        }
-
-        .config-section .card-header {
-            border-bottom: 2px solid var(--primary-color);
-        }
-
-        .logo-preview {
-            max-width: 200px;
-            max-height: 200px;
-            border: 2px dashed #dee2e6;
-            border-radius: 8px;
-            padding: 10px;
-        }
-
-        .nav-tabs .nav-link.active {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        .stat-card {
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .color-preview {
-            width: 30px;
-            height: 30px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-right: 10px;
-            border: 1px solid #ddd;
-        }
-
-        .backup-list {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        /* Estilos adicionales para la personalización de colores */
-        .paleta-option {
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .paleta-option:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .paleta-option.border-primary {
-            border-width: 2px !important;
-        }
-
-        .form-control-color {
-            width: 3rem;
-            height: 2.5rem;
-            padding: 0.1rem;
-        }
-
-        .color-preview {
-            width: 30px;
-            height: 30px;
-            border-radius: 4px;
-            display: inline-block;
-            border: 1px solid #ddd;
-        }
-
-        #previewNavbar {
-            min-height: 60px;
-        }
-
-        #previewAlert {
-            border: none;
-            border-radius: 0.375rem;
-        }
-
-        /* Botón hamburguesa para móvil */
-        .sidebar-toggle {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.25rem;
-            padding: 0.5rem;
-            margin-right: 1rem;
-        }
-
-        .sidebar-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1040;
-        }
-
-        /* Responsive */
-        @media (max-width: 767.98px) {
-            .sidebar-toggle {
-                display: block;
-            }
-
-            .sidebar {
-                position: fixed;
-                top: 56px;
-                left: -100%;
-                width: 280px;
-                height: calc(100vh - 56px);
-                z-index: 1050;
-                overflow-y: auto;
-            }
-
-            .sidebar.show {
-                left: 0;
-            }
-
-            .sidebar-backdrop.show {
-                display: block;
-            }
-
-            main {
-                margin-left: 0 !important;
-            }
-        }
-
-        @media (max-width: 575.98px) {
-            .btn-group-actions .btn {
-                padding: 0.75rem 0.5rem;
-                font-size: 0.875rem;
-            }
-        }
-    </style>
     <!-- Tema unificado LibertyFin (estilo landing) -->
-    <!-- <link rel="stylesheet" href="css/crm-theme.css"> -->
+    <link rel="stylesheet" href="css/crm-theme.css">
 </head>
 
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <!-- Botón hamburguesa para móvil -->
-            <button class="sidebar-toggle" type="button" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <a class="navbar-brand" href="#">
-                <?php if (!empty($config['logo']) && file_exists($config['logo'])): ?>
-                    <img src="<?php echo htmlspecialchars($config['logo']); ?>"
-                        alt="Logo"
-                        style="height: 40px; max-width: 150px; object-fit: contain; margin-right: 10px;">
-                <?php else: ?>
-                    <i class="fas fa-cash-register me-2"></i>
-                <?php endif; ?>
-                <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>
-            </a>
-
-            <div class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle me-1"></i>
-                        <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><span class="dropdown-item-text">
-                                <small>Empresa: <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></small>
-                            </span></li>
-                        <li><span class="dropdown-item-text">
-                                <small>Rol: <?php echo htmlspecialchars($_SESSION['usuario_rol']); ?></small>
-                            </span></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
-                    </ul>
-                </li>
-            </div>
-        </div>
-    </nav>
+    <?php include 'includes/navbar.php'; ?>
 
     <!-- Backdrop para móvil -->
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -805,110 +559,7 @@ function crearBackupPHP($conn, $backup_file)
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar" id="sidebar">
-                <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="Inicio">
-                                <i class="fas fa-tachometer-alt"></i>
-                                Inicio
-                            </a>
-                        </li>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="Usuarios">
-                                    <i class="fas fa-user-cog"></i>
-                                    Usuarios
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Caja">
-                                <i class="fas fa-cash-register"></i>
-                                Caja
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Productos">
-                                <i class="fas fa-boxes"></i>
-                                Productos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Clientes">
-                                <i class="fas fa-users"></i>
-                                Clientes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Ventas">
-                                <i class="fas fa-receipt"></i>
-                                Ventas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="CortesCaja">
-                                <i class="fas fa-cash-register"></i>
-                                Cortes de Caja
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Proveedores">
-                                <i class="fas fa-truck"></i>
-                                Proveedores
-                            </a>
-                        </li>
-                        <!-- MENÚ DE SUCURSALES CONDICIONAL -->
-                        <?php if ($empresa_plan !== 'basico'  && $_SESSION['usuario_rol'] === 'admin' ): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="Sucursales">
-                                    <i class="fas fa-store"></i>
-                                    Sucursales
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                         <?php if ($_SESSION['usuario_rol'] === 'admin' && $_SESSION['sucursal_id'] == 1 && $timbres_disponibles > 0) : ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="Facturacion/inicio.php">
-                                    <i class="fas fa-file-invoice-dollar"></i>
-                                    Facturación
-                                    <?php if ($timbres_disponibles > 0): ?>
-                                        <span class="badge bg-success ms-2" style="font-size: 0.65rem;">
-                                            <?php echo $timbres_disponibles; ?> timbres
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="badge bg-warning ms-2" style="font-size: 0.65rem;">
-                                            Sin timbres
-                                        </span>
-                                    <?php endif; ?>
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="reportes.php">
-                                <i class="fas fa-chart-bar"></i>
-                                Reportes
-                            </a>
-                        </li>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="comisiones_config.php">
-                                    <i class="fas fa-percentage"></i>
-                                    Comisiones
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link active" href="Configuracion">
-                                    <i class="fas fa-cogs"></i>
-                                    Configuración
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
-            </div>
+  <?php include 'includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
@@ -955,7 +606,7 @@ function crearBackupPHP($conn, $backup_file)
                             <div class="col-lg-8">
                                 <div class="card">
                                     <div class="card-header bg-primary text-white">
-                                        <h5 class="card-title mb-0"><i class="fas fa-building me-2"></i>Información de la Empresa</h5>
+                                        <h5 class="card-title text-white mb-0"><i class="fas fa-building me-2"></i>Información de la Empresa</h5>
                                     </div>
                                     <div class="card-body">
                                         <form method="POST" action="">
@@ -1013,7 +664,7 @@ function crearBackupPHP($conn, $backup_file)
                             <div class="col-lg-4">
                                 <div class="card">
                                     <div class="card-header bg-success text-white">
-                                        <h5 class="card-title mb-0"><i class="fas fa-image me-2"></i>Logo de la Empresa</h5>
+                                        <h5 class="card-title text-white mb-0"><i class="fas fa-image me-2"></i>Logo de la Empresa</h5>
                                     </div>
                                     <div class="card-body text-center">
                                         <?php if (!empty($config['logo']) && file_exists($config['logo'])): ?>
@@ -1044,7 +695,7 @@ function crearBackupPHP($conn, $backup_file)
                             <div class="col-lg-6">
                                 <div class="card">
                                     <div class="card-header bg-warning text-dark">
-                                        <h5 class="card-title mb-0"><i class="fas fa-boxes me-2"></i>Configuración de Inventario</h5>
+                                        <h5 class="card-title text-white mb-0"><i class="fas fa-boxes me-2"></i>Configuración de Inventario</h5>
                                     </div>
                                     <div class="card-body">
                                         <form method="POST" action="">
@@ -1081,7 +732,7 @@ function crearBackupPHP($conn, $backup_file)
                             <div class="col-lg-8">
                                 <div class="card">
                                     <div class="card-header bg-secondary text-white">
-                                        <h5 class="card-title mb-0"><i class="fas fa-receipt me-2"></i>Configuración de Tickets</h5>
+                                        <h5 class="card-title text-white mb-0"><i class="fas fa-receipt me-2"></i>Configuración de Tickets</h5>
                                     </div>
                                     <div class="card-body">
                                         <form method="POST" action="">
@@ -1118,7 +769,7 @@ function crearBackupPHP($conn, $backup_file)
                             <div class="col-lg-8">
                                 <div class="card">
                                     <div class="card-header bg-purple text-white" style="background-color: #6f42c1;">
-                                        <h5 class="card-title mb-0"><i class="fas fa-palette me-2"></i>Personalización de Colores</h5>
+                                        <h5 class="card-title text-white mb-0"><i class="fas fa-palette me-2"></i>Personalización de Colores</h5>
                                     </div>
                                     <div class="card-body">
                                         <form method="POST" action="">
@@ -1262,7 +913,7 @@ function crearBackupPHP($conn, $backup_file)
                                                     <!-- Tarjeta de vista previa -->
                                                     <div class="card mb-4">
                                                         <div class="card-header" id="previewCardHeader">
-                                                            <h5 class="card-title mb-0">Ejemplo de Tarjeta</h5>
+                                                            <h5 class="card-title text-white mb-0">Ejemplo de Tarjeta</h5>
                                                         </div>
                                                         <div class="card-body">
                                                             <p class="card-text">Esta es una tarjeta de ejemplo con los colores seleccionados.</p>

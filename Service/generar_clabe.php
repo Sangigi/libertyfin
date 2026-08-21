@@ -53,6 +53,42 @@ try {
     $descripcion = $data['Description'] ?? 'Pago Libertyfin';
     $montoTotal = isset($data['MontoTotal']) ? (float) $data['MontoTotal'] : 0;
     
+    // ========== OBTENER EMPRESA_ID ==========
+    // Opción 1: Desde la sesión (si la API es llamada desde el sistema)
+    $empresaId = null;
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    // Prioridad: 1. Desde el payload, 2. Desde sesión, 3. Desde usuario
+    if (isset($data['empresa_id']) && !empty($data['empresa_id'])) {
+        $empresaId = (int) $data['empresa_id'];
+        error_log("📌 empresa_id desde payload: " . $empresaId);
+    } elseif (isset($_SESSION['empresa_id']) && !empty($_SESSION['empresa_id'])) {
+        $empresaId = (int) $_SESSION['empresa_id'];
+        error_log("📌 empresa_id desde sesión: " . $empresaId);
+    } else {
+        // Intentar obtener desde la base de datos usando el email del cliente
+        try {
+            $sql_empresa = "SELECT id FROM empresas WHERE email_contacto = ? OR id = (SELECT empresa_id FROM usuarios WHERE email = ? LIMIT 1) LIMIT 1";
+            $stmt_empresa = $pdo->prepare($sql_empresa);
+            $stmt_empresa->execute([$clienteEmail, $clienteEmail]);
+            $empresa = $stmt_empresa->fetch();
+            if ($empresa) {
+                $empresaId = (int) $empresa['id'];
+                error_log("📌 empresa_id obtenido desde BD: " . $empresaId);
+            }
+        } catch (PDOException $e) {
+            error_log("⚠️ No se pudo obtener empresa_id desde BD: " . $e->getMessage());
+        }
+    }
+    
+    // Si no se pudo obtener empresa_id, usar un valor por defecto
+    if (empty($empresaId)) {
+        $empresaId = 1; // Empresa por defecto
+        error_log("⚠️ Usando empresa_id por defecto: " . $empresaId);
+    }
+    
     // Si no se pasó MontoTotal pero se pasó 'monto' en el payload, usarlo
     if ($montoTotal <= 0 && isset($data['monto'])) {
         $montoTotal = (float) $data['monto'];
@@ -70,8 +106,8 @@ try {
     $descripcionFinal = $data['Description'] ?? "Pago Libertyfin - Monto: $" . number_format($montoTotal, 2);
     
     $payload = [
-        'User' => $speiConfig['user'],
-        'Password' => $speiConfig['password'],
+        'User' => $speiConfig['user_sanbox'],
+        'Password' => $speiConfig['password_sanbox'],
         'IntegrationID' => $speiConfig['integration_id'],
         'BusinessID' => $speiConfig['business_id'],
         'Description' => $descripcionFinal,
@@ -86,7 +122,7 @@ try {
         $payload['MontoTotal'] = $montoTotal;
     }
     
-    error_log("SPEI Payload - Account: " . $account . " - Monto: " . $montoTotal . " - Descripción: " . $descripcionFinal);
+    error_log("📦 SPEI Payload - Account: " . $account . " - Monto: " . $montoTotal . " - EmpresaID: " . $empresaId);
     
     // Llamar a la API
     $ch = curl_init($speiConfig['url_generar']);
@@ -120,7 +156,26 @@ try {
         throw new Exception('Error de Cobroscontarjeta: ' . $errorMsg);
     }
     
-    // Guardar en la base de datos
+    // INICIAR TRANSACCIÓN
+    $pdo->beginTransaction();
+    
+    // Verificar si la columna empresa_id existe
+    try {
+        $stmt_check = $pdo->query("SHOW COLUMNS FROM clabes_spei LIKE 'empresa_id'");
+        $col_exists = $stmt_check->rowCount() > 0;
+    } catch (PDOException $e) {
+        // Si la tabla no tiene la columna, intentar agregarla
+        try {
+            $pdo->exec("ALTER TABLE clabes_spei ADD COLUMN empresa_id INT(11) DEFAULT NULL AFTER id, ADD KEY idx_empresa_id (empresa_id)");
+            error_log("✅ Columna empresa_id agregada a clabes_spei");
+            $col_exists = true;
+        } catch (PDOException $alterError) {
+            error_log("⚠️ No se pudo agregar columna empresa_id: " . $alterError->getMessage());
+            $col_exists = false;
+        }
+    }
+    
+    // Expirar CLABEs anteriores del mismo cliente
     $stmt = $pdo->prepare("
         UPDATE clabes_spei 
         SET estado = 'expirada' 
@@ -128,30 +183,55 @@ try {
     ");
     $stmt->execute([$clienteEmail]);
     
-    $stmt = $pdo->prepare("
-        INSERT INTO clabes_spei (
-            account, clabe, cliente_email, cliente_nombre, descripcion,
-            monto_total, monto_pendiente, fecha_expiracion, estado, 
-            folio, productos_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'vigente', ?, ?)
-    ");
+    // Construir la consulta INSERT con o sin empresa_id
+    if ($col_exists) {
+        $sql = "
+            INSERT INTO clabes_spei (
+                empresa_id, account, clabe, cliente_email, cliente_nombre, descripcion,
+                monto_total, monto_pendiente, fecha_expiracion, estado, 
+                folio, productos_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'vigente', ?, ?)
+        ";
+        $params = [
+            $empresaId,
+            $account,
+            $apiResponse['Clabe'],
+            $clienteEmail,
+            $clienteNombre,
+            $descripcionFinal,
+            $montoTotalCentavos,
+            $montoTotalCentavos,
+            date('Y-m-d H:i:s', strtotime('+1 day')),
+            $apiResponse['Folio'] ?? null,
+            $productos ? json_encode($productos, JSON_UNESCAPED_UNICODE) : null
+        ];
+    } else {
+        $sql = "
+            INSERT INTO clabes_spei (
+                account, clabe, cliente_email, cliente_nombre, descripcion,
+                monto_total, monto_pendiente, fecha_expiracion, estado, 
+                folio, productos_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'vigente', ?, ?)
+        ";
+        $params = [
+            $account,
+            $apiResponse['Clabe'],
+            $clienteEmail,
+            $clienteNombre,
+            $descripcionFinal,
+            $montoTotalCentavos,
+            $montoTotalCentavos,
+            date('Y-m-d H:i:s', strtotime('+1 day')),
+            $apiResponse['Folio'] ?? null,
+            $productos ? json_encode($productos, JSON_UNESCAPED_UNICODE) : null
+        ];
+    }
     
-    $fechaExpiracion = date('Y-m-d H:i:s', strtotime('+1 day'));
-    
-    $stmt->execute([
-        $account,
-        $apiResponse['Clabe'],
-        $clienteEmail,
-        $clienteNombre,
-        $descripcionFinal,
-        $montoTotalCentavos,
-        $montoTotalCentavos,
-        $fechaExpiracion,
-        $apiResponse['Folio'] ?? null,
-        $productos ? json_encode($productos, JSON_UNESCAPED_UNICODE) : null
-    ]);
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     
     $id = $pdo->lastInsertId();
+    $pdo->commit();
     
     // Respuesta exitosa
     echo json_encode([
@@ -161,20 +241,25 @@ try {
         'message' => $apiResponse['Message'] ?? 'Exitosa',
         'folio' => $apiResponse['Folio'] ?? null,
         'id' => $id,
-        'fecha_expiracion' => $fechaExpiracion,
+        'fecha_expiracion' => date('Y-m-d H:i:s', strtotime('+1 day')),
         'reutilizada' => false,
         'nueva' => true,
         'monto_total' => $montoTotal,
         'monto_total_centavos' => $montoTotalCentavos,
-        'descripcion' => $descripcionFinal
+        'descripcion' => $descripcionFinal,
+        'empresa_id' => $empresaId
     ]);
     
 } catch (Exception $e) {
-    error_log("Error en generar_clabe: " . $e->getMessage());
+    // Rollback en caso de error
+    if (isset($pdo) && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    
+    error_log("❌ Error en generar_clabe: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage()
     ]);
 }
-?>

@@ -1,4 +1,5 @@
 <?php
+// suscripciones.php 
 session_start();
 
 // Verificar si el usuario está logueado y es admin
@@ -46,6 +47,15 @@ $offset = ($pagina_actual - 1) * $registros_por_pagina;
 $mensaje = '';
 $tipo_mensaje = '';
 
+// ============================================================
+// VARIABLES PARA EL LOGO
+// ============================================================
+$logo_empresa = null;
+$logo_src_base64 = null;
+$color_primario = '#27ae60';
+$color_secundario = '#2ecc71';
+$nombre_empresa = $_SESSION['empresa_nombre'] ?? 'Mi Empresa';
+
 // Conectar a la base de datos de la empresa
 try {
     $conn = getEmpresaDBConnection($_SESSION['empresa_db']);
@@ -75,11 +85,65 @@ try {
             'direccion' => '',
             'logo' => '',
             'iva' => '16.00',
-            'moneda' => 'MXN'
+            'moneda' => 'MXN',
+            'color_primario' => '#27ae60',
+            'color_secundario' => '#2ecc71'
         ];
         // Recargar la configuración
         $result_config = $conn->query($sql_config);
         $config = $result_config->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // ============================================================
+    // CARGAR LOGO DESDE sistema_config
+    // ============================================================
+    $nombre_empresa = $config['nombre_empresa'] ?? $_SESSION['empresa_nombre'] ?? 'Mi Empresa';
+    $color_primario = $config['color_primario'] ?? '#27ae60';
+    $color_secundario = $config['color_secundario'] ?? '#2ecc71';
+
+    if (!empty($config['logo'])) {
+        $empresa_logo = $config['logo'];
+        $logo_path = '';
+        $rutas_posibles = [
+            $empresa_logo,
+            '../' . $empresa_logo,
+            '../../' . $empresa_logo,
+            'admin/' . $empresa_logo,
+            '../admin/' . $empresa_logo,
+            'logos/' . $empresa_logo,
+            'img/' . $empresa_logo,
+            'images/' . $empresa_logo,
+            'assets/' . $empresa_logo,
+            'uploads/' . $empresa_logo,
+            '../logos/' . $empresa_logo,
+            '../img/' . $empresa_logo,
+            '../images/' . $empresa_logo,
+            '../assets/' . $empresa_logo,
+            '../uploads/' . $empresa_logo
+        ];
+
+        foreach ($rutas_posibles as $ruta) {
+            if (file_exists($ruta) && is_file($ruta)) {
+                $logo_path = $ruta;
+                break;
+            }
+        }
+
+        // Si encontramos el logo, convertirlo a base64
+        if (!empty($logo_path) && file_exists($logo_path)) {
+            $logo_empresa = $logo_path;
+
+            // Obtener la extensión del archivo
+            $extension = strtolower(pathinfo($logo_path, PATHINFO_EXTENSION));
+
+            // Verificar que sea una imagen válida
+            $extensiones_validas = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+            if (in_array($extension, $extensiones_validas)) {
+                // Leer el archivo y convertirlo a base64
+                $logo_data = base64_encode(file_get_contents($logo_path));
+                $logo_src_base64 = 'data:image/' . $extension . ';base64,' . $logo_data;
+            }
+        }
     }
 
     // Función segura para obtener valores de configuración
@@ -188,753 +252,170 @@ $planes = [
 $plan_seleccionado = isset($_GET['plan']) ? $_GET['plan'] : 'empresarial';
 $plan_data = isset($planes[$plan_seleccionado]) ? $planes[$plan_seleccionado] : $planes['empresarial'];
 
-?>
+// Verificar si la empresa ya tiene una tarjeta domiciliada
+$conn_main = getDBConnection();
+$tiene_domiciliacion = false;
+$tarjeta_mask = '';
+$tarjeta_exp_month = '';
+$tarjeta_exp_year = '';
+$domiciliacion_id = 0;
 
+if ($conn_main) {
+    $stmt_dom = $conn_main->prepare("SELECT id, cc_mask, cc_expmonth, cc_expyear FROM domiciliacion_tokens WHERE empresa_id = ?");
+    $stmt_dom->execute([$_SESSION['empresa_id']]);
+    $dom_data = $stmt_dom->fetch(PDO::FETCH_ASSOC);
+    if ($dom_data && !empty($dom_data['cc_mask'])) {
+        $tiene_domiciliacion = true;
+        $domiciliacion_id = $dom_data['id'];
+        $tarjeta_mask = $dom_data['cc_mask'];
+        $tarjeta_exp_month = str_pad($dom_data['cc_expmonth'], 2, '0', STR_PAD_LEFT);
+        $tarjeta_exp_year = $dom_data['cc_expyear'];
+        // Convertir año de 2 dígitos a 4 si es necesario
+        if (strlen($tarjeta_exp_year) == 2) {
+            $tarjeta_exp_year = '20' . $tarjeta_exp_year;
+        }
+    }
+    $conn_main = null;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planes - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
+    <title>Planes - <?php echo htmlspecialchars($nombre_empresa); ?></title>
+    
+    <!-- Color de marca por empresa (sobrescribe el tema CRM) -->
     <style>
         :root {
-            --primary-color: <?php echo getConfigValue($config, 'color_primario', '#27ae60'); ?>;
-            --secondary-color: <?php echo getConfigValue($config, 'color_secundario', '#2ecc71'); ?>;
-            --bg: #f8f9fa;
-            --border: #e9ecef;
-            --border2: #dee2e6;
-            --ink: #0f172a;
-            --ink2: #334155;
-            --ink3: #64748b;
-            --ink4: #94a3b8;
-            --green: #27ae60;
-            --green-d: #1e8449;
-            --green-mid: #d5f5e3;
-            --green-light: #eafaf1;
+            --primary-color: <?php echo $color_primario; ?>;
+            --secondary-color: <?php echo $color_secundario; ?>;
         }
-
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        
+        /* Sobrescribir margin-left del main para esta página */
+        main {
+            margin-left: 0 !important;
+            width: 100% !important;
+            padding: 1.5rem 1.75rem !important;
         }
-
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .navbar-brand img {
-            height: 40px;
-            width: auto;
-            max-width: 120px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-
-        /* ============================================================
-           PLANES SECTION
-           ============================================================ */
-        .plans-section {
-            padding: 2rem 0;
-            background: #f8f9fa;
-            min-height: calc(100vh - 76px);
-        }
-
+        
+        /* Ajustar el contenedor de planes */
         .plans-inner {
             max-width: 1280px;
             margin: 0 auto;
             padding: 0 1rem;
             width: 100%;
         }
-
-        /* Pricing Toggle */
-        .pricing-toggle {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            justify-content: center;
-            margin: 24px 0 32px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--ink3);
-        }
-
-        .tog-track {
-            width: 48px;
-            height: 26px;
-            border-radius: 100px;
-            background: var(--primary-color);
-            cursor: pointer;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .tog-track:hover {
-            opacity: 0.8;
-        }
-
-        .tog-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: white;
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            transition: transform 0.3s ease;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-        }
-
-        .tog-track.annual .tog-thumb {
-            transform: translateX(22px);
-        }
-
-        .save-badge {
-            background: var(--green-mid);
-            color: var(--green-d);
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        .plans-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-            align-items: stretch;
-        }
-
-        /* Cada tarjeta de plan */
-        .plan {
-            background: #fff;
-            border-radius: 16px;
-            padding: 1.8rem 1.2rem;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.05);
-            transition: 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            text-align: center;
-            border: 1px solid #e9ecef;
-            height: 100%;
-            cursor: pointer;
-            position: relative;
-        }
-        .plan:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.10);
-        }
-
-        .plan.selected {
-            border: 3px solid var(--primary-color);
-            background: #f0fdf4;
-            box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.15);
-        }
-
-        .plan.selected .plan-name {
-            color: var(--primary-color);
-        }
-
-        .plan-check {
-            display: none;
-            position: absolute;
-            top: -12px;
-            right: -12px;
-            background: var(--primary-color);
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
-        }
-
-        .plan.selected .plan-check {
-            display: flex;
-        }
-
-        /* Plan destacado */
-        .plan.popular {
-            border: 2px solid var(--primary-color);
-            position: relative;
-        }
-
-        .plan.selected.popular {
-            border: 3px solid var(--primary-color);
-        }
-
-        .popular-badge {
-            background: var(--primary-color);
-            color: #fff;
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 0.2rem 1rem;
-            border-radius: 30px;
-            display: inline-block;
-            margin-top: -2.4rem;
-            margin-bottom: 0.6rem;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-
-        .plan-name {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 0.25rem;
-        }
-        .plan-price {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: #0f172a;
-            line-height: 1.2;
-        }
-        .plan-price sup {
-            font-size: 1rem;
-            font-weight: 600;
-            top: -0.6rem;
-            margin-right: 2px;
-        }
-        .plan-period {
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-bottom: 0.8rem;
-        }
-
-        .plan-lis {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 1.2rem 0;
-            text-align: left;
-            flex: 1;
-        }
-        .plan-section-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: #94a3b8;
-            margin-top: 0.6rem;
-            margin-bottom: 0.2rem;
-            border-bottom: 1px dashed #e2e8f0;
-            padding-bottom: 0.2rem;
-        }
-        .plan-section-label:first-of-type {
-            margin-top: 0;
-        }
-        .plan-li {
-            font-size: 0.85rem;
-            color: #334155;
-            padding: 0.2rem 0 0.2rem 1.2rem;
-            position: relative;
-        }
-        .plan-li::before {
-            content: "✓";
-            color: var(--primary-color);
-            font-weight: 700;
-            position: absolute;
-            left: 0;
-        }
-
-        /* ============================================================
-           BOTONES DE SELECCIÓN MEJORADOS
-           ============================================================ */
-        .plan-select-btn {
-            width: 100%;
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: none;
-            margin-top: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            letter-spacing: 0.3px;
-        }
-
-        .plan-select-btn-outline {
-            background: transparent;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-        }
-
-        .plan-select-btn-outline:hover {
-            background: var(--primary-color);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
-        }
-
-        .plan-select-btn-filled {
-            background: var(--primary-color);
-            color: white;
-            border: 2px solid var(--primary-color);
-            box-shadow: 0 3px 12px rgba(39, 174, 96, 0.25);
-        }
-
-        .plan-select-btn-filled:hover {
-            background: var(--green-d);
-            border-color: var(--green-d);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
-        }
-
-        .plan-select-btn-filled i {
-            font-size: 0.9rem;
-        }
-
-        .plan-select-btn-outline i {
-            font-size: 0.9rem;
-        }
-
-        .plan.selected .plan-select-btn-outline {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .plan.selected .plan-select-btn-filled {
-            background: var(--green-d);
-            border-color: var(--green-d);
-            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
-        }
-
-        /* ============================================================
-           RESUMEN DEL PEDIDO
-           ============================================================ */
-        .order-summary {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-            border: 1px solid #e9ecef;
-            margin-top: 32px;
-            display: none;
-        }
-
-        .order-summary.visible {
-            display: block;
-            animation: slideDown 0.4s ease forwards;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .order-summary .summary-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #f0f0f0;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .order-summary .summary-header h4 {
-            margin: 0;
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .order-summary .summary-header .badge-status {
-            background: var(--green-mid);
-            color: var(--green-d);
-            padding: 4px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
-        }
-
-        .summary-row:last-child {
-            border-bottom: none;
-        }
-
-        .summary-row .label {
-            color: #64748b;
-        }
-
-        .summary-row .value {
-            font-weight: 600;
-            color: #0f172a;
-        }
-
-        .summary-row.total {
-            padding-top: 16px;
-            margin-top: 8px;
-            border-top: 2px solid #e9ecef;
-            font-size: 18px;
-        }
-
-        .summary-row.total .label {
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .summary-row.total .value {
-            font-size: 20px;
-            color: var(--primary-color);
-        }
-
-        .summary-row.ahorro {
-            border-bottom: none;
-            padding-bottom: 4px;
-        }
-
-        .summary-row.ahorro .value {
-            color: #f59e0b;
-        }
-
-        .summary-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .summary-actions .btn {
-            border-radius: 50px;
-            padding: 10px 28px;
-            font-weight: 600;
-            flex: 1;
-            min-width: 140px;
-        }
-
-        .btn-pay {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            transition: all 0.3s;
-        }
-
-        .btn-pay:hover {
-            background: var(--green-d);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
-        }
-
-        .btn-pay i {
-            margin-right: 8px;
-        }
-
-        .btn-cancel {
-            background: transparent;
-            color: #64748b;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s;
-        }
-
-        .btn-cancel:hover {
-            border-color: #dc3545;
-            color: #dc3545;
-        }
-
-        /* Efecto de revelado */
-        .reveal {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeUp 0.7s ease forwards;
-        }
-        .reveal-d1 { animation-delay: 0.1s; }
-        .reveal-d2 { animation-delay: 0.2s; }
-        .reveal-d3 { animation-delay: 0.3s; }
-        .reveal-d4 { animation-delay: 0.4s; }
-
-        @keyframes fadeUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ============================================================
-           PAYMENT SECTION (Acordeón)
-           ============================================================ */
-        .payment-section {
-            padding: 64px 24px;
-            background: #f8f9fa;
-        }
-
-        .payment-inner {
-            max-width: 960px;
-            margin: 0 auto;
-        }
-
-        .accordion-item {
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            overflow: hidden;
-        }
-
-        .accordion-item .accordion-button {
-            padding: 20px 24px;
-            background: white;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: none;
-        }
-
-        .accordion-item .accordion-button:not(.collapsed) {
-            background: white;
-            color: var(--primary-color);
-            box-shadow: none;
-        }
-
-        .accordion-item .accordion-button:focus {
-            box-shadow: none;
-            border-color: transparent;
-        }
-
-        .accordion-item .accordion-body {
-            padding: 24px;
-            background: #fafafa;
-            border-top: 1px solid #e9ecef;
-        }
-
-        .accordion-item .accordion-button .badge {
-            font-size: 10px;
-            font-weight: 600;
-        }
-
-        .payment-features {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .payment-features li {
-            padding: 6px 0;
-            font-size: 14px;
-            color: #334155;
-        }
-
-        .payment-features li i {
-            color: var(--primary-color);
-            margin-right: 8px;
-        }
-
-        .payment-icons {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .payment-icons i {
-            font-size: 3rem;
-        }
-
-        .bank-tags {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-        }
-
-        .bank-tags span {
-            background: #e9ecef;
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #334155;
-        }
-
-        .payment-note {
-            margin-top: 24px;
-            padding: 20px 24px;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e9ecef;
-        }
-
-        .payment-note .note-icon {
-            color: var(--primary-color);
-            font-size: 1.2rem;
-            margin-top: 2px;
-            flex-shrink: 0;
-        }
-
-        /* Modal de carga */
-        .loading-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .loading-overlay.active {
-            display: flex;
-        }
-
-        .loading-modal {
-            background: white;
-            border-radius: 16px;
-            padding: 40px;
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .loading-modal .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-modal h5 {
-            color: #0f172a;
-            margin-bottom: 8px;
-        }
-
-        .loading-modal p {
-            color: #64748b;
-            font-size: 14px;
-            margin: 0;
-        }
-
-        /* ============================================================
-           RESPONSIVE
-           ============================================================ */
-        @media (max-width: 767.98px) {
-            .plans-grid {
-                grid-template-columns: 1fr;
-                max-width: 400px;
-                margin: 0 auto;
-            }
-            .plans-section {
-                min-height: auto;
-                padding: 2rem 0;
-            }
-            .pricing-toggle {
-                flex-wrap: wrap;
-            }
-            .payment-section {
-                padding: 40px 16px;
-            }
-            .payment-icons i {
-                font-size: 2.5rem;
-            }
-            .accordion-item .accordion-button {
-                font-size: 14px;
-                padding: 16px;
-            }
-            .accordion-item .accordion-body {
-                padding: 16px;
-            }
-            .order-summary {
-                padding: 16px;
-            }
-            .summary-actions .btn {
-                min-width: 100%;
-            }
-            .summary-row {
-                font-size: 13px;
-            }
-            .order-summary .summary-header {
-                flex-direction: column;
-                align-items: stretch;
-                text-align: center;
-            }
-        }
-
-        @media (min-width: 768px) and (max-width: 991.98px) {
-            .plans-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
     </style>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Tema CRM (estilos centralizados) -->
+    <link rel="stylesheet" href="/css/crm-theme.css">
+    <!-- Estilos específicos de suscripciones (solo lo que no cubre el tema CRM) -->
+    <link rel="stylesheet" href="css/suscripciones.css">
 </head>
 
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <?php if (!empty($config['logo']) && file_exists($config['logo'])): ?>
-                    <img src="<?php echo htmlspecialchars($config['logo']); ?>"
-                         alt="Logo"
-                         style="height: 40px; max-width: 150px; object-fit: contain; margin-right: 10px;">
+            <!-- Botón hamburguesa para móvil -->
+            <button class="sidebar-toggle" type="button" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <?php if ($logo_src_base64): ?>
+                    <!-- Mostrar logo en base64 -->
+                    <img src="<?php echo $logo_src_base64; ?>"
+                        alt="<?php echo htmlspecialchars($nombre_empresa); ?>"
+                        class="me-2"
+                        style="height: 32px; width: auto; border-radius: 8px; object-fit: contain;">
+                    <span>
+                        <?php echo htmlspecialchars($nombre_empresa); ?>
+                        <span class="badge bg-<?php
+                                                echo match ($empresa_plan) {
+                                                    'premium' => 'primary',
+                                                    'emprendedor' => 'success',
+                                                    'basico' => 'warning',
+                                                    'prueba' => 'info',
+                                                    default => 'secondary'
+                                                };
+                                                ?> ms-2" style="font-size: 0.5rem;">
+                            <?php echo ucfirst($empresa_plan); ?>
+                        </span>
+                    </span>
+                <?php elseif ($logo_empresa && file_exists($logo_empresa)): ?>
+                    <!-- Mostrar logo por ruta de archivo (fallback) -->
+                    <img src="<?php echo htmlspecialchars($logo_empresa); ?>"
+                        alt="<?php echo htmlspecialchars($nombre_empresa); ?>"
+                        class="me-2"
+                        style="height: 32px; width: auto; border-radius: 8px; object-fit: contain;"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                    <i class="fas fa-cash-register me-2" style="display: none;"></i>
+                    <span>
+                        <?php echo htmlspecialchars($nombre_empresa); ?>
+                        <span class="badge bg-<?php
+                                                echo match ($empresa_plan) {
+                                                    'premium' => 'primary',
+                                                    'emprendedor' => 'success',
+                                                    'basico' => 'warning',
+                                                    'prueba' => 'info',
+                                                    default => 'secondary'
+                                                };
+                                                ?> ms-2" style="font-size: 0.5rem;">
+                            <?php echo ucfirst($empresa_plan); ?>
+                        </span>
+                    </span>
                 <?php else: ?>
-                    <i class="fas fa-cash-register me-2"></i>
+                    <!-- Mostrar icono por defecto -->
+                    <i class="fas fa-cash-register me-2" style="font-size: 1.2rem;"></i>
+                    <span>
+                        <?php echo htmlspecialchars($nombre_empresa); ?>
+                        <span class="badge bg-<?php
+                                                echo match ($empresa_plan) {
+                                                    'premium' => 'primary',
+                                                    'emprendedor' => 'success',
+                                                    'basico' => 'warning',
+                                                    'prueba' => 'info',
+                                                    default => 'secondary'
+                                                };
+                                                ?> ms-2" style="font-size: 0.5rem;">
+                            <?php echo ucfirst($empresa_plan); ?>
+                        </span>
+                    </span>
                 <?php endif; ?>
-                <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>
             </a>
 
-            <div class="d-flex align-items-center">
-                <!-- Botón Regresar a Inicio -->
-                <a href="Inicio" class="btn btn-light btn-sm me-3" style="border-radius: 20px; padding: 5px 15px;">
-                    <i class="fas fa-arrow-left me-1"></i> Inicio
-                </a>
-
-                <!-- Menú de usuario -->
-                <div class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i>
-                            <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><span class="dropdown-item-text">
-                                    <small>Empresa: <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></small>
-                                </span></li>
-                            <li><span class="dropdown-item-text">
-                                    <small>Rol: <?php echo htmlspecialchars($_SESSION['usuario_rol']); ?></small>
-                                </span></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="Suscripciones">
+            <div class="navbar-nav ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>
+                        <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-item-text">
+                                <small>Empresa: <?php echo htmlspecialchars($nombre_empresa); ?></small>
+                            </span></li>
+                        <li><span class="dropdown-item-text">
+                                <small>Rol: <?php echo htmlspecialchars($_SESSION['usuario_rol']); ?></small>
+                            </span></li>
+                        <li>
+                             <li><a class="dropdown-item" href="Suscripciones">
                                     <i class="fas fa-crown me-2"></i>Suscripciones
                                 </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="logout.php">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                                </a></li>
-                        </ul>
-                    </li>
-                </div>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                    </ul>
+                </li>
             </div>
         </div>
     </nav>
@@ -943,8 +424,8 @@ $plan_data = isset($planes[$plan_seleccionado]) ? $planes[$plan_seleccionado] : 
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-modal">
             <div class="spinner"></div>
-            <h5>Generando link de pago</h5>
-            <p>Por favor espera un momento...</p>
+            <h5 id="loadingTitle">Procesando pago</h5>
+            <p id="loadingMessage">Por favor espera un momento...</p>
         </div>
     </div>
 
@@ -954,16 +435,14 @@ $plan_data = isset($planes[$plan_seleccionado]) ? $planes[$plan_seleccionado] : 
         <div class="plans-section">
             <div class="plans-inner">
 
-                <!-- Título de la sección -->
-                <h2 class="mb-2 text-center" style="color: #0f172a; font-weight: 700;">
+                <h2 class="mb-2 text-center" style="color: var(--lf-ink); font-weight: 700;">
                     <i class="fas fa-rocket me-2" style="color: var(--primary-color);"></i>
                     Elige tu plan
                 </h2>
-                <p style="text-align: center; color: #64748b; margin-bottom: 0; font-size: 15px;">
+                <p style="text-align: center; color: var(--lf-muted); margin-bottom: 0; font-size: 15px;">
                     Sin permanencia. Cancela cuando quieras.
                 </p>
 
-                <!-- Toggle Mensual / Anual -->
                 <div class="pricing-toggle">
                     <span style="font-weight: 600;">Mensual</span>
                     <div class="tog-track" onclick="togglePricing()" id="togTrack">
@@ -1008,7 +487,7 @@ $plan_data = isset($planes[$plan_seleccionado]) ? $planes[$plan_seleccionado] : 
                         </button>
                     </div>
 
-                    <!-- EMPRESARIAL (destacado) -->
+                    <!-- EMPRESARIAL -->
                     <div class="plan popular reveal reveal-d2 <?php echo $plan_seleccionado == 'empresarial' ? 'selected' : ''; ?>" data-plan="empresarial" onclick="selectPlan('empresarial')">
                         <div class="plan-check"><i class="fas fa-check"></i></div>
                         <div class="popular-badge">⚡ Más popular</div>
@@ -1052,7 +531,7 @@ $plan_data = isset($planes[$plan_seleccionado]) ? $planes[$plan_seleccionado] : 
                         </button>
                     </div>
 
-                </div><!-- /plans-grid -->
+                </div>
 
                 <!-- RESUMEN DEL PEDIDO -->
                 <div class="order-summary visible" id="orderSummary">
@@ -1100,9 +579,8 @@ $plan_data = isset($planes[$plan_seleccionado]) ? $planes[$plan_seleccionado] : 
                         <span class="value" id="summaryPeriodo">Mensual</span>
                     </div>
 
-                    <!-- Fila de ahorro (se muestra solo en anual) -->
                     <div class="summary-row ahorro" id="summaryAhorroRow" style="display: none;">
-                        <span class="label"><i class="fas fa-gift me-2" style="color: #f59e0b;"></i>Ahorro</span>
+                        <span class="label"><i class="fas fa-gift me-2" style="color: var(--lf-warning);"></i>Ahorro</span>
                         <span class="value" id="summaryAhorro">-20%</span>
                     </div>
 
@@ -1113,28 +591,205 @@ $plan_data = isset($planes[$plan_seleccionado]) ? $planes[$plan_seleccionado] : 
 
                     <div class="summary-actions">
                         <button class="btn btn-pay" onclick="generarPago()">
-                            <i class="fas fa-credit-card"></i> Proceder al pago
+                            <i class="fas fa-credit-card"></i> Pagar con tarjeta
                         </button>
+
+                        <?php if ($tiene_domiciliacion && $empresa_plan !== 'prueba'): ?>
+                        <button class="btn btn-pay-domiciliado" id="btnPagoDomiciliado" onclick="pagarConDomiciliacion()">
+                            <i class="fas fa-sync-alt"></i> Pagar con domiciliación
+                            <span class="badge bg-light text-dark ms-1" style="font-size: 9px; padding: 2px 8px;">
+                                <i class="fas fa-check-circle text-success"></i> Activado
+                            </span>
+                        </button>
+                        <?php endif; ?>
+
                         <button class="btn btn-cancel" onclick="cancelarSeleccion()">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
                     </div>
+
+                    <?php if ($tiene_domiciliacion && $empresa_plan !== 'prueba'): ?>
+                    <div class="mt-3 p-2" style="background: var(--lf-primary-050); border-radius: var(--lf-r); border-left: 4px solid #667eea;">
+                        <small style="color: var(--lf-ink-2);">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Tu pago se procesará automáticamente con la tarjeta domiciliada 
+                            <strong><?php echo htmlspecialchars($tarjeta_mask); ?></strong>.
+                        </small>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
-            </div><!-- /plans-inner -->
-        </div><!-- /plans-section -->
+                <!-- SECCIÓN DE DOMICILIACIÓN DE TARJETA -->
+                <div class="domiciliacion-section mt-5" id="domiciliacionSection" style="display: <?php echo ($empresa_plan !== 'prueba') ? 'block' : 'none'; ?>;">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <h5 class="mb-0" style="font-weight: 700;">
+                                <i class="fas fa-credit-card me-2"></i> 
+                                Domiciliación de Pago
+                                <span class="badge bg-light text-dark ms-2" style="font-size: 11px;">Pagos automáticos</span>
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            
+                            <?php if ($tiene_domiciliacion): ?>
+                                <div class="alert alert-success">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                        <div>
+                                            <i class="fas fa-check-circle me-2" style="color: var(--lf-success);"></i>
+                                            <strong>Tarjeta domiciliada correctamente</strong>
+                                            <div class="mt-1">
+                                                <span class="badge bg-light text-dark me-2">
+                                                    <i class="fas fa-credit-card me-1"></i>
+                                                    <?php echo htmlspecialchars($tarjeta_mask); ?>
+                                                </span>
+                                                <span class="badge bg-light text-dark">
+                                                    <i class="far fa-calendar-alt me-1"></i>
+                                                    Expira: <?php echo $tarjeta_exp_month . '/' . $tarjeta_exp_year; ?>
+                                                </span>
+                                                <span class="badge" style="background: #667eea; color: white;">
+                                                    <i class="fas fa-check-circle me-1"></i> Activa
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 mt-sm-0">
+                                            <button class="btn btn-danger btn-sm" onclick="cancelarDomiciliacion()">
+                                                <i class="fas fa-trash-alt me-1"></i> Cancelar domiciliación
+                                            </button>
+                                            <button class="btn btn-outline-success btn-sm ms-2" onclick="cargarActualizarTarjeta()">
+                                                <i class="fas fa-sync me-1"></i> Actualizar tarjeta
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Tu suscripción se renovará automáticamente cada mes. Puedes cancelar en cualquier momento.
+                                </p>
+                            <?php else: ?>
+                                <!-- Formulario para domiciliar tarjeta -->
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <form id="formDomiciliacion" onsubmit="return procesarDomiciliacion(event)">
+                                            <div class="row g-3">
+                                                <div class="col-12">
+                                                    <label class="form-label fw-semibold" style="font-size: 14px;">
+                                                        <i class="fas fa-credit-card me-1" style="color: var(--primary-color);"></i>
+                                                        Número de tarjeta
+                                                    </label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">
+                                                            <i class="fas fa-credit-card"></i>
+                                                        </span>
+                                                        <input type="text" 
+                                                               class="form-control" 
+                                                               id="cardNumber" 
+                                                               placeholder="1234 5678 9012 3456"
+                                                               maxlength="19"
+                                                               oninput="formatearNumeroTarjeta(this)"
+                                                               required>
+                                                    </div>
+                                                    <small class="text-muted" style="font-size: 11px;">
+                                                        <i class="fas fa-lock me-1"></i> Datos encriptados y seguros
+                                                    </small>
+                                                </div>
+                                                
+                                                <div class="col-md-4">
+                                                    <label class="form-label fw-semibold" style="font-size: 14px;">Mes</label>
+                                                    <select class="form-select" id="expMonth" required>
+                                                        <option value="">MM</option>
+                                                        <?php for ($m = 1; $m <= 12; $m++): ?>
+                                                            <option value="<?php echo str_pad($m, 2, '0', STR_PAD_LEFT); ?>">
+                                                                <?php echo str_pad($m, 2, '0', STR_PAD_LEFT); ?>
+                                                            </option>
+                                                        <?php endfor; ?>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div class="col-md-4">
+                                                    <label class="form-label fw-semibold" style="font-size: 14px;">Año</label>
+                                                    <select class="form-select" id="expYear" required>
+                                                        <option value="">AA</option>
+                                                        <?php for ($y = date('Y'); $y <= date('Y') + 10; $y++): ?>
+                                                            <option value="<?php echo substr($y, -2); ?>">
+                                                                <?php echo $y; ?>
+                                                            </option>
+                                                        <?php endfor; ?>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div class="col-md-4">
+                                                    <label class="form-label fw-semibold" style="font-size: 14px;">
+                                                        CVV
+                                                        <span class="text-muted" style="font-weight: normal; font-size: 11px;">
+                                                            <i class="fas fa-question-circle" data-bs-toggle="tooltip" title="Código de 3 dígitos en el reverso de tu tarjeta"></i>
+                                                        </span>
+                                                    </label>
+                                                    <input type="password" 
+                                                           class="form-control" 
+                                                           id="cvv" 
+                                                           placeholder="123"
+                                                           maxlength="4"
+                                                           required>
+                                                </div>
+                                                
+                                                <div class="col-12">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="aceptoTerminos" required>
+                                                        <label class="form-check-label" for="aceptoTerminos" style="font-size: 13px;">
+                                                            Acepto los <a href="#" style="color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#terminosModal">términos y condiciones</a> del pago domiciliado
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-12">
+                                                    <button type="submit" class="btn btn-primary" style="border-radius: 50px; padding: 10px 30px; font-weight: 600; width: 100%;" id="btnDomiciliar">
+                                                        <i class="fas fa-check-circle me-2"></i>
+                                                        Domiciliar tarjeta
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    
+                                    <div class="col-md-4 mt-3 mt-md-0">
+                                        <div class="p-3" style="background: var(--lf-surface-2); border-radius: var(--lf-r); height: 100%;">
+                                            <div class="text-center mb-2">
+                                                <i class="fas fa-shield-alt" style="font-size: 2rem; color: var(--primary-color);"></i>
+                                            </div>
+                                            <h6 class="text-center fw-bold" style="font-size: 13px;">Pagos seguros</h6>
+                                            <ul class="list-unstyled" style="font-size: 12px; color: var(--lf-muted);">
+                                                <li><i class="fas fa-check-circle text-success me-1"></i> Datos encriptados</li>
+                                                <li><i class="fas fa-check-circle text-success me-1"></i> Sin comisiones extra</li>
+                                                <li><i class="fas fa-check-circle text-success me-1"></i> Renovación automática</li>
+                                                <li><i class="fas fa-check-circle text-success me-1"></i> Cancelación fácil</li>
+                                            </ul>
+                                            <div class="text-center mt-2">
+                                                <i class="fab fa-cc-visa me-1" style="color: #1a1f71;"></i>
+                                                <i class="fab fa-cc-mastercard me-1" style="color: #eb001b;"></i>
+                                                <i class="fab fa-cc-amex" style="color: #006fcf;"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- SECCIÓN DE FORMAS DE PAGO (Accordion) -->
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE FORMAS DE PAGO -->
         <section class="payment-section">
             <div class="payment-inner">
                 <div class="text-center mb-4 reveal">
-                    <span class="s-eyebrow" style="display: inline-block; background: #d5f5e3; color: #1e8449; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                    <span class="s-eyebrow">
                         <i class="fas fa-credit-card me-1"></i> Métodos de Pago
                     </span>
-                    <h2 style="font-family: 'Segoe UI', sans-serif; font-size: clamp(28px, 4vw, 40px); font-weight: 900; color: #0f172a; margin-bottom: 8px;">
+                    <h2>
                         Formas de <span style="color: var(--primary-color);">pago</span>
                     </h2>
-                    <p style="color: #64748b; font-size: 15px;">Elige la opción que mejor se adapte a tu negocio</p>
+                    <p>Elige la opción que mejor se adapte a tu negocio</p>
                 </div>
 
                 <div class="accordion" id="paymentAccordion">
@@ -1144,14 +799,14 @@ $plan_data = isset($planes[$plan_seleccionado]) ? $planes[$plan_seleccionado] : 
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCard" aria-expanded="true" aria-controls="collapseCard">
                                 <i class="fas fa-credit-card me-3" style="color: var(--primary-color); font-size: 1.2rem;"></i>
                                 Tarjeta
-                                <span class="badge ms-2" style="background: var(--primary-color);">Recomendado</span>
+                                <span class="badge ms-2" style="background: var(--primary-color); color: var(--lf-on-brand);">Recomendado</span>
                             </button>
                         </h2>
                         <div id="collapseCard" class="accordion-collapse collapse show" data-bs-parent="#paymentAccordion">
                             <div class="accordion-body">
                                 <div class="row align-items-center">
                                     <div class="col-md-7">
-                                        <p style="color: #334155; font-size: 14px; line-height: 1.8; margin-bottom: 16px;">
+                                        <p style="color: var(--lf-ink-2); font-size: 14px; line-height: 1.8; margin-bottom: 16px;">
                                             <i class="fas fa-lock me-2" style="color: var(--primary-color);"></i>
                                             Pago seguro con tarjeta de crédito o débito. Aceptamos todas las tarjetas principales.
                                         </p>
@@ -1166,10 +821,10 @@ $plan_data = isset($planes[$plan_seleccionado]) ? $planes[$plan_seleccionado] : 
                                             <i class="fab fa-cc-mastercard" style="color: #eb001b;"></i>
                                             <i class="fab fa-cc-amex" style="color: #006fcf;"></i>
                                         </div>
-                                        <button class="btn btn-primary btn-sm" style="border-radius: 50px; padding: 8px 24px; background: var(--primary-color); border-color: var(--primary-color); font-weight: 600;" onclick="generarPago()">
+                                        <button class="btn btn-primary btn-sm" style="border-radius: 50px; padding: 8px 24px; font-weight: 600;" onclick="generarPago()">
                                             <i class="fas fa-credit-card me-1"></i> Pagar ahora
                                         </button>
-                                        <p style="font-size: 11px; color: #94a3b8; margin-top: 8px;">
+                                        <p style="font-size: 11px; color: var(--lf-muted-2); margin-top: 8px;">
                                             <i class="fas fa-shield-alt me-1"></i> 100% seguro
                                         </p>
                                     </div>
@@ -1179,385 +834,210 @@ $plan_data = isset($planes[$plan_seleccionado]) ? $planes[$plan_seleccionado] : 
                     </div>
 
                     <!-- Transferencia SPEI -->
-                    <!-- Transferencia SPEI -->
-<div class="accordion-item reveal reveal-d1">
-    <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSPEI" aria-expanded="false" aria-controls="collapseSPEI">
-            <i class="fas fa-university me-3" style="color: var(--primary-color); font-size: 1.2rem;"></i>
-            Transferencia SPEI
-            <span class="badge ms-2" style="background: #17a2b8;">Sin comisiones</span>
-        </button>
-    </h2>
-    <div id="collapseSPEI" class="accordion-collapse collapse" data-bs-parent="#paymentAccordion">
-        <div class="accordion-body">
-            <div class="row">
-                <div class="col-12">
-                    <div class="card shadow-sm" style="border-radius: 12px; border: 1px solid #e9ecef;">
-                        <div class="card-body p-4">
-                            <h5 class="card-title mb-3" style="color: #0f172a; font-weight: 700;">
-                                <i class="fas fa-building me-2" style="color: var(--primary-color);"></i>
-                                Datos Bancarios
-                            </h5>
-                            
-                            <div class="row g-3">
-                                <!-- Banco -->
-                                <div class="col-md-6">
-                                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-                                        <small class="text-muted d-block mb-1">
-                                            <i class="fas fa-university me-1"></i> Banco
-                                        </small>
-                                        <strong style="font-size: 1.1rem;">BANAMEX</strong>
-                                    </div>
-                                </div>
-                                
-                                <!-- Beneficiario -->
-                                <div class="col-md-6">
-                                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-                                        <small class="text-muted d-block mb-1">
-                                            <i class="fas fa-user me-1"></i> Beneficiario
-                                        </small>
-                                        <strong style="font-size: 1.1rem;">OPERACIONES Y MULTISERVICIOS IDEAS SA DE CV</strong>
-                                    </div>
-                                </div>
-                                
-                                <!-- CLABE Interbancaria -->
-                                <div class="col-md-6">
-                                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-                                        <small class="text-muted d-block mb-1">
-                                            <i class="fas fa-hashtag me-1"></i> CLABE Interbancaria
-                                        </small>
-                                        <div class="d-flex align-items-center">
-                                            <strong style="font-size: 1.1rem; letter-spacing: 1px;">002180702323009399</strong>
-                                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="copiarCLABE('002180702323009399')" style="border-radius: 20px;">
-                                                <i class="fas fa-copy"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Número de Tarjeta -->
-                                <div class="col-md-6">
-                                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-                                        <small class="text-muted d-block mb-1">
-                                            <i class="fas fa-credit-card me-1"></i> Número de Tarjeta
-                                        </small>
-                                        <strong style="font-size: 1.1rem; letter-spacing: 1px;">5290 9303 0104 4786</strong>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="accordion-item reveal reveal-d1">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSPEI" aria-expanded="false" aria-controls="collapseSPEI">
+                                <i class="fas fa-university me-3" style="color: var(--primary-color); font-size: 1.2rem;"></i>
+                                Transferencia SPEI
+                                <span class="badge ms-2" style="background: #17a2b8; color: white;">Sin comisiones</span>
+                            </button>
+                        </h2>
+                        <div id="collapseSPEI" class="accordion-collapse collapse" data-bs-parent="#paymentAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="card shadow-sm">
+                                            <div class="card-body p-4">
+                                                <h5 class="card-title mb-3" style="color: var(--lf-ink); font-weight: 700;">
+                                                    <i class="fas fa-building me-2" style="color: var(--primary-color);"></i>
+                                                    Datos Bancarios
+                                                </h5>
+                                                
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <div class="p-3" style="background: var(--lf-surface-2); border-radius: var(--lf-r);">
+                                                            <small class="text-muted d-block mb-1">
+                                                                <i class="fas fa-university me-1"></i> Banco
+                                                            </small>
+                                                            <strong style="font-size: 1.1rem;">BANAMEX</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="p-3" style="background: var(--lf-surface-2); border-radius: var(--lf-r);">
+                                                            <small class="text-muted d-block mb-1">
+                                                                <i class="fas fa-user me-1"></i> Beneficiario
+                                                            </small>
+                                                            <strong style="font-size: 1.1rem;">OPERACIONES Y MULTISERVICIOS IDEAS SA DE CV</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="p-3" style="background: var(--lf-surface-2); border-radius: var(--lf-r);">
+                                                            <small class="text-muted d-block mb-1">
+                                                                <i class="fas fa-hashtag me-1"></i> CLABE Interbancaria
+                                                            </small>
+                                                            <div class="d-flex align-items-center">
+                                                                <strong style="font-size: 1.1rem; letter-spacing: 1px;">002180702323009399</strong>
+                                                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="copiarCLABE('002180702323009399')" style="border-radius: 20px;">
+                                                                    <i class="fas fa-copy"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="p-3" style="background: var(--lf-surface-2); border-radius: var(--lf-r);">
+                                                            <small class="text-muted d-block mb-1">
+                                                                <i class="fas fa-credit-card me-1"></i> Número de Tarjeta
+                                                            </small>
+                                                            <strong style="font-size: 1.1rem; letter-spacing: 1px;">5290 9303 0104 4786</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                            <!-- Información de Contacto -->
-                            <hr class="my-3">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-phone me-2" style="color: var(--primary-color);"></i>
-                                        <div>
-                                            <small class="text-muted d-block">Teléfonos</small>
-                                            <strong>55 4123 2305</strong> / <strong>55 4124 7213</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fab fa-whatsapp me-2" style="color: #25D366;"></i>
-                                        <div>
-                                            <small class="text-muted d-block">WhatsApp</small>
-                                            <strong>55 5925 7893</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-globe me-2" style="color: var(--primary-color);"></i>
-                                        <div>
-                                            <small class="text-muted d-block">Sitio Web</small>
-                                            <strong>WWW.GRUPOIDEAS.COM.MX</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                                <hr class="my-3" style="border-color: var(--lf-border);">
+                                                <div class="row g-3">
+                                                    <div class="col-md-4">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="fas fa-phone me-2" style="color: var(--primary-color);"></i>
+                                                            <div>
+                                                                <small class="text-muted d-block">Teléfonos</small>
+                                                                <strong>55 4123 2305</strong> / <strong>55 4124 7213</strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="fab fa-whatsapp me-2" style="color: #25D366;"></i>
+                                                            <div>
+                                                                <small class="text-muted d-block">WhatsApp</small>
+                                                                <strong>55 5925 7893</strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="fas fa-globe me-2" style="color: var(--primary-color);"></i>
+                                                            <div>
+                                                                <small class="text-muted d-block">Sitio Web</small>
+                                                                <strong>www.grupoideasmx.com</strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                            <!-- Mensaje de ayuda -->
-                            <div class="alert alert-success mt-3 mb-0" style="border-radius: 8px; background: #d5f5e3; border-color: #a9dfbf; color: #1e8449;">
-                                <i class="fas fa-info-circle me-2"></i>
-                                <strong>Sin comisiones</strong> · Transferencia reflejada en 24-48 horas hábiles.
-                                Envía tu comprobante a <strong>ventas@grupoideas.com.mx</strong> o por WhatsApp.
+                                                <div class="alert alert-success mt-3 mb-0">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    <strong>Sin comisiones</strong> · Transferencia reflejada en 24-48 horas hábiles.
+                                                    Envía tu comprobante a <strong>ventas@grupoideas.com.mx</strong> o por WhatsApp.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
+                    <!-- Domiciliación -->
+                    <?php if ($tiene_domiciliacion): ?>
+                    <div class="accordion-item reveal reveal-d2">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDomiciliacion" aria-expanded="false" aria-controls="collapseDomiciliacion">
+                                <i class="fas fa-sync-alt me-3" style="color: #667eea; font-size: 1.2rem;"></i>
+                                Pago Domiciliado
+                                <span class="badge ms-2" style="background: #667eea; color: white;">Automático</span>
+                            </button>
+                        </h2>
+                        <div id="collapseDomiciliacion" class="accordion-collapse collapse" data-bs-parent="#paymentAccordion">
+                            <div class="accordion-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <p style="color: var(--lf-ink-2); font-size: 14px; line-height: 1.8; margin-bottom: 16px;">
+                                            <i class="fas fa-check-circle me-2" style="color: #667eea;"></i>
+                                            Tu pago se realizará automáticamente con la tarjeta domiciliada.
+                                        </p>
+                                        <ul class="payment-features">
+                                            <li><i class="fas fa-check-circle" style="color: #667eea;"></i> Sin necesidad de ingresar datos cada vez</li>
+                                            <li><i class="fas fa-check-circle" style="color: #667eea;"></i> Renovación automática mensual</li>
+                                            <li><i class="fas fa-check-circle" style="color: #667eea;"></i> Cancelación en cualquier momento</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-5 text-center">
+                                        <div class="mb-3">
+                                            <span class="badge" style="background: #667eea; color: white; padding: 8px 16px; font-size: 14px; border-radius: 50px;">
+                                                <i class="fas fa-credit-card me-1"></i>
+                                                <?php echo htmlspecialchars($tarjeta_mask); ?>
+                                            </span>
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" style="border-radius: 50px; padding: 10px 30px; background: #667eea; border-color: #667eea; font-weight: 600;" onclick="pagarConDomiciliacion()">
+                                            <i class="fas fa-sync-alt me-1"></i> Pagar con domiciliación
+                                        </button>
+                                        <p style="font-size: 11px; color: var(--lf-muted-2); margin-top: 8px;">
+                                            <i class="fas fa-clock me-1"></i> Proceso inmediato
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </section>
     </main>
 
+    <!-- Modal de términos y condiciones -->
+    <div class="modal fade" id="terminosModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-file-contract me-2" style="color: var(--primary-color);"></i>
+                        Términos de Domiciliación
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="font-size: 14px; color: var(--lf-ink-2); line-height: 1.8;">
+                    <p><strong>Al domiciliar tu tarjeta, aceptas:</strong></p>
+                    <ul>
+                        <li>El cargo automático mensual por el monto correspondiente a tu plan.</li>
+                        <li>Recibir notificaciones antes de cada cargo.</li>
+                        <li>Puedes cancelar la domiciliación en cualquier momento.</li>
+                        <li>Tus datos están protegidos bajo estándares de seguridad PCI-DSS.</li>
+                    </ul>
+                    <p class="mt-3 text-muted" style="font-size: 13px;">
+                        <i class="fas fa-lock me-1"></i>
+                        No almacenamos el número completo de tu tarjeta, solo un token seguro.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 50px;">Cerrar</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" style="border-radius: 50px;">
+                        <i class="fas fa-check me-1"></i> Acepto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+    <!-- JavaScript personalizado -->
+    <script src="js/suscripciones.js"></script>
+    
     <script>
-        // Datos de los planes
-        const planesData = {
-            basico: {
-                nombre: 'Básico',
-                precio_mensual: 299,
-                precio_anual: 239,
-                usuarios: 1,
-                cajas: 1,
-                productos: 100
-            },
-            profesional: {
-                nombre: 'Profesional',
-                precio_mensual: 599,
-                precio_anual: 479,
-                usuarios: 4,
-                cajas: 2,
-                productos: 500
-            },
-            empresarial: {
-                nombre: 'Empresarial',
-                precio_mensual: 999,
-                precio_anual: 799,
-                usuarios: 6,
-                cajas: 3,
-                productos: 500,
-                sucursales: 1
-            },
-            plus: {
-                nombre: 'Empresarial Plus',
-                precio_mensual: 1499,
-                precio_anual: 1199,
-                usuarios: 10,
-                cajas: 10,
-                productos: 'Ilimitados',
-                sucursales: 3,
-                timbres: 500
-            }
+        // Inicializar datos para JS (variables PHP a JS)
+        const phpData = {
+            empresaId: '<?php echo $_SESSION['empresa_id']; ?>',
+            empresaPlan: '<?php echo $empresa_plan; ?>',
+            tieneDomiciliacion: <?php echo $tiene_domiciliacion ? 'true' : 'false'; ?>,
+            tarjetaMask: '<?php echo $tarjeta_mask; ?>',
+            planSeleccionado: '<?php echo $plan_seleccionado; ?>'
         };
-
-        let planActual = '<?php echo $plan_seleccionado; ?>';
-        let isAnnual = false;
-
-        // Función para seleccionar un plan
-        function selectPlan(planId) {
-            planActual = planId;
-            const plan = planesData[planId];
-            
-            // Actualizar clases seleccionadas
-            document.querySelectorAll('.plan').forEach(el => {
-                el.classList.remove('selected');
-            });
-            document.querySelector(`.plan[data-plan="${planId}"]`).classList.add('selected');
-            
-            // Actualizar resumen
-            updateSummary(plan);
-            
-            // Mostrar resumen
-            document.getElementById('orderSummary').classList.add('visible');
-            
-            // Scroll suave al resumen en móviles
-            if (window.innerWidth < 768) {
-                document.getElementById('orderSummary').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-
-        // Función para actualizar el resumen
-        function updateSummary(plan) {
-            const isAnnual = document.getElementById('togTrack').classList.contains('annual');
-            // Si es anual, mostramos el precio total del año (precio_anual * 12)
-            // Si es mensual, mostramos el precio mensual
-            const precio = isAnnual ? plan.precio_anual * 12 : plan.precio_mensual;
-            const periodo = isAnnual ? 'Anual' : 'Mensual';
-            
-            document.getElementById('summaryPlan').textContent = plan.nombre;
-            document.getElementById('summaryUsuarios').textContent = plan.usuarios;
-            document.getElementById('summaryCajas').textContent = plan.cajas;
-            document.getElementById('summaryProductos').textContent = plan.productos;
-            document.getElementById('summaryPeriodo').textContent = periodo;
-            document.getElementById('summaryTotal').textContent = `$${precio.toLocaleString()} MXN`;
-            
-            // Mostrar/ocultar fila de ahorro
-            const ahorroRow = document.getElementById('summaryAhorroRow');
-            if (ahorroRow) {
-                if (isAnnual) {
-                    ahorroRow.style.display = 'flex';
-                    const ahorro = ((plan.precio_mensual - plan.precio_anual) / plan.precio_mensual * 100).toFixed(0);
-                    const ahorroMonto = (plan.precio_mensual - plan.precio_anual) * 12;
-                    document.getElementById('summaryAhorro').textContent = `-${ahorro}% ($${ahorroMonto.toLocaleString()} MXN/año)`;
-                } else {
-                    ahorroRow.style.display = 'none';
-                }
-            }
-            
-            // Mostrar/ocultar campos opcionales
-            const sucursalesRow = document.getElementById('summarySucursales')?.parentElement;
-            const timbresRow = document.getElementById('summaryTimbres')?.parentElement;
-            
-            if (sucursalesRow) {
-                if (plan.sucursales) {
-                    sucursalesRow.style.display = 'flex';
-                    document.getElementById('summarySucursales').textContent = plan.sucursales;
-                } else {
-                    sucursalesRow.style.display = 'none';
-                }
-            }
-            
-            if (timbresRow) {
-                if (plan.timbres) {
-                    timbresRow.style.display = 'flex';
-                    document.getElementById('summaryTimbres').textContent = plan.timbres;
-                } else {
-                    timbresRow.style.display = 'none';
-                }
-            }
-        }
-
-        // Función para copiar CLABE al portapapeles
-function copiarCLABE(clabe) {
-    navigator.clipboard.writeText(clabe).then(function() {
-        // Mostrar feedback visual
-        const btn = document.querySelector('.btn-outline-primary');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i>';
-        btn.classList.remove('btn-outline-primary');
-        btn.classList.add('btn-success');
         
-        setTimeout(function() {
-            btn.innerHTML = originalText;
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-outline-primary');
-        }, 2000);
-    }).catch(function(err) {
-        // Fallback para navegadores antiguos
-        const textArea = document.createElement('textarea');
-        textArea.value = clabe;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        alert('CLABE copiada al portapapeles');
-    });
-}
-
-        // Función para cancelar selección
-        function cancelarSeleccion() {
-            document.querySelectorAll('.plan').forEach(el => {
-                el.classList.remove('selected');
-            });
-            document.getElementById('orderSummary').classList.remove('visible');
-        }
-
-        // Toggle de precios mensuales/anuales
-        function togglePricing() {
-            const track = document.getElementById('togTrack');
-            track.classList.toggle('annual');
-            isAnnual = track.classList.contains('annual');
-            
-            // Actualizar precios en las tarjetas
-            document.querySelectorAll('.plan').forEach(el => {
-                const planId = el.dataset.plan;
-                const plan = planesData[planId];
-                if (plan) {
-                    const priceEl = el.querySelector('.pv');
-                    // Mostrar el precio mensual o anual en las tarjetas
-                    const precio = isAnnual ? plan.precio_anual : plan.precio_mensual;
-                    priceEl.textContent = precio.toLocaleString();
-                }
-            });
-            
-            // Actualizar resumen si hay un plan seleccionado
-            if (planActual && planesData[planActual]) {
-                updateSummary(planesData[planActual]);
-            }
-        }
-
-        // También permitir cambiar haciendo clic en el texto
-        document.querySelector('.pricing-toggle')?.addEventListener('click', function(e) {
-            if (e.target.closest('.tog-track')) return;
-            togglePricing();
-        });
-
-        // Función para generar el link de pago
-        async function generarPago() {
-            try {
-                // Mostrar overlay de carga
-                document.getElementById('loadingOverlay').classList.add('active');
-                
-                // Obtener el total del resumen
-                const totalTexto = document.getElementById('summaryTotal').textContent;
-                // Extraer el número del texto "$X.XX MXN"
-                const totalMatch = totalTexto.match(/\$([\d,]+\.?\d*)/);
-                let monto = totalMatch ? parseFloat(totalMatch[1].replace(/,/g, '')) : 0;
-                
-                // Obtener el plan seleccionado
-                const planSeleccionado = document.querySelector('.plan.selected');
-                const nombrePlan = planSeleccionado ? planSeleccionado.querySelector('.plan-name').textContent : 'Plan Empresarial';
-                
-                // Verificar si es anual
-                const esAnual = document.getElementById('togTrack').classList.contains('annual');
-                
-                // Construir la descripción
-                const descripcion = `Suscripción ${nombrePlan} - ${esAnual ? 'Anual' : 'Mensual'}`;
-                
-                // Deshabilitar botones
-                document.querySelectorAll('.btn-pay, .btn-primary.btn-sm').forEach(btn => {
-                    btn.disabled = true;
-                });
-                
-                // Llamar al endpoint para generar el link de pago
-                const response = await fetch('Service/GenerarLigaPagoSuscripcion.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        monto: monto,
-                        descripcion: descripcion
-                    })
-                });
-                
-                const data = await response.json();
-                
-                // Ocultar overlay de carga
-                document.getElementById('loadingOverlay').classList.remove('active');
-                
-                // Habilitar botones
-                document.querySelectorAll('.btn-pay, .btn-primary.btn-sm').forEach(btn => {
-                    btn.disabled = false;
-                });
-                
-                if (data.success && data.url) {
-                    // Redirigir a la URL de pago
-                    window.location.href = data.url;
-                } else {
-                    // Mostrar error
-                    alert('Error al generar el link de pago: ' + (data.error || 'Error desconocido'));
-                    console.error('Error:', data);
-                }
-                
-            } catch (error) {
-                // Ocultar overlay de carga
-                document.getElementById('loadingOverlay').classList.remove('active');
-                
-                console.error('Error en generarPago:', error);
-                alert('Error al procesar el pago. Por favor, intenta de nuevo.');
-                
-                // Habilitar botones
-                document.querySelectorAll('.btn-pay, .btn-primary.btn-sm').forEach(btn => {
-                    btn.disabled = false;
-                });
-            }
-        }
-
-        // Inicializar resumen con el plan seleccionado por defecto
+        // Pasar datos a la función de inicialización
         document.addEventListener('DOMContentLoaded', function() {
-            if (planActual && planesData[planActual]) {
-                updateSummary(planesData[planActual]);
-                document.getElementById('orderSummary').classList.add('visible');
+            if (typeof inicializarSuscripciones === 'function') {
+                inicializarSuscripciones(phpData);
             }
         });
     </script>

@@ -1,0 +1,1416 @@
+/* ============================================
+   suscripciones.css - Estilos específicos de la página de planes
+   (Complementa el tema CRM centralizado en /css/crm-theme.css)
+   ============================================ */
+
+/* ============================================
+   SECCIÓN DE PLANES
+   ============================================ */
+.plans-section {
+    padding: 2rem 0;
+    background: var(--lf-bg);
+    min-height: calc(100vh - 76px);
+}
+
+main {
+    margin-left: 0 !important;
+    width: 100% !important;
+}
+
+.plans-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    width: 100%;
+}
+
+.plans-section h2 {
+    color: var(--lf-ink);
+    font-weight: 700;
+}
+
+.plans-section h2 i {
+    color: var(--primary-color);
+}
+
+.plans-section > p {
+    color: var(--lf-muted);
+    margin-bottom: 0;
+    font-size: 15px;
+}
+
+/* ============================================
+   TOGGLE DE PRECIOS
+   ============================================ */
+.pricing-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    margin: 24px 0 32px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--lf-muted);
+}
+
+.pricing-toggle span {
+    font-weight: 600;
+}
+
+.tog-track {
+    width: 48px;
+    height: 26px;
+    border-radius: 100px;
+    background: var(--primary-color);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.tog-track:hover {
+    opacity: 0.8;
+}
+
+.tog-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.tog-track.annual .tog-thumb {
+    transform: translateX(22px);
+}
+
+.save-badge {
+    background: var(--lf-primary-050);
+    color: var(--primary-color);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* ============================================
+   GRID DE PLANES
+   ============================================ */
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+/* ============================================
+   TARJETA DE PLAN INDIVIDUAL
+   ============================================ */
+.plan {
+    background: var(--lf-surface);
+    border-radius: var(--lf-r-lg);
+    padding: 1.8rem 1.2rem;
+    box-shadow: var(--lf-shadow-sm);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    border: 1px solid var(--lf-border);
+    height: 100%;
+    cursor: pointer;
+    position: relative;
+}
+
+.plan:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--lf-shadow);
+}
+
+.plan.selected {
+    border: 3px solid var(--primary-color);
+    background: var(--lf-primary-050);
+    box-shadow: 0 0 0 4px var(--lf-ring);
+}
+
+.plan.selected .plan-name {
+    color: var(--primary-color);
+}
+
+.plan.popular {
+    border: 2px solid var(--primary-color);
+    position: relative;
+}
+
+.plan.selected.popular {
+    border: 3px solid var(--primary-color);
+}
+
+/* Check de selección */
+.plan-check {
+    display: none;
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    background: var(--primary-color);
+    color: var(--lf-on-brand);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 2px 8px var(--lf-ring);
+}
+
+.plan.selected .plan-check {
+    display: flex;
+}
+
+/* Badge "Más popular" */
+.popular-badge {
+    background: var(--primary-color);
+    color: var(--lf-on-brand);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 1rem;
+    border-radius: 30px;
+    display: inline-block;
+    margin-top: -2.4rem;
+    margin-bottom: 0.6rem;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* Nombre del plan */
+.plan-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--lf-ink);
+    margin-bottom: 0.25rem;
+}
+
+/* Precio del plan */
+.plan-price {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--lf-ink);
+    line-height: 1.2;
+}
+
+.plan-price sup {
+    font-size: 1rem;
+    font-weight: 600;
+    top: -0.6rem;
+    margin-right: 2px;
+}
+
+.plan-period {
+    font-size: 0.8rem;
+    color: var(--lf-muted);
+    margin-bottom: 0.8rem;
+}
+
+/* ============================================
+   LISTA DE CARACTERÍSTICAS DEL PLAN
+   ============================================ */
+.plan-lis {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.2rem 0;
+    text-align: left;
+    flex: 1;
+}
+
+.plan-section-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--lf-muted-2);
+    margin-top: 0.6rem;
+    margin-bottom: 0.2rem;
+    border-bottom: 1px dashed var(--lf-border);
+    padding-bottom: 0.2rem;
+}
+
+.plan-section-label:first-of-type {
+    margin-top: 0;
+}
+
+.plan-li {
+    font-size: 0.85rem;
+    color: var(--lf-ink-2);
+    padding: 0.2rem 0 0.2rem 1.2rem;
+    position: relative;
+}
+
+.plan-li::before {
+    content: "✓";
+    color: var(--primary-color);
+    font-weight: 700;
+    position: absolute;
+    left: 0;
+}
+
+/* ============================================
+   BOTONES DE SELECCIÓN DE PLAN
+   ============================================ */
+.plan-select-btn {
+    width: 100%;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.3px;
+}
+
+/* Botón outline */
+.plan-select-btn-outline {
+    background: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+}
+
+.plan-select-btn-outline:hover {
+    background: var(--primary-color);
+    color: var(--lf-on-brand);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--lf-ring);
+}
+
+/* Botón filled (para plan destacado) */
+.plan-select-btn-filled {
+    background: var(--primary-color);
+    color: var(--lf-on-brand);
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 3px 12px var(--lf-ring);
+}
+
+.plan-select-btn-filled:hover {
+    background: var(--lf-primary-hover);
+    border-color: var(--lf-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--lf-ring);
+}
+
+/* Estilos cuando el plan está seleccionado */
+.plan.selected .plan-select-btn-outline {
+    background: var(--primary-color);
+    color: var(--lf-on-brand);
+    border-color: var(--primary-color);
+}
+
+.plan.selected .plan-select-btn-filled {
+    background: var(--lf-primary-hover);
+    border-color: var(--lf-primary-hover);
+    box-shadow: 0 4px 15px var(--lf-ring);
+}
+
+/* ============================================
+   RESUMEN DEL PEDIDO
+   ============================================ */
+.order-summary {
+    background: var(--lf-surface);
+    border-radius: var(--lf-r-lg);
+    padding: 24px;
+    box-shadow: var(--lf-shadow-sm);
+    border: 1px solid var(--lf-border);
+    margin-top: 32px;
+    display: none;
+}
+
+.order-summary.visible {
+    display: block;
+    animation: slideDown 0.4s ease forwards;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Header del resumen */
+.order-summary .summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--lf-border);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.order-summary .summary-header h4 {
+    margin: 0;
+    font-weight: 700;
+    color: var(--lf-ink);
+}
+
+.order-summary .summary-header h4 i {
+    color: var(--primary-color);
+}
+
+.order-summary .summary-header .badge-status {
+    background: var(--lf-primary-050);
+    color: var(--primary-color);
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Filas del resumen */
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--lf-border);
+    font-size: 14px;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-row .label {
+    color: var(--lf-muted);
+}
+
+.summary-row .label i {
+    color: var(--primary-color);
+    margin-right: 8px;
+}
+
+.summary-row .value {
+    font-weight: 600;
+    color: var(--lf-ink);
+}
+
+/* Fila de ahorro */
+.summary-row.ahorro {
+    border-bottom: none;
+    padding-bottom: 4px;
+}
+
+.summary-row.ahorro .label i {
+    color: var(--lf-warning);
+}
+
+.summary-row.ahorro .value {
+    color: var(--lf-warning);
+}
+
+/* Fila total */
+.summary-row.total {
+    padding-top: 16px;
+    margin-top: 8px;
+    border-top: 2px solid var(--lf-border);
+    font-size: 18px;
+}
+
+.summary-row.total .label {
+    font-weight: 700;
+    color: var(--lf-ink);
+}
+
+.summary-row.total .label i {
+    color: var(--primary-color);
+}
+
+.summary-row.total .value {
+    font-size: 20px;
+    color: var(--primary-color);
+}
+
+/* ============================================
+   BOTONES DE ACCIÓN DEL RESUMEN
+   ============================================ */
+.summary-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.summary-actions .btn {
+    border-radius: 50px;
+    padding: 10px 28px;
+    font-weight: 600;
+    flex: 1;
+    min-width: 140px;
+    transition: all 0.3s ease;
+}
+
+/* Botón pagar con tarjeta */
+.btn-pay {
+    background: var(--primary-color);
+    color: var(--lf-on-brand);
+    border: none;
+}
+
+.btn-pay:hover {
+    background: var(--lf-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--lf-ring);
+    color: var(--lf-on-brand);
+}
+
+.btn-pay i {
+    margin-right: 8px;
+}
+
+/* Botón pagar con domiciliación */
+.btn-pay-domiciliado {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.btn-pay-domiciliado:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4);
+    color: white;
+}
+
+.btn-pay-domiciliado i {
+    margin-right: 8px;
+}
+
+.btn-pay-domiciliado:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-pay-domiciliado .badge {
+    font-size: 9px;
+    padding: 2px 8px;
+}
+
+/* Botón cancelar */
+.btn-cancel {
+    background: transparent;
+    color: var(--lf-muted);
+    border: 2px solid var(--lf-border);
+}
+
+.btn-cancel:hover {
+    border-color: var(--lf-danger);
+    color: var(--lf-danger);
+    background: transparent;
+}
+
+.btn-cancel i {
+    margin-right: 8px;
+}
+
+/* Mensaje informativo de domiciliación */
+.order-summary .mt-3.p-2 {
+    background: var(--lf-primary-050);
+    border-radius: var(--lf-r);
+    border-left: 4px solid #667eea;
+}
+
+.order-summary .mt-3.p-2 small {
+    color: var(--lf-ink-2);
+}
+
+/* ============================================
+   SECCIÓN DE DOMICILIACIÓN DE TARJETA
+   ============================================ */
+.domiciliacion-section .card {
+    border-radius: var(--lf-r-lg);
+    border: 1px solid var(--lf-border);
+    overflow: hidden;
+    background: var(--lf-surface);
+    box-shadow: var(--lf-shadow-sm);
+}
+
+.domiciliacion-section .card-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--lf-on-brand);
+    padding: 16px 24px;
+    border: none;
+}
+
+.domiciliacion-section .card-header h5 {
+    color: var(--lf-on-brand);
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+.domiciliacion-section .card-header .badge {
+    font-size: 11px;
+    color: var(--lf-ink) !important;
+}
+
+.domiciliacion-section .card-body {
+    background: var(--lf-surface);
+    padding: 24px;
+}
+
+/* Alertas en la sección de domiciliación */
+.domiciliacion-section .alert-success {
+    background: var(--lf-success-bg);
+    border-color: var(--lf-success);
+    color: var(--lf-success);
+    border-radius: var(--lf-r);
+}
+
+.domiciliacion-section .alert-success .badge {
+    font-size: 12px;
+}
+
+.domiciliacion-section .alert-success .badge.bg-light {
+    background: var(--lf-surface) !important;
+    color: var(--lf-ink) !important;
+}
+
+.domiciliacion-section .alert-success .badge[style*="background: #667eea"] {
+    background: #667eea !important;
+    color: white !important;
+}
+
+/* Formulario de domiciliación */
+.domiciliacion-section .form-label {
+    font-weight: 600;
+    color: var(--lf-ink-2);
+    margin-bottom: 0.35rem;
+    font-size: 0.88rem;
+}
+
+.domiciliacion-section .form-control,
+.domiciliacion-section .form-select {
+    background: var(--lf-surface);
+    border: 1px solid var(--lf-border);
+    border-radius: var(--lf-r);
+    color: var(--lf-ink);
+    padding: 0.6rem 0.85rem;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.domiciliacion-section .form-control:focus,
+.domiciliacion-section .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px var(--lf-ring);
+    color: var(--lf-ink);
+}
+
+.domiciliacion-section .input-group-text {
+    background: var(--lf-surface-3);
+    border: 1px solid var(--lf-border);
+    color: var(--lf-muted);
+    border-radius: var(--lf-r) 0 0 var(--lf-r);
+}
+
+.domiciliacion-section .form-check-input {
+    border-color: var(--lf-border);
+    background-color: var(--lf-surface);
+}
+
+.domiciliacion-section .form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.domiciliacion-section .form-check-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px var(--lf-ring);
+}
+
+.domiciliacion-section .text-muted {
+    color: var(--lf-muted) !important;
+}
+
+/* Panel de información de seguridad */
+.domiciliacion-section .p-3[style*="background: var(--lf-surface-2)"] {
+    background: var(--lf-surface-2) !important;
+    border-radius: var(--lf-r);
+    height: 100%;
+}
+
+.domiciliacion-section .p-3 .list-unstyled li {
+    color: var(--lf-muted);
+    font-size: 12px;
+}
+
+.domiciliacion-section .p-3 .list-unstyled li i {
+    color: var(--lf-success);
+}
+
+.domiciliacion-section .p-3 .fab {
+    font-size: 1.5rem;
+}
+
+/* Botón domiciliar */
+.domiciliacion-section .btn-primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--lf-on-brand);
+    border-radius: 50px;
+    padding: 10px 30px;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.domiciliacion-section .btn-primary:hover {
+    background: var(--lf-primary-hover);
+    border-color: var(--lf-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--lf-ring);
+}
+
+/* Botones de acción (cancelar/actualizar) */
+.domiciliacion-section .btn-danger {
+    background: var(--lf-danger);
+    border-color: var(--lf-danger);
+    color: #fff;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+}
+
+.domiciliacion-section .btn-danger:hover {
+    background: color-mix(in srgb, var(--lf-danger) 86%, #000);
+    border-color: color-mix(in srgb, var(--lf-danger) 86%, #000);
+    transform: translateY(-2px);
+}
+
+.domiciliacion-section .btn-outline-success {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    border-radius: 50px;
+    transition: all 0.3s ease;
+}
+
+.domiciliacion-section .btn-outline-success:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--lf-on-brand);
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   SECCIÓN DE MÉTODOS DE PAGO
+   ============================================ */
+.payment-section {
+    padding: 64px 24px;
+    background: var(--lf-bg);
+}
+
+.payment-inner {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+/* Eyebrow decorativo */
+.payment-section .s-eyebrow {
+    display: inline-block;
+    background: var(--lf-primary-050);
+    color: var(--primary-color);
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+/* Títulos de la sección */
+.payment-section h2 {
+    font-family: 'Google Sans', sans-serif;
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 900;
+    color: var(--lf-ink);
+    margin-bottom: 8px;
+}
+
+.payment-section h2 span {
+    color: var(--primary-color);
+}
+
+.payment-section > p {
+    color: var(--lf-muted);
+    font-size: 15px;
+}
+
+/* Accordion de métodos de pago */
+.accordion-item {
+    border: 1px solid var(--lf-border);
+    border-radius: var(--lf-r);
+    margin-bottom: 12px;
+    overflow: hidden;
+    background: var(--lf-surface);
+}
+
+.accordion-item .accordion-button {
+    padding: 20px 24px;
+    background: var(--lf-surface);
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: none;
+    color: var(--lf-ink);
+}
+
+.accordion-item .accordion-button:not(.collapsed) {
+    background: var(--lf-surface);
+    color: var(--primary-color);
+    box-shadow: none;
+}
+
+.accordion-item .accordion-button:focus {
+    box-shadow: none;
+    border-color: transparent;
+}
+
+.accordion-item .accordion-button .badge {
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.accordion-item .accordion-button .badge.ms-2 {
+    margin-left: 8px;
+}
+
+.accordion-item .accordion-body {
+    padding: 24px;
+    background: var(--lf-surface-2);
+    border-top: 1px solid var(--lf-border);
+}
+
+.accordion-item .accordion-body p {
+    color: var(--lf-ink-2);
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+/* Payment features list */
+.payment-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.payment-features li {
+    padding: 6px 0;
+    font-size: 14px;
+    color: var(--lf-ink-2);
+}
+
+.payment-features li i {
+    color: var(--primary-color);
+    margin-right: 8px;
+}
+
+/* Payment icons */
+.payment-icons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.payment-icons i {
+    font-size: 3rem;
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+}
+
+.payment-icons .fa-cc-visa.active,
+.payment-icons .fa-cc-mastercard.active,
+.payment-icons .fa-cc-amex.active {
+    opacity: 1;
+}
+
+/* Card de datos bancarios SPEI */
+.payment-section .card.shadow-sm {
+    background: var(--lf-surface);
+    border: 1px solid var(--lf-border);
+    border-radius: var(--lf-r);
+    box-shadow: var(--lf-shadow-sm);
+}
+
+.payment-section .card.shadow-sm .card-body {
+    background: var(--lf-surface);
+}
+
+.payment-section .card.shadow-sm .card-title {
+    color: var(--lf-ink);
+    font-weight: 700;
+}
+
+.payment-section .card.shadow-sm .p-3[style*="background: var(--lf-surface-2)"] {
+    background: var(--lf-surface-2) !important;
+    border-radius: var(--lf-r);
+}
+
+.payment-section .card.shadow-sm .p-3 strong {
+    color: var(--lf-ink);
+}
+
+.payment-section .card.shadow-sm .p-3 .text-muted {
+    color: var(--lf-muted) !important;
+}
+
+.payment-section .card.shadow-sm .p-3 .btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.payment-section .card.shadow-sm .p-3 .btn-outline-primary:hover {
+    background: var(--primary-color);
+    color: var(--lf-on-brand);
+    border-color: var(--primary-color);
+}
+
+.payment-section .card.shadow-sm hr {
+    border-color: var(--lf-border);
+}
+
+.payment-section .card.shadow-sm .alert-success {
+    background: var(--lf-success-bg);
+    border-color: var(--lf-success);
+    color: var(--lf-success);
+    border-radius: var(--lf-r);
+}
+
+/* ============================================
+   MODAL DE TÉRMINOS Y CONDICIONES
+   ============================================ */
+.modal-content {
+    background: var(--lf-surface);
+    border: 1px solid var(--lf-border);
+    border-radius: var(--lf-r-lg);
+    box-shadow: var(--lf-shadow-lg);
+    color: var(--lf-ink);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--lf-border);
+    padding: 1.1rem 1.35rem;
+}
+
+.modal-header .modal-title {
+    font-weight: 700;
+    color: var(--lf-ink);
+}
+
+.modal-header .modal-title i {
+    color: var(--primary-color);
+}
+
+.modal-body {
+    padding: 1.35rem;
+    color: var(--lf-ink-2);
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.modal-body ul {
+    padding-left: 1.5rem;
+}
+
+.modal-body .text-muted {
+    color: var(--lf-muted) !important;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--lf-border);
+    padding: 1rem 1.35rem;
+}
+
+.modal-footer .btn-secondary {
+    background: var(--lf-surface-3);
+    border-color: var(--lf-border);
+    color: var(--lf-ink);
+    border-radius: 50px;
+}
+
+.modal-footer .btn-secondary:hover {
+    background: var(--lf-border);
+    color: var(--lf-ink);
+}
+
+.modal-footer .btn-primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--lf-on-brand);
+    border-radius: 50px;
+}
+
+.modal-footer .btn-primary:hover {
+    background: var(--lf-primary-hover);
+    border-color: var(--lf-primary-hover);
+}
+
+/* ============================================
+   LOADING OVERLAY
+   ============================================ */
+.loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.loading-modal {
+    background: var(--lf-surface);
+    border-radius: var(--lf-r-lg);
+    padding: 40px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: var(--lf-shadow-lg);
+}
+
+.loading-modal .spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid var(--lf-surface-3);
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-modal h5 {
+    color: var(--lf-ink);
+    margin-bottom: 8px;
+}
+
+.loading-modal p {
+    color: var(--lf-muted);
+    font-size: 14px;
+    margin: 0;
+}
+
+/* ============================================
+   ANIMACIONES REVEAL
+   ============================================ */
+.reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.7s ease forwards;
+}
+
+.reveal-d1 {
+    animation-delay: 0.1s;
+}
+
+.reveal-d2 {
+    animation-delay: 0.2s;
+}
+
+.reveal-d3 {
+    animation-delay: 0.3s;
+}
+
+.reveal-d4 {
+    animation-delay: 0.4s;
+}
+
+@keyframes fadeUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+/* Tablets y móviles grandes */
+@media (max-width: 991.98px) {
+    .navbar .navbar-brand {
+        font-size: 1rem;
+    }
+
+    .navbar .navbar-brand img {
+        height: 32px;
+        max-width: 100px;
+    }
+}
+
+/* Móviles */
+@media (max-width: 767.98px) {
+    .plans-grid {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .plans-section {
+        min-height: auto;
+        padding: 2rem 0;
+    }
+
+    .pricing-toggle {
+        flex-wrap: wrap;
+    }
+
+    .payment-section {
+        padding: 40px 16px;
+    }
+
+    .payment-icons i {
+        font-size: 2.5rem;
+    }
+
+    .accordion-item .accordion-button {
+        font-size: 14px;
+        padding: 16px;
+    }
+
+    .accordion-item .accordion-body {
+        padding: 16px;
+    }
+
+    .order-summary {
+        padding: 16px;
+    }
+
+    .summary-actions .btn {
+        min-width: 100%;
+    }
+
+    .summary-row {
+        font-size: 13px;
+    }
+
+    .order-summary .summary-header {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .domiciliacion-section .row {
+        flex-direction: column;
+    }
+
+    .domiciliacion-section .card-body {
+        padding: 16px;
+    }
+
+    .domiciliacion-section .card-header {
+        padding: 12px 16px;
+    }
+
+    .domiciliacion-section .card-header h5 {
+        font-size: 1rem;
+    }
+
+    /* Ajustes para móviles muy pequeños */
+    .plan {
+        padding: 1.2rem 0.8rem;
+    }
+
+    .plan-price {
+        font-size: 1.8rem;
+    }
+
+    .plan-name {
+        font-size: 0.95rem;
+    }
+
+    .plan-select-btn {
+        font-size: 0.8rem;
+        padding: 8px 16px;
+    }
+
+    .loading-modal {
+        padding: 24px;
+        margin: 0 16px;
+    }
+}
+
+/* Tablets */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .plans-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .plan {
+        padding: 1.5rem 1rem;
+    }
+
+    .domiciliacion-section .col-md-8,
+    .domiciliacion-section .col-md-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .domiciliacion-section .col-md-4 {
+        margin-top: 1rem;
+    }
+}
+
+/* Pantallas muy pequeñas (menos de 400px) */
+@media (max-width: 399.98px) {
+    .plans-grid {
+        max-width: 100%;
+    }
+
+    .plan {
+        padding: 1rem 0.6rem;
+    }
+
+    .plan-price {
+        font-size: 1.5rem;
+    }
+
+    .plan-period {
+        font-size: 0.7rem;
+    }
+
+    .plan-li {
+        font-size: 0.75rem;
+        padding: 0.15rem 0 0.15rem 1rem;
+    }
+
+    .plan-section-label {
+        font-size: 0.55rem;
+    }
+
+    .summary-row {
+        font-size: 12px;
+        padding: 6px 0;
+    }
+
+    .summary-row.total {
+        font-size: 15px;
+    }
+
+    .summary-row.total .value {
+        font-size: 17px;
+    }
+
+    .order-summary .summary-header h4 {
+        font-size: 1rem;
+    }
+
+    .summary-actions .btn {
+        font-size: 0.8rem;
+        padding: 8px 16px;
+        min-width: 100%;
+    }
+
+    .payment-section h2 {
+        font-size: clamp(22px, 5vw, 28px);
+    }
+
+    .accordion-item .accordion-button {
+        font-size: 13px;
+        padding: 12px 16px;
+    }
+
+    .accordion-item .accordion-body {
+        padding: 12px;
+    }
+}
+
+/* ============================================
+   SOPORTE PARA MODO OSCURO (complemento al tema CRM)
+   ============================================ */
+:root[data-theme="dark"] .navbar,
+:root.dark .navbar {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+}
+
+:root[data-theme="dark"] .plan,
+:root.dark .plan {
+    background: var(--lf-surface);
+    border-color: var(--lf-border);
+}
+
+:root[data-theme="dark"] .plan:hover,
+:root.dark .plan:hover {
+    box-shadow: var(--lf-shadow);
+}
+
+:root[data-theme="dark"] .plan.selected,
+:root.dark .plan.selected {
+    background: var(--lf-primary-050);
+    border-color: var(--primary-color);
+}
+
+:root[data-theme="dark"] .order-summary,
+:root.dark .order-summary {
+    background: var(--lf-surface);
+    border-color: var(--lf-border);
+}
+
+:root[data-theme="dark"] .domiciliacion-section .card,
+:root.dark .domiciliacion-section .card {
+    background: var(--lf-surface);
+    border-color: var(--lf-border);
+}
+
+:root[data-theme="dark"] .domiciliacion-section .card-body,
+:root.dark .domiciliacion-section .card-body {
+    background: var(--lf-surface);
+}
+
+:root[data-theme="dark"] .accordion-item,
+:root.dark .accordion-item {
+    background: var(--lf-surface);
+    border-color: var(--lf-border);
+}
+
+:root[data-theme="dark"] .accordion-item .accordion-button,
+:root.dark .accordion-item .accordion-button {
+    background: var(--lf-surface);
+    color: var(--lf-ink);
+}
+
+:root[data-theme="dark"] .accordion-item .accordion-button:not(.collapsed),
+:root.dark .accordion-item .accordion-button:not(.collapsed) {
+    background: var(--lf-surface);
+    color: var(--primary-color);
+}
+
+:root[data-theme="dark"] .accordion-item .accordion-body,
+:root.dark .accordion-item .accordion-body {
+    background: var(--lf-surface-2);
+}
+
+:root[data-theme="dark"] .modal-content,
+:root.dark .modal-content {
+    background: var(--lf-surface);
+    border-color: var(--lf-border);
+}
+
+:root[data-theme="dark"] .loading-modal,
+:root.dark .loading-modal {
+    background: var(--lf-surface);
+}
+
+:root[data-theme="dark"] .payment-section .card.shadow-sm,
+:root.dark .payment-section .card.shadow-sm {
+    background: var(--lf-surface);
+    border-color: var(--lf-border);
+}
+
+:root[data-theme="dark"] .payment-section .card.shadow-sm .card-body,
+:root.dark .payment-section .card.shadow-sm .card-body {
+    background: var(--lf-surface);
+}
+
+:root[data-theme="dark"] .payment-section .card.shadow-sm .p-3[style*="background: var(--lf-surface-2)"],
+:root.dark .payment-section .card.shadow-sm .p-3[style*="background: var(--lf-surface-2)"] {
+    background: var(--lf-surface-2) !important;
+}
+
+:root[data-theme="dark"] .payment-section .card.shadow-sm .text-muted,
+:root.dark .payment-section .card.shadow-sm .text-muted {
+    color: var(--lf-muted) !important;
+}
+
+:root[data-theme="dark"] .navbar .dropdown-menu,
+:root.dark .navbar .dropdown-menu {
+    background: var(--lf-surface);
+    border-color: var(--lf-border);
+}
+
+:root[data-theme="dark"] .navbar .dropdown-item,
+:root.dark .navbar .dropdown-item {
+    color: var(--lf-ink-2);
+}
+
+:root[data-theme="dark"] .navbar .dropdown-item:hover,
+:root.dark .navbar .dropdown-item:hover {
+    background: var(--lf-primary-050);
+}
+
+/* Ajustes para inputs en modo oscuro */
+:root[data-theme="dark"] .domiciliacion-section .form-control,
+:root[data-theme="dark"] .domiciliacion-section .form-select,
+:root.dark .domiciliacion-section .form-control,
+:root.dark .domiciliacion-section .form-select {
+    background: var(--lf-surface);
+    border-color: var(--lf-border);
+    color: var(--lf-ink);
+}
+
+:root[data-theme="dark"] .domiciliacion-section .input-group-text,
+:root.dark .domiciliacion-section .input-group-text {
+    background: var(--lf-surface-3);
+    border-color: var(--lf-border);
+    color: var(--lf-muted);
+}
+
+:root[data-theme="dark"] .domiciliacion-section .form-check-input,
+:root.dark .domiciliacion-section .form-check-input {
+    border-color: var(--lf-border);
+    background-color: var(--lf-surface);
+}
+
+/* Toast/Swal en modo oscuro */
+:root[data-theme="dark"] .swal2-popup,
+:root.dark .swal2-popup {
+    background: var(--lf-surface) !important;
+    color: var(--lf-ink) !important;
+}
+
+:root[data-theme="dark"] .swal2-title,
+:root.dark .swal2-title {
+    color: var(--lf-ink) !important;
+}
+
+:root[data-theme="dark"] .swal2-html-container,
+:root.dark .swal2-html-container {
+    color: var(--lf-ink-2) !important;
+}
+
+:root[data-theme="dark"] .swal2-confirm,
+:root.dark .swal2-confirm {
+    background: var(--primary-color) !important;
+}
+
+:root[data-theme="dark"] .swal2-cancel,
+:root.dark .swal2-cancel {
+    background: var(--lf-surface-3) !important;
+    color: var(--lf-ink) !important;
+}

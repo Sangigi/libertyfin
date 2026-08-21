@@ -46,7 +46,6 @@ class EnvLoader {
         }
         
         $this->loaded = true;
-        error_log("✅ Variables de entorno cargadas correctamente");
         return true;
     }
 }

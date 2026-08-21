@@ -1950,9 +1950,9 @@
         .subtotal-descuento {
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
+            align-items: center;
+            text-align: center;
         }
-
         .subtotal-original {
             text-decoration: line-through;
             color: #6c757d;

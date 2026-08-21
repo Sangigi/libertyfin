@@ -1,39 +1,78 @@
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
 /* ============================================================
-   LibertyFin CRM - Hoja de estilos centralizada
-   Estilo alineado con la landing principal - Tipografia Google Sans
+   LibertyFin CRM - Sistema de diseno centralizado
+   Estilo "CRM verde" (referencia dashboard limpio, sidebar claro)
+   Tipografia: Inter
 
+   -----------------------------------------------------------
    COLOR POR EMPRESA
-   Este archivo NO hardcodea el color de la empresa. Manten en cada
-   pagina un pequeno bloque para inyectarlo desde PHP, por ejemplo:
+   Este archivo NO ejecuta PHP (se sirve como .css estatico).
+   El color de marca se toma de --primary-color / --secondary-color.
+   Se definen abajo unos valores por defecto (verde). Para
+   personalizar por empresa, deja en cada pagina un bloque inline
+   ANTES de que cargue este archivo, o despues, con mayor prioridad:
 
-     <style>
-       :root {
-         --primary-color:   <?php echo $color_primario; ?>;
-         --secondary-color: <?php echo $color_secundario; ?>;
-       }
-     </style>
+       <style>
+         :root {
+           --primary-color:   <?php echo $color_primario; ?>;
+           --secondary-color: <?php echo $color_secundario; ?>;
+         }
+       </style>
 
-   Los tonos derivados (hover, tints, sombras) se calculan solos con
-   color-mix(), asi que solo necesitas esas dos variables.
+   Los tonos derivados (hover, tints, sombras, anillos) se calculan
+   solos con color-mix(), asi que solo necesitas esas dos variables.
+
+   -----------------------------------------------------------
+   MODO OSCURO (manual)
+   Se activa con un atributo/clase en la etiqueta <html>:
+
+       <html data-theme="dark">   o   <html class="dark">
+
+   Snippet para el boton de alternancia (ponlo una sola vez, p.ej.
+   al final del layout o en un JS comun):
+
+       <button id="themeToggle" class="btn btn-ghost btn-sm" type="button">
+         <i class="fas fa-moon"></i>
+       </button>
+       <script>
+         (function () {
+           var root = document.documentElement;
+           var saved = localStorage.getItem('lf-theme');
+           if (saved) root.setAttribute('data-theme', saved);
+           var btn = document.getElementById('themeToggle');
+           if (btn) btn.addEventListener('click', function () {
+             var dark = root.getAttribute('data-theme') === 'dark';
+             var next = dark ? 'light' : 'dark';
+             root.setAttribute('data-theme', next);
+             localStorage.setItem('lf-theme', next);
+           });
+         })();
+       </script>
    ============================================================ */
 
+/* ============================================================
+   TOKENS - MODO CLARO (por defecto)
+   ============================================================ */
 :root {
-  --primary-color: <?php echo getConfigValue($empresa_info, 'color_primario', '#27ae60'); ?>;
-  --secondary-color: <?php echo getConfigValue($empresa_info, 'color_secundario', '#2ecc71'); ?>;
+  /* Marca (override por empresa desde PHP si se requiere) */
+  --primary-color:   #27ae60;
+  --secondary-color: #2ecc71;
 
-
-  /* Superficie / neutros (landing) */
-  --lf-bg:        #f6f7f9;
+  /* Superficie / neutros */
+  --lf-bg:        #f4f6f5;
   --lf-surface:   #ffffff;
-  --lf-surface-2: #f9fafb;
-  --lf-ink:       #111827;
-  --lf-ink-2:     #374151;
-  --lf-muted:     #6b7280;
-  --lf-muted-2:   #9ca3af;
-  --lf-border:    #e5e7eb;
-  --lf-border-2:  #eef1f4;
+  --lf-surface-2: #f8faf9;
+  --lf-surface-3: #eef2f0;
+  --lf-ink:       #14201a;
+  --lf-ink-2:     #384843;
+  --lf-muted:     #6b7d76;
+  --lf-muted-2:   #9aa8a2;
+  --lf-border:    #e4e9e7;
+  --lf-border-2:  #eef2f0;
+  --lf-sidebar-bg:   #ffffff;
+  --lf-navbar-bg:    #ffffff;
+  --lf-on-brand:     #ffffff;
 
   /* Estados */
   --lf-success:   #16a34a;
@@ -42,23 +81,73 @@
   --lf-info:      #0284c7;
 
   /* Tints derivados de la marca */
-  --lf-primary-050: color-mix(in srgb, var(--primary-color) 6%,  #ffffff);
-  --lf-primary-100: color-mix(in srgb, var(--primary-color) 12%, #ffffff);
-  --lf-primary-150: color-mix(in srgb, var(--primary-color) 18%, #ffffff);
-  --lf-primary-hover: color-mix(in srgb, var(--primary-color) 88%, #000000);
-  --lf-primary-ink:   color-mix(in srgb, var(--primary-color) 72%, #000000);
+  --lf-primary-050: color-mix(in srgb, var(--primary-color) 6%,  var(--lf-surface));
+  --lf-primary-100: color-mix(in srgb, var(--primary-color) 12%, var(--lf-surface));
+  --lf-primary-150: color-mix(in srgb, var(--primary-color) 18%, var(--lf-surface));
+  --lf-primary-200: color-mix(in srgb, var(--primary-color) 26%, var(--lf-surface));
+  --lf-primary-hover: color-mix(in srgb, var(--primary-color) 86%, #000000);
+  --lf-primary-ink:   color-mix(in srgb, var(--primary-color) 82%, #000000);
+  --lf-ring:          color-mix(in srgb, var(--primary-color) 35%, transparent);
+
+  /* Tints de estado (fondos suaves de badges/alertas) */
+  --lf-success-bg: color-mix(in srgb, var(--lf-success) 12%, var(--lf-surface));
+  --lf-warning-bg: color-mix(in srgb, var(--lf-warning) 14%, var(--lf-surface));
+  --lf-danger-bg:  color-mix(in srgb, var(--lf-danger) 12%,  var(--lf-surface));
+  --lf-info-bg:    color-mix(in srgb, var(--lf-info) 12%,    var(--lf-surface));
 
   /* Radios */
   --lf-r-sm: 8px;
   --lf-r:    12px;
   --lf-r-lg: 16px;
-  --lf-r-xl: 20px;
+  --lf-r-xl: 22px;
 
-  /* Sombras (suaves, estilo landing) */
+  /* Sombras (suaves) */
   --lf-shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
   --lf-shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
-  --lf-shadow:    0 8px 24px rgba(16, 24, 40, 0.08), 0 2px 6px rgba(16, 24, 40, 0.04);
+  --lf-shadow:    0 10px 28px rgba(16, 24, 40, 0.08), 0 2px 6px rgba(16, 24, 40, 0.04);
   --lf-shadow-lg: 0 24px 48px rgba(16, 24, 40, 0.12), 0 8px 16px rgba(16, 24, 40, 0.06);
+
+  --lf-scrollbar: #d3dbd7;
+}
+
+/* ============================================================
+   TOKENS - MODO OSCURO
+   Activo con <html data-theme="dark"> o <html class="dark">
+   ============================================================ */
+:root[data-theme="dark"],
+:root.dark {
+  --lf-bg:        #0f1512;
+  --lf-surface:   #161d19;
+  --lf-surface-2: #1c2621;
+  --lf-surface-3: #22302a;
+  --lf-ink:       #eef3f0;
+  --lf-ink-2:     #c4d1cb;
+  --lf-muted:     #93a49c;
+  --lf-muted-2:   #6f8079;
+  --lf-border:    #2a352f;
+  --lf-border-2:  #232e29;
+  --lf-sidebar-bg:   #131a16;
+  --lf-navbar-bg:    #131a16;
+
+  --lf-primary-050: color-mix(in srgb, var(--primary-color) 14%, var(--lf-surface));
+  --lf-primary-100: color-mix(in srgb, var(--primary-color) 22%, var(--lf-surface));
+  --lf-primary-150: color-mix(in srgb, var(--primary-color) 30%, var(--lf-surface));
+  --lf-primary-200: color-mix(in srgb, var(--primary-color) 40%, var(--lf-surface));
+  --lf-primary-hover: color-mix(in srgb, var(--primary-color) 82%, #ffffff);
+  --lf-primary-ink:   color-mix(in srgb, var(--primary-color) 65%, #ffffff);
+  --lf-ring:          color-mix(in srgb, var(--primary-color) 45%, transparent);
+
+  --lf-success-bg: color-mix(in srgb, var(--lf-success) 22%, var(--lf-surface));
+  --lf-warning-bg: color-mix(in srgb, var(--lf-warning) 22%, var(--lf-surface));
+  --lf-danger-bg:  color-mix(in srgb, var(--lf-danger) 22%,  var(--lf-surface));
+  --lf-info-bg:    color-mix(in srgb, var(--lf-info) 22%,    var(--lf-surface));
+
+  --lf-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --lf-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --lf-shadow:    0 10px 28px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --lf-shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.6), 0 8px 16px rgba(0, 0, 0, 0.45);
+
+  --lf-scrollbar: #37453e;
 }
 
 /* ============================================================
@@ -69,23 +158,30 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  background-color: var(--lf-bg);
+}
+
 body {
-  font-family: 'Google Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: "Google Sans", sans-serif;
   background-color: var(--lf-bg);
   color: var(--lf-ink);
   font-size: 0.95rem;
   line-height: 1.6;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.006em;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 h1, h2, h3, h4, h5, h6,
 .h1, .h2, .h3, .h4, .h5, .h6 {
-  font-family: 'Google Sans', system-ui, sans-serif;
+  font-family: "Google Sans", sans-serif;
   font-weight: 700;
   color: var(--lf-ink);
   letter-spacing: -0.02em;
   line-height: 1.25;
 }
+
+p { color: var(--lf-ink-2); }
 
 a {
   color: var(--lf-primary-ink);
@@ -95,6 +191,9 @@ a {
 a:hover { color: var(--lf-primary-hover); }
 
 .text-muted { color: var(--lf-muted) !important; }
+small, .small { color: var(--lf-muted); }
+
+hr { border-color: var(--lf-border); opacity: 1; }
 
 :focus-visible {
   outline: 2px solid var(--primary-color);
@@ -105,129 +204,167 @@ a:hover { color: var(--lf-primary-hover); }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: #d5d9e0;
+  background: var(--lf-scrollbar);
   border-radius: 999px;
   border: 2px solid var(--lf-bg);
 }
-::-webkit-scrollbar-thumb:hover { background: #c2c7d0; }
+::-webkit-scrollbar-thumb:hover { background: var(--lf-muted-2); }
+
+/* Utilidades de marca */
+.text-primary { color: var(--primary-color) !important; }
+.text-brand   { color: var(--primary-color) !important; }
+.bg-brand     { background: var(--primary-color) !important; color: var(--lf-on-brand) !important; }
+.text-success { color: var(--lf-success) !important; }
 
 /* ============================================================
-   NAVBAR (barra superior)
+   NAVBAR (barra superior) - clara, estilo referencia
    ============================================================ */
 .navbar {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  border-bottom: 1px solid var(--lf-border);
-  box-shadow: var(--lf-shadow-xs);
-  padding: 0.65rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 1030;
-  min-height: 64px;
+  background: var(--lf-navbar-bg);
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  min-height: 56px;
 }
 
-.navbar .navbar-brand {
-  color: var(--lf-surface) !important;
-  font-weight: 700;
-  font-size: 1.1rem;
+/* La barra viene marcada como navbar-dark en el markup; forzamos
+   texto oscuro sobre fondo claro para el look de la referencia. */
+.navbar,
+.navbar .navbar-brand,
+.navbar .navbar-nav .nav-link,
+.navbar .navbar-text {
+  color: var(--lf-ink) !important;
+}
+
+.navbar-brand {
+  font-weight: 800;
   letter-spacing: -0.02em;
+  font-size: 1.15rem;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.15rem;
 }
-
-.navbar .navbar-brand img {
-  height: 35px;
+.navbar-brand img {
+  height: 30px;
   width: auto;
-  max-width: 150px;
+  border-radius: 8px;
   object-fit: contain;
 }
+.navbar-brand i { color: var(--primary-color); }
 
-.navbar .navbar-brand i { color: var(--lf-surface); }
-
-.navbar .nav-link {
-  color: var(--lf-surface) !important;
+.navbar .navbar-nav .nav-link {
   font-weight: 500;
   border-radius: var(--lf-r-sm);
-  padding: 0.5rem 0.85rem !important;
+  padding: 0.4rem 0.75rem !important;
   transition: background 0.18s ease, color 0.18s ease;
 }
-.navbar .nav-link:hover { color: var(--lf-surface-2) !important; }
-.navbar .nav-link i { color: var(--lf-surface-2); }
-
-/* Boton hamburguesa */
-.sidebar-toggle {
-  display: none;
-  background: var(--lf-surface-2);
-  border: 1px solid var(--lf-border);
-  color: var(--lf-surface);
-  width: 42px;
-  height: 42px;
-  border-radius: var(--lf-r-sm);
-  margin-right: 0.75rem;
-  cursor: pointer;
-  transition: background 0.18s ease;
+.navbar .navbar-nav .nav-link:hover {
+  color: var(--lf-ink-2) !important;
 }
-.sidebar-toggle:hover { background: var(--lf-primary-050); }
+.navbar .navbar-nav .nav-link i { color: var(--primary-color); }
+
+.navbar-toggler {
+  border-color: var(--lf-border);
+  color: var(--lf-ink);
+}
 
 /* ============================================================
-   SIDEBAR
+   SIDEBAR - claro, item activo en pastilla verde (referencia)
    ============================================================ */
 .sidebar {
-  background: #2c3e50;
-  border-right: 1px solid var(--lf-border);
-  min-height: calc(100vh - 64px);
-  padding: 0;
-  position: sticky;
-  top: 64px;
-  height: calc(100vh - 64px);
-  overflow-y: auto;
+  background: var(--lf-sidebar-bg);
+  color: var(--lf-ink-2);
+  min-height: calc(100vh - 56px);
+  padding: 0.5rem 0.75rem;
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              background-color 0.25s ease;
+  will-change: transform;
 }
 
-.sidebar .position-sticky { padding: 1rem 0.75rem !important; }
+.sidebar div ul {
+  background: #f9f9f9;
+  border: 1px solid #e3e3e3;
+  border-radius: 10px;
+  padding: 20px;
+}
 
-.sidebar .nav { gap: 2px; }
+.sidebar .position-sticky { top: 0.5rem; }
 
 .sidebar .nav-link {
+  color: var(--lf-ink-2);
+  font-weight: 500;
+  padding: 0.7rem 0.6rem;
+  margin: 0.15rem 0;
+  border-radius: var(--lf-r);
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  color: var(--lf-surface);
-  font-weight: 500;
-  font-size: 0.92rem;
-  padding: 0.7rem 0.9rem;
-  border-radius: var(--lf-r);
-  transition: background 0.16s ease, color 0.16s ease;
-  white-space: nowrap;
+  gap: 0.15rem;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
-.sidebar .nav-link i,
-.sidebar .nav-link img {
-  width: 20px;
-  font-size: 1rem;
+.sidebar .nav-link i {
+  width: 22px;
+  margin-right: 0.6rem;
+  font-size: 0.95rem;
   text-align: center;
-  color: var(--lf-surface);
-  transition: color 0.16s ease;
-  flex-shrink: 0;
+  color: var(--lf-muted);
+  transition: color 0.18s ease;
 }
 
 .sidebar .nav-link:hover {
-  background: var(--lf-muted);
+  background: var(--lf-surface-3);
+  color: var(--lf-ink);
 }
+.sidebar .nav-link:hover i { color: var(--lf-ink-2); }
 
 .sidebar .nav-link.active {
-  background: var(--lf-muted);
+  background: var(--lf-primary-100);
+  color: var(--lf-primary-ink);
   font-weight: 600;
 }
+.sidebar .nav-link.active i { color: var(--primary-color); }
+
+/* Encabezados / separadores dentro del sidebar */
+.sidebar .nav-header,
+.sidebar .sidebar-heading {
+  color: var(--lf-muted-2);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.9rem 0.9rem 0.35rem;
+}
+
+/* Boton hamburguesa: SOLO visible en movil (se muestra en el media query) */
+.sidebar-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--lf-ink);
+  font-size: 1.2rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--lf-r-sm);
+}
+.sidebar-toggle:hover { background: var(--lf-surface-3); }
 
 /* ============================================================
    MAIN CONTENT
    ============================================================ */
 main, #mainContent {
-  padding-top: 1.75rem !important;
-  padding-bottom: 3rem !important;
+  padding: 1.5rem 1.75rem;
 }
 
-.page-header, .page-title, main > h1, main > h2 { margin-bottom: 1.25rem; }
+#mainContent {
+  background: #fff;
+}
+
+.page-title, .h-page {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.25rem;
+}
 
 /* ============================================================
    CARDS
@@ -236,378 +373,379 @@ main, #mainContent {
   background: var(--lf-surface);
   border: 1px solid var(--lf-border);
   border-radius: var(--lf-r-lg);
-  box-shadow: var(--lf-shadow-xs);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--lf-shadow-sm);
+  color: var(--lf-ink);
+  transition: transform 0.2s ease, box-shadow 80ms ease, border-color 0.2s ease;
 }
-
-.card:hover { box-shadow: var(--lf-shadow-sm); }
+.card:hover {
+  transform: translateY(-1px);
+}
 
 .card-header {
-  background: var(--lf-surface);
-  border-bottom: 1px solid var(--lf-border-2);
-  padding: 1.1rem 1.35rem;
-  font-weight: 600;
-  border-radius: var(--lf-r-lg) var(--lf-r-lg) 0 0 !important;
+  background: transparent;
+  border-bottom: 1px solid var(--lf-border);
+  font-weight: 700;
+  color: var(--lf-ink);
+  padding: 1rem 1.25rem;
 }
+.card-body { padding: 0.5rem 1.25rem; }
+.card-title { color: var(--lf-ink); font-weight: 700; }
+.card-text { color: var(--lf-ink-2); }
 
-.card-title { font-weight: 700; color: var(--bs-black); }
-
-.card-body { padding: 1.35rem; }
-
-.card-footer {
-  background: var(--lf-surface-2);
-  border-top: 1px solid var(--lf-border-2);
-  border-radius: 0 0 var(--lf-r-lg) var(--lf-r-lg) !important;
-}
-
-/* Welcome card (hero con color de marca) */
-.welcome-card {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  border: none;
-  color: #fff;
-  box-shadow: var(--lf-shadow);
-}
-.welcome-card,
-.welcome-card .card-title,
-.welcome-card h1, .welcome-card h2, .welcome-card h3, .welcome-card h4, .welcome-card h5 { color: #fff; }
-.welcome-card .text-muted,
-.welcome-card .text-white-50,
-.welcome-card .opacity-75 { color: rgba(255, 255, 255, 0.82) !important; }
-.welcome-card img { border-radius: 10px; }
-.welcome-card .logo-placeholder {
-  width: 60px; height: 60px; border-radius: 12px;
-  background: rgba(255, 255, 255, 0.18);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 24px; color: #fff;
-}
-
-/* Ingresos card (metrica destacada con marca) */
-.ingresos-card {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  border: none; color: #fff;
-}
-.ingresos-card .metric-value, .ingresos-card .metric-label { color: #fff !important; }
-
-/* Stat / metric cards */
+/* Tarjeta de metrica limpia estilo referencia (sin borde grueso) */
 .stat-card {
-  position: relative;
-  overflow: hidden;
+  border: 1px solid var(--lf-border);
   border-radius: var(--lf-r-lg);
+  border-top: 2px solid var(--primary-color);
 }
-.stat-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: var(--primary-color);
-  opacity: 0;
-  transition: opacity 0.2s ease;
+.stat-card:hover, .btn-success:hover, .btn-warning:hover, .btn-info:hover, .btn-primary:hover {
+  transform: translateY(-2px);
 }
-.stat-card:hover { transform: translateY(-2px); box-shadow: var(--lf-shadow); }
-.stat-card:hover::before { opacity: 1; }
+.stat-card .card-body { padding: 1.5rem 1.6rem; }
 
 .metric-value {
-  font-size: 1.9rem;
-  font-weight: 700;
-  line-height: 1.1;
+  font-size: 2rem;
+  font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--lf-ink);
+  color: var(--lf-ink) !important;
+  line-height: 1.1;
 }
-.metric-value.text-white { color: #fff !important; }
-.metric-value.text-success { color: var(--lf-success) !important; }
-.metric-value.text-warning { color: var(--lf-warning) !important; }
-.metric-value.text-danger  { color: var(--lf-danger) !important; }
-
 .metric-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 0.76rem;
   color: var(--lf-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
 }
+
+/* Panel de bienvenida: claro con acento de marca sutil (no saturado) */
+.welcome-card {
+  background: var(--lf-primary-050);
+  color: var(--lf-ink);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 22%, var(--lf-border));
+}
+.welcome-card .card-title { color: var(--lf-ink); }
+.welcome-card .card-text { color: var(--lf-ink-2); }
+.welcome-card .logo-placeholder {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--lf-r);
+  background: var(--primary-color);
+  color: var(--lf-on-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.ingresos-card {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: var(--lf-on-brand);
+  border: none;
+}
+.ingresos-card .card-title,
+.ingresos-card .metric-value,
+.ingresos-card .metric-label,
+.ingresos-card * { color: var(--lf-on-brand); }
 
 /* ============================================================
    BOTONES
    ============================================================ */
+.fas {
+  color: --lf-ink;
+}
+
+.fa-users:before, .fa-boxes:before, .fa-cash-register:before, .fa-bar-chart:before, .fa-chart-bar:before,.fa-shopping-cart:before, .fa-user-check:before, .fa-money-bill-wave:before, .fa-cash-register:before {
+  color: var(--lf-ink);
+}
+
+.text-white-50 {
+  color: #2f2f2f !important;
+}
+
 .btn {
   font-weight: 600;
   border-radius: var(--lf-r-sm);
   padding: 0.55rem 1.1rem;
-  font-size: 0.92rem;
   letter-spacing: -0.01em;
-  transition: all 0.18s ease;
-  border-width: 1px;
+  transition: background 0.18s ease, border-color 0.18s ease,
+              color 0.18s ease, box-shadow 0.18s ease, transform 0.1s ease;
 }
-.btn:focus, .btn:focus-visible { box-shadow: 0 0 0 3px var(--lf-primary-150); }
+.btn:focus-visible { box-shadow: 0 0 0 4px var(--lf-ring); }
 
-.btn-sm { padding: 0.35rem 0.7rem; font-size: 0.82rem; border-radius: 7px; }
-.btn-lg { padding: 0.75rem 1.5rem; font-size: 1rem; border-radius: var(--lf-r); }
-
-.btn-primary,
-.btn-success {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: #fff;
-  box-shadow: var(--lf-shadow-xs);
+.btn-primary, .btn-success {
+    background-color: #f9f9f9;
+    border: 0;
+    border-top: 2px solid var(--primary-color);
+    color: #000;
 }
+
 .btn-primary:hover,
-.btn-success:hover,
 .btn-primary:focus,
 .btn-success:focus {
-  background: var(--lf-primary-hover);
+  background-color: var(--lf-primary-hover);
   border-color: var(--lf-primary-hover);
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: var(--lf-shadow-sm);
+  color: var(--lf-on-brand);
 }
-.btn-primary:active, .btn-success:active { transform: translateY(0); }
 
 .btn-outline-primary,
 .btn-outline-success {
-  color: var(--lf-primary-ink);
-  border-color: var(--primary-color);
+  color: var(--primary-color);
+  border-color: color-mix(in srgb, var(--primary-color) 45%, var(--lf-border));
   background: transparent;
 }
 .btn-outline-primary:hover,
 .btn-outline-success:hover {
   background: var(--primary-color);
   border-color: var(--primary-color);
-  color: #fff;
+  color: var(--lf-on-brand);
 }
 
 .btn-secondary {
-  background: var(--lf-surface);
+  background: var(--lf-surface-3);
   border-color: var(--lf-border);
-  color: var(--lf-ink-2);
-}
-.btn-secondary:hover {
-  background: var(--lf-surface-2);
-  border-color: var(--lf-border-2);
   color: var(--lf-ink);
 }
 
 .btn-light {
-  background: var(--lf-surface-2);
+  background: var(--lf-surface);
   border-color: var(--lf-border);
+  color: var(--lf-ink);
+}
+.btn-light:hover { background: var(--lf-surface-3); color: var(--lf-ink); }
+
+/* Boton fantasma (util para iconos, toggle de tema) */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--lf-ink-2);
 }
-.btn-light:hover { background: #eef1f4; color: var(--lf-ink); }
-
-.btn-danger  { background: var(--lf-danger);  border-color: var(--lf-danger); color: #fff; }
-.btn-danger:hover  { background: #b91c1c; border-color: #b91c1c; }
-.btn-warning { background: var(--lf-warning); border-color: var(--lf-warning); color: #fff; }
-.btn-warning:hover { background: #b45309; border-color: #b45309; color: #fff; }
-.btn-info    { background: var(--lf-info);    border-color: var(--lf-info); color: #fff; }
-.btn-info:hover { background: #0369a1; border-color: #0369a1; color: #fff; }
-
-.btn-outline-secondary {
-  color: var(--lf-ink-2);
-  border-color: var(--lf-border);
-}
-.btn-outline-secondary:hover {
-  background: var(--lf-surface-2);
-  border-color: var(--lf-border-2);
+.btn-ghost:hover {
+  background: var(--lf-surface-3);
   color: var(--lf-ink);
 }
 
-.btn-group-actions .btn { width: 100%; text-align: left; border-radius: var(--lf-r); }
-.btn-group-actions .btn:hover { transform: translateY(-2px); box-shadow: var(--lf-shadow-sm); }
-.btn:active, .btn-group-actions .btn:active { transform: scale(0.98); }
+.btn-danger {
+  background: var(--lf-danger);
+  border-color: var(--lf-danger);
+  color: #fff;
+}
+.btn-danger:hover {
+  background: color-mix(in srgb, var(--lf-danger) 86%, #000);
+  border-color: color-mix(in srgb, var(--lf-danger) 86%, #000);
+  color: #fff;
+}
+
+.btn-warning {
+    background: #f9f9f9;
+    /* border-color: var(--lf-warning); */
+    color: #000;
+    border: 0;
+    border-top: 2px solid var(--primary-color);
+}
+
+.btn-info {
+    background: #f9f9f9;
+    /* border-color: var(--lf-info); */
+    color: #fff;
+    border: 0;
+    border-top: 2px solid var(--primary-color);
+}
+
+.btn:active { transform: scale(0.98); }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
+.btn-lg { padding: 0.75rem 1.4rem; font-size: 1.05rem; }
 
 /* ============================================================
    FORMULARIOS
    ============================================================ */
 .form-label {
   font-weight: 600;
-  font-size: 0.85rem;
   color: var(--lf-ink-2);
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.88rem;
 }
 
 .form-control,
 .form-select {
+  background: var(--lf-surface);
   border: 1px solid var(--lf-border);
-  border-radius: var(--lf-r-sm);
-  padding: 0.6rem 0.85rem;
-  font-size: 0.92rem;
+  border-radius: var(--lf-r);
   color: var(--lf-ink);
-  background-color: var(--lf-surface);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  padding: 0.6rem 0.85rem;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 .form-control::placeholder { color: var(--lf-muted-2); }
-
 .form-control:focus,
 .form-select:focus {
+  background: var(--lf-surface);
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--lf-primary-150);
-  background-color: var(--lf-surface);
+  box-shadow: 0 0 0 4px var(--lf-ring);
   color: var(--lf-ink);
 }
 
-.form-control-lg, .form-select-lg { padding: 0.75rem 1rem; border-radius: var(--lf-r); }
-.form-control-sm, .form-select-sm { padding: 0.4rem 0.65rem; font-size: 0.85rem; }
-
-.input-group-text {
-  background: var(--lf-surface-2);
-  border: 1px solid var(--lf-border);
+.form-control:disabled,
+.form-select:disabled {
+  background: var(--lf-surface-3);
   color: var(--lf-muted);
-  border-radius: var(--lf-r-sm);
 }
 
+.input-group-text {
+  background: var(--lf-surface-3);
+  border: 1px solid var(--lf-border);
+  color: var(--lf-muted);
+  border-radius: var(--lf-r);
+}
+
+.form-check-input {
+  border-color: var(--lf-border);
+  background-color: var(--lf-surface);
+}
 .form-check-input:checked {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
 }
 .form-check-input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--lf-primary-150);
+  box-shadow: 0 0 0 4px var(--lf-ring);
 }
 
-.search-results-count { font-size: 0.82rem; color: var(--lf-muted); }
+.form-text { color: var(--lf-muted); }
+
+/* Barra de busqueda estilo referencia */
+.search-bar,
+.form-control.search {
+  border-radius: 999px;
+  background: var(--lf-surface-2);
+}
 
 /* ============================================================
    TABLAS
    ============================================================ */
 .table-container,
-.table-responsive-custom {
+.table-responsive {
   background: var(--lf-surface);
   border: 1px solid var(--lf-border);
   border-radius: var(--lf-r-lg);
+  box-shadow: var(--lf-shadow-sm);
   overflow: hidden;
-  box-shadow: var(--lf-shadow-xs);
 }
 
 .table {
-  color: var(--lf-ink-2);
+  color: var(--lf-ink);
   margin-bottom: 0;
-  vertical-align: middle;
+  --bs-table-bg: transparent;
 }
-
-.table > thead > tr > th,
-.table-light > tr > th {
+.table > :not(caption) > * > * {
+  background: transparent;
+  border-bottom-color: var(--lf-border);
+  padding: 0.85rem 1rem;
+}
+.table thead th {
   background: var(--lf-surface-2);
   color: var(--lf-muted);
-  font-size: 0.74rem;
   font-weight: 700;
+  font-size: 0.76rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   border-bottom: 1px solid var(--lf-border);
-  padding: 0.85rem 1rem;
-  white-space: nowrap;
 }
-
-.table > tbody > tr > td {
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--lf-border-2);
-  font-size: 0.9rem;
+.table tbody tr { transition: background 0.15s ease; }
+.table-hover tbody tr:hover > * {
+  background: var(--lf-primary-050);
 }
-
-.table > tbody > tr:last-child > td { border-bottom: none; }
-
-.table-hover > tbody > tr { transition: background 0.14s ease; }
-.table-hover > tbody > tr:hover { background: var(--lf-primary-050); }
-
-.table-sm > :not(caption) > * > * { padding: 0.55rem 0.75rem; }
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  background: var(--lf-surface-2);
+}
 
 /* ============================================================
    BADGES / ESTADOS
    ============================================================ */
 .badge {
   font-weight: 600;
-  font-size: 0.72rem;
+  border-radius: 999px;
+  padding: 0.35em 0.7em;
   letter-spacing: 0.01em;
-  padding: 0.4em 0.7em;
-  border-radius: 999px;
+  display: none;
+}
+.badge.bg-primary { background: var(--primary-color) !important; color: var(--lf-on-brand); }
+.badge.bg-success { background: var(--lf-success-bg) !important; color: var(--lf-success); }
+.badge.bg-warning { background: var(--lf-warning-bg) !important; color: var(--lf-warning); }
+.badge.bg-danger  { background: var(--lf-danger-bg) !important;  color: var(--lf-danger); }
+.badge.bg-info    { background: var(--lf-info-bg) !important;    color: var(--lf-info); }
+.badge.bg-secondary {
+  background: var(--lf-surface-3) !important;
+  color: var(--lf-ink-2);
 }
 
-.badge.bg-primary,
-.badge.bg-success { background: var(--primary-color) !important; color: #fff; }
-.badge.bg-warning { background: var(--lf-warning) !important; color: #fff !important; }
-.badge.bg-danger  { background: var(--lf-danger) !important; }
-.badge.bg-info    { background: var(--lf-info) !important; color: #fff !important; }
-.badge.bg-secondary { background: #e5e7eb !important; color: var(--lf-ink-2) !important; }
-.badge.bg-light   { background: var(--lf-surface-2) !important; color: var(--lf-ink-2) !important; }
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-weight: 600;
-  font-size: 0.75rem;
-  padding: 0.3rem 0.7rem;
+/* Punto de estado */
+.status-dot {
+  width: 8px; height: 8px;
   border-radius: 999px;
+  display: inline-block;
+  background: var(--lf-muted-2);
 }
-.status-active {
-  background: var(--lf-primary-100);
-  color: var(--lf-primary-ink);
-}
-.status-inactive {
-  background: #f3f4f6;
-  color: var(--lf-muted);
-}
-
-.badge-precio, .badge-subprecio, .badge-descuento,
-.badge-stock, .badge-stock-bajo, .badge-ventas,
-.badge-unidad-stats, .badge-principal, .badge-cliente-frecuente {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-weight: 600;
-  font-size: 0.74rem;
-  padding: 0.28rem 0.6rem;
-  border-radius: 999px;
-}
-.badge-precio, .badge-subprecio { background: var(--lf-primary-100); color: var(--lf-primary-ink); }
-.badge-descuento{ background: #fef3c7; color: #b45309; }
-.badge-stock, .badge-ventas, .badge-unidad-stats { background: #dbeafe; color: #1d4ed8; }
-.badge-stock-bajo { background: #fee2e2; color: #b91c1c; }
-.badge-principal, .badge-cliente-frecuente { background: var(--lf-primary-100); color: var(--lf-primary-ink); }
+.status-dot.online { background: var(--lf-success); }
 
 /* ============================================================
    DROPDOWN
    ============================================================ */
 .dropdown-menu {
+  background: var(--lf-surface);
   border: 1px solid var(--lf-border);
   border-radius: var(--lf-r);
   box-shadow: var(--lf-shadow);
   padding: 0.4rem;
-  font-size: 0.9rem;
+  color: var(--lf-ink);
 }
 .dropdown-item {
-  border-radius: var(--lf-r-sm);
-  padding: 0.55rem 0.75rem;
-  font-weight: 500;
   color: var(--lf-ink-2);
+  border-radius: var(--lf-r-sm);
+  padding: 0.5rem 0.75rem;
+  font-weight: 500;
 }
-.dropdown-item:hover, .dropdown-item:focus {
+.dropdown-item:hover,
+.dropdown-item:focus {
   background: var(--lf-primary-050);
   color: var(--lf-primary-ink);
 }
-.dropdown-item i { color: var(--lf-muted); width: 18px; }
-.dropdown-item:hover i { color: var(--primary-color); }
-.dropdown-item-text { color: var(--lf-muted); font-size: 0.82rem; }
-.dropdown-divider { border-color: var(--lf-border-2); }
+.dropdown-item.active,
+.dropdown-item:active {
+  background: var(--primary-color);
+  color: var(--lf-on-brand);
+}
+.dropdown-item-text { color: var(--lf-muted); }
+.dropdown-divider { border-color: var(--lf-border); }
 
 /* ============================================================
    MODALES
    ============================================================ */
 .modal-content {
-  border: none;
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border);
   border-radius: var(--lf-r-lg);
   box-shadow: var(--lf-shadow-lg);
-  overflow: hidden;
+  color: var(--lf-ink);
 }
 .modal-header {
-  border-bottom: 1px solid var(--lf-border-2);
-  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--lf-border);
+  padding: 1.1rem 1.35rem;
 }
-.modal-title { font-weight: 700; }
-.modal-body { padding: 1.5rem; }
+.modal-title { font-weight: 700; color: var(--lf-ink); }
+.modal-body { padding: 1.35rem; color: var(--lf-ink-2); }
 .modal-footer {
-  border-top: 1px solid var(--lf-border-2);
-  padding: 1rem 1.5rem;
-  background: var(--lf-surface-2);
+  border-top: 1px solid var(--lf-border);
+  padding: 1rem 1.35rem;
 }
+.btn-close {
+  border-radius: var(--lf-r-sm);
+}
+:root[data-theme="dark"] .btn-close,
+:root.dark .btn-close {
+  filter: invert(1) grayscale(1) brightness(1.6);
+}
+.modal-backdrop.show { opacity: 0.5; }
 
 /* ============================================================
    ALERTAS
@@ -615,108 +753,165 @@ main, #mainContent {
 .alert {
   border: 1px solid transparent;
   border-radius: var(--lf-r);
-  padding: 0.9rem 1.1rem;
-  font-size: 0.9rem;
+  font-weight: 500;
 }
-.alert-success { background: var(--lf-primary-050); border-color: var(--lf-primary-150); color: var(--lf-primary-ink); }
-.alert-warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
-.alert-danger  { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-.alert-info    { background: #f0f9ff; border-color: #bae6fd; color: #075985; }
+.alert-success { background: var(--lf-success-bg); color: var(--lf-success); border-color: color-mix(in srgb, var(--lf-success) 30%, transparent); }
+.alert-warning { background: var(--lf-warning-bg); color: var(--lf-warning); border-color: color-mix(in srgb, var(--lf-warning) 30%, transparent); }
+.alert-danger  { background: var(--lf-danger-bg);  color: var(--lf-danger);  border-color: color-mix(in srgb, var(--lf-danger) 30%, transparent); }
+.alert-info    { background: var(--lf-info-bg);    color: var(--lf-info);    border-color: color-mix(in srgb, var(--lf-info) 30%, transparent); }
+.alert-primary { background: var(--lf-primary-050); color: var(--lf-primary-ink); border-color: color-mix(in srgb, var(--primary-color) 30%, transparent); }
 
 /* ============================================================
    PAGINACION / TABS / BREADCRUMB / PROGRESO / ESTADO VACIO
    ============================================================ */
 .page-link {
   color: var(--lf-ink-2);
-  border-color: var(--lf-border);
-  border-radius: var(--lf-r-sm) !important;
-  margin: 0 2px;
-  font-weight: 500;
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border);
 }
-.page-link:hover { background: var(--lf-surface-2); color: var(--lf-ink); }
+.page-link:hover { background: var(--lf-surface-3); color: var(--lf-ink); }
 .page-item.active .page-link {
   background: var(--primary-color);
   border-color: var(--primary-color);
-  color: #fff;
+  color: var(--lf-on-brand);
 }
+.page-item.disabled .page-link { color: var(--lf-muted-2); background: var(--lf-surface-2); }
 
-.nav-tabs { border-bottom: 1px solid var(--lf-border); gap: 0.25rem; }
-.nav-tabs .nav-link {
-  border: none;
-  color: var(--lf-muted);
-  font-weight: 600;
-  border-radius: 0;
-  border-bottom: 2px solid transparent;
-  padding: 0.65rem 1rem;
+.nav-tabs {
+  border-bottom: 1px solid var(--lf-border);
+  gap: 0.25rem;
 }
-.nav-tabs .nav-link:hover { color: var(--lf-ink); border-bottom-color: var(--lf-border-2); }
+.nav-tabs .nav-link {
+  color: var(--lf-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-weight: 600;
+  padding: 0.65rem 0.9rem;
+}
+.nav-tabs .nav-link:hover { color: var(--lf-ink); border-bottom-color: var(--lf-border); }
 .nav-tabs .nav-link.active {
-  color: var(--lf-primary-ink);
+  color: var(--primary-color);
   background: transparent;
   border-bottom-color: var(--primary-color);
 }
 
-.breadcrumb { font-size: 0.85rem; }
-.breadcrumb-item.active { color: var(--lf-muted); }
-.breadcrumb-item a { color: var(--lf-primary-ink); }
+.nav-pills .nav-link { color: var(--lf-ink-2); border-radius: var(--lf-r); font-weight: 600; }
+.nav-pills .nav-link.active { background: var(--primary-color); color: var(--lf-on-brand); }
 
-.progress { background: var(--lf-border-2); border-radius: 999px; height: 8px; }
-.progress-bar { background: var(--primary-color); border-radius: 999px; }
+.breadcrumb { background: transparent; }
+.breadcrumb-item { color: var(--lf-muted); }
+.breadcrumb-item.active { color: var(--lf-ink-2); }
+.breadcrumb-item + .breadcrumb-item::before { color: var(--lf-muted-2); }
 
-.empty-state, .empty-state-stats {
+.progress {
+  background: var(--lf-surface-3);
+  border-radius: 999px;
+  height: 8px;
+}
+.progress-bar { background: var(--primary-color); }
+
+.list-group-item {
+  background: var(--lf-surface);
+  border-color: var(--lf-border);
+  color: var(--lf-ink-2);
+}
+.list-group-item.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: var(--lf-on-brand);
+}
+
+/* Estado vacio */
+.empty-state {
   text-align: center;
-  padding: 3rem 1.5rem;
+  padding: 2.5rem 1rem;
   color: var(--lf-muted);
 }
-.empty-state i, .empty-state-stats i {
-  font-size: 2.75rem;
-  color: var(--lf-muted-2);
-  margin-bottom: 0.75rem;
+.empty-state i { font-size: 2.5rem; color: var(--lf-muted-2); margin-bottom: 0.75rem; }
+
+/* Toast / notificacion tipo referencia */
+.toast, .lf-toast {
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border);
+  border-radius: var(--lf-r-lg);
+  box-shadow: var(--lf-shadow-lg);
+  color: var(--lf-ink);
 }
 
-.text-primary { color: var(--lf-primary-ink) !important; }
-.text-success { color: var(--lf-success) !important; }
-.text-warning { color: var(--lf-warning) !important; }
-.text-danger  { color: var(--lf-danger) !important; }
-.text-info    { color: var(--lf-info) !important; }
-.bg-primary, .bg-success { background: var(--primary-color) !important; }
-.border-primary { border-color: var(--primary-color) !important; }
+/* ============================================================
+   BACKDROP DEL SIDEBAR (movil)
+   ============================================================ */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  opacity: 0;
+  display: none;            /* oculto por defecto: NO debe capturar clics */
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.sidebar-backdrop.show {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
 
 /* ============================================================
    RESPONSIVE (layout general del CRM)
    ============================================================ */
-@media (max-width: 767.98px) {
-  .sidebar-toggle { display: inline-flex; align-items: center; justify-content: center; }
-
+@media (max-width: 991.98px) {
   .sidebar {
     position: fixed;
-    top: 0;
+    top: 56px;
     left: 0;
-    bottom: 0;
-    width: 270px;
-    height: 100vh;
+    width: 280px;
     z-index: 1045;
     transform: translateX(-100%);
-    transition: transform 0.25s ease;
     box-shadow: var(--lf-shadow-lg);
   }
-  .sidebar.show { transform: translateX(0); }
-
-  .sidebar-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(17, 24, 39, 0.5);
-    z-index: 1040;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
-  }
-  .sidebar-backdrop.show { opacity: 1; visibility: visible; }
-
-  .metric-value { font-size: 1.6rem; }
-  .card-body { padding: 1.1rem; }
+  .sidebar.show,
+  body.sidebar-open .sidebar { transform: translateX(0); }
+  .sidebar-toggle { display: inline-flex !important; }
+  .sidebar-backdrop.show { display: block; opacity: 1; }
 }
 
+@media (max-width: 767.98px) {
+  main, #mainContent { padding: 1rem; }
+  .metric-value { font-size: 1.6rem; }
+}
+
+/* ============================================================
+   MODO OSCURO - AJUSTES PARA CSS FUNCIONAL DEL POS/CAJAS
+   El bloque funcional de abajo usa colores fijos (white, #e9ecef,
+   sombras negras). Aqui neutralizamos los mas visibles para que
+   el modo oscuro no muestre paneles blancos. Si agregas nuevos
+   contenedores fijos en el POS, replica el patron aqui.
+   ============================================================ */
+:root[data-theme="dark"] .left-panel,
+:root[data-theme="dark"] .right-panel,
+:root[data-theme="dark"] .top-header,
+:root[data-theme="dark"] .cart-container,
+:root[data-theme="dark"] .product-card,
+:root[data-theme="dark"] .ticket-preview,
+:root.dark .left-panel,
+:root.dark .right-panel,
+:root.dark .top-header,
+:root.dark .cart-container,
+:root.dark .product-card,
+:root.dark .ticket-preview {
+  background: var(--lf-surface) !important;
+  color: var(--lf-ink);
+  box-shadow: var(--lf-shadow) !important;
+}
+
+:root[data-theme="dark"] .left-section,
+:root[data-theme="dark"] .right-section,
+:root.dark .left-section,
+:root.dark .right-section {
+  border-color: var(--lf-border) !important;
+}
 
 /* ============================================================
    CSS FUNCIONAL ESPECIFICO POR PAGINA
@@ -2644,7 +2839,7 @@ main, #mainContent {
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 0.7rem;
-            font-family: monospace;
+            font-family: "Google Sans", sans-serif;
         }
 .cliente-frecuente {
             border-left: 4px solid #f39c12 !important;
@@ -2967,13 +3162,7 @@ main {
             border: 1px solid rgba(0, 0, 0, .15);
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, .1);
         }
-.btn-primary:hover,
-        .btn-primary:focus,
-        .btn-primary:active {
-            background-color: var(--primary-dark) !important;
-            border-color: var(--primary-dark) !important;
-            color: white !important;
-        }
+
 .btn-outline-primary {
             color: var(--primary-color) !important;
             border-color: var(--primary-color) !important;
@@ -2985,13 +3174,7 @@ main {
             border-color: var(--primary-color) !important;
             color: white !important;
         }
-.btn-secondary:hover,
-        .btn-secondary:focus,
-        .btn-secondary:active {
-            background-color: var(--secondary-dark) !important;
-            border-color: var(--secondary-dark) !important;
-            color: white !important;
-        }
+
 .btn-outline-secondary {
             color: var(--secondary-color) !important;
             border-color: var(--secondary-color) !important;
@@ -3003,13 +3186,7 @@ main {
             border-color: var(--secondary-color) !important;
             color: white !important;
         }
-.btn-success:hover,
-        .btn-success:focus,
-        .btn-success:active {
-            background-color: var(--secondary-dark) !important;
-            border-color: var(--secondary-dark) !important;
-            color: white !important;
-        }
+
 .btn-outline-success {
             color: var(--secondary-color) !important;
             border-color: var(--secondary-color) !important;
@@ -4235,7 +4412,7 @@ body.sidebar-open {
 .producto-codigo-stats {
     font-size: 0.75rem;
     color: #6c757d;
-    font-family: monospace;
+    font-family: "Google Sans", sans-serif;
 }
 .badge-unidad-stats {
     font-size: 0.65rem;
@@ -5181,7 +5358,7 @@ body.sidebar-open {
             display: inline-block;
         }
 .ticket-number {
-            font-family: monospace;
+            font-family: "Google Sans", sans-serif;
             font-size: 0.7rem;
             color: #6c757d;
         }
@@ -5252,3 +5429,81 @@ body.sidebar-open {
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+.text-white {
+  color: #fff !important;
+}
+
+.text-white-50 {
+  margin-top: 1rem !important;
+}
+
+.welcome-card div div div div{
+  margin-bottom: 0 !important;
+}
+
+.btn-config {
+  color: #000;
+}
+
+.btn-config {
+  
+}
+
+
+/* ============================================================
+   FIX: Modal fondo transparente en móvil
+   ============================================================ */
+
+/* Fondo sólido para el modal completo y sus partes */
+.modal .modal-dialog,
+.modal .modal-content,
+.modal .modal-header,
+.modal .modal-body,
+.modal .modal-footer {
+    background-color: var(--lf-surface) !important;
+}
+
+/* En modo oscuro, forzar el fondo correspondiente */
+[data-theme="dark"] .modal .modal-dialog,
+[data-theme="dark"] .modal .modal-content,
+[data-theme="dark"] .modal .modal-header,
+[data-theme="dark"] .modal .modal-body,
+[data-theme="dark"] .modal .modal-footer {
+    background-color: var(--lf-surface) !important;
+}
+
+/* Específicamente para el modal fullscreen en móviles (Bootstrap 5) */
+@media (max-width: 991.98px) {
+    .modal-fullscreen-lg-down .modal-dialog,
+    .modal-fullscreen-lg-down .modal-content,
+    .modal-fullscreen-lg-down .modal-header,
+    .modal-fullscreen-lg-down .modal-body,
+    .modal-fullscreen-lg-down .modal-footer {
+        background-color: var(--lf-surface) !important;
+    }
+
+    [data-theme="dark"] .modal-fullscreen-lg-down .modal-dialog,
+    [data-theme="dark"] .modal-fullscreen-lg-down .modal-content,
+    [data-theme="dark"] .modal-fullscreen-lg-down .modal-header,
+    [data-theme="dark"] .modal-fullscreen-lg-down .modal-body,
+    [data-theme="dark"] .modal-fullscreen-lg-down .modal-footer {
+        background-color: var(--lf-surface) !important;
+    }
+}
+
+/* Asegura que el cuerpo del modal tenga fondo opaco,
+   incluso si hereda de .modal-content */
+.modal .modal-body {
+    background-color: var(--lf-surface) !important;
+}
+
+[data-theme="dark"] .modal .modal-body {
+    background-color: var(--lf-surface) !important;
+}
+
+/* Elimina cualquier sombra o borde que pueda interferir
+   (opcional, pero ayuda a limpiar) */
+.modal .modal-content {
+    border: none !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}

@@ -21,13 +21,14 @@ require_once __DIR__ . '/env_loader.php';
 // OBTENER EL PLAN DE LA EMPRESA DESDE LA BASE DE DATOS PRINCIPAL
 $conn_main = getDBConnection();
 
-// Obtener el plan de la empresa
+// Obtener el plan de la empresa y otros datos necesarios para el sidebar
 $empresa_plan = "prueba";
 $timbres_totales = 0;
 $timbres_disponibles = 0;
+$terminal_emida = null;
 
 if ($conn_main) {
-    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?";
+    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida FROM empresas WHERE id = ?";
     $stmt_empresa = $conn_main->prepare($sql_empresa);
     $stmt_empresa->execute([$_SESSION['empresa_id']]);
     $result_empresa = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
@@ -36,9 +37,10 @@ if ($conn_main) {
         $empresa_plan = $result_empresa['plan'];
         $timbres_totales = $result_empresa['timbres_totales'] ?? 0;
         $timbres_disponibles = $result_empresa['timbres_disponibles'] ?? 0;
+        $terminal_emida = $result_empresa['terminal_emida'] ?? null;
     }
     $stmt_empresa = null;
-    $conn_main = null;
+    // No cerramos $conn_main aquí porque se necesita para getNotificationStatus
 }
 
 // Guardar el plan en la sesión
@@ -54,7 +56,7 @@ $offset = ($pagina_actual - 1) * $registros_por_pagina;
 try {
     $conn = getEmpresaDBConnection($_SESSION['empresa_db']);
 
-    // Obtener configuración de colores
+    // Obtener configuración de colores (no usado directamente, pero se mantiene)
     $sql_colores = "SELECT color_primario, color_secundario FROM sistema_config LIMIT 1";
     $result_colores = $conn->query($sql_colores);
     if ($result_colores->rowCount() > 0) {
@@ -66,7 +68,7 @@ try {
         $color_secundario = '#2ecc71';
     }
 
-    // Obtener información de la empresa
+    // Obtener información de la empresa (incluyendo logo)
     $sql_config = "SELECT nombre_empresa, rfc, telefono, email, color_primario, color_secundario, logo FROM sistema_config LIMIT 1";
     $result_config = $conn->query($sql_config);
     $empresa_info = $result_config->fetch(PDO::FETCH_ASSOC);
@@ -186,6 +188,16 @@ try {
     
     // Obtener ID del usuario actual para evitar que se elimine a sí mismo
     $usuario_actual_id = $_SESSION['usuario_id'] ?? 0;
+
+    // Notificaciones (opcional) - se necesita para el sidebar
+    $notification_status = null;
+    if (file_exists(__DIR__ . '/../EmidaServicios/config.php')) {
+        require_once __DIR__ . '/../EmidaServicios/config.php';
+        if (function_exists('getNotificationStatus')) {
+            $notification_status = getNotificationStatus($conn_main);
+        }
+    }
+
 } catch (Exception $e) {
     die("Error: " . $e->getMessage());
 }
@@ -369,7 +381,6 @@ function eliminarUsuario($conn)
     exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 
@@ -377,765 +388,28 @@ function eliminarUsuario($conn)
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Usuarios - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
-     <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        :root {
-            --primary-color: <?php echo $color_primario; ?>;
-            --secondary-color: <?php echo $color_secundario; ?>;
-        }
-
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: pan-y;
-            overflow-x: hidden;
-        }
-
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .navbar-brand img {
-            height: 40px;
-            width: auto;
-            max-width: 120px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-
-        .sidebar {
-            background: #2c3e50;
-            color: white;
-            min-height: calc(100vh - 56px);
-            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            will-change: transform;
-        }
-
-        .sidebar .nav-link {
-            color: #ecf0f1;
-            padding: 12px 20px;
-            border-left: 3px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar .nav-link.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar .nav-link i {
-            width: 20px;
-            margin-right: 10px;
-        }
-
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Estilo para las tarjetas de estadísticas como clickeables */
-        .stat-card {
-            border-left: 4px solid var(--primary-color);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .stat-card:active {
-            transform: scale(0.98);
-        }
-
-        .stat-card .card-body {
-            padding: 1.5rem;
-        }
-
-        /* Estilos para la lista de usuarios en el modal */
-        .user-list-modal {
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-        .user-list-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background-color 0.2s;
-        }
-        .user-list-item:hover {
-            background-color: #f8f9fa;
-        }
-        .user-list-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            margin-right: 15px;
-            flex-shrink: 0;
-        }
-        .user-list-info {
-            flex: 1;
-        }
-        .user-list-name {
-            font-weight: 600;
-            margin-bottom: 2px;
-            color: #2c3e50;
-        }
-        .user-list-username {
-            font-size: 0.8rem;
-            color: #7f8c8d;
-        }
-        .user-list-email {
-            font-size: 0.7rem;
-            color: #95a5a6;
-        }
-        .user-list-badge {
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-        }
-        .badge-admin {
-            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-            color: white;
-        }
-        .badge-cajero {
-            background: linear-gradient(45deg, #28a745, #1e7e34);
-            color: white;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-
-        .status-active {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .badge-admin {
-            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-            color: white;
-        }
-
-        .badge-cajero {
-            background: linear-gradient(45deg, #28a745, #1e7e34);
-            color: white;
-        }
-
-        .badge-inventario {
-            background: linear-gradient(45deg, #ffc107, #e0a800);
-            color: black;
-        }
-
-        .search-box {
-            position: relative;
-        }
-
-        .search-box .form-control {
-            padding-left: 40px;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        .btn-danger {
-            background-color: #dc3545;
-            border-color: #dc3545;
-        }
-
-        .btn-danger:hover {
-            background-color: #c82333;
-            border-color: #bd2130;
-        }
-
-        /* Estilo para filas clickeables */
-        .clickable-row {
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        
-        .clickable-row:hover {
-            background-color: rgba(39, 174, 96, 0.05) !important;
-        }
-
-        /* ============================================
-           ESTILOS PARA TARJETAS DE USUARIOS (MÓVIL)
-        ============================================ */
-        .users-cards-container {
-            display: none;
-        }
-
-        .user-card {
-            background: white;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            overflow: hidden;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            cursor: pointer;
-        }
-
-        .user-card:active {
-            transform: scale(0.98);
-        }
-
-        .user-card-header {
-            display: flex;
-            align-items: center;
-            padding: 16px;
-            background: white;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .user-card-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
-        .user-card-info {
-            flex: 1;
-            margin-left: 14px;
-        }
-
-        .user-card-name {
-            font-weight: 600;
-            font-size: 1rem;
-            color: #2c3e50;
-            margin-bottom: 4px;
-        }
-
-        .user-card-username {
-            font-size: 0.8rem;
-            color: #7f8c8d;
-            margin-bottom: 2px;
-        }
-
-        .user-card-email {
-            font-size: 0.75rem;
-            color: #95a5a6;
-            word-break: break-all;
-        }
-
-        .user-card-body {
-            padding: 12px 16px;
-            background: #fafbfc;
-        }
-
-        .user-card-detail {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .user-card-detail:last-child {
-            border-bottom: none;
-        }
-
-        .detail-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .detail-value {
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #2c3e50;
-        }
-
-        /* Paginación */
-        .pagination-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1rem;
-            padding: 1rem 0;
-            border-top: 1px solid #dee2e6;
-        }
-
-        .pagination-info {
-            color: #6c757d;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .pagination {
-            margin-bottom: 0;
-        }
-
-        .pagination .page-link {
-            color: #495057;
-            border: 1px solid #dee2e6;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .pagination .page-link:hover {
-            background-color: #e9ecef;
-            border-color: #dee2e6;
-            color: #495057;
-        }
-
-        .pagination .page-item.active .page-link {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white !important;
-        }
-
-        /* Sidebar móvil */
-        .sidebar-toggle {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.25rem;
-            padding: 0.5rem;
-            margin-right: 1rem;
-        }
-
-        .sidebar-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1040;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .sidebar-backdrop.show {
-            display: block;
-            opacity: 1;
-        }
-
-        /* Estilos para nueva sucursal */
-        .nueva-sucursal-field {
-            border: 2px dashed #28a745;
-            background-color: #f8fff9;
-        }
-
-        .plan-limit-alert {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .plan-limit-alert i {
-            font-size: 1.2rem;
-            margin-right: 10px;
-        }
-
-        .plan-badge {
-            background: linear-gradient(45deg, #6c5ce7, #a29bfe);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .metric-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-        }
-
-        .metric-label {
-            font-size: 0.875rem;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* ============================================
-           MEDIA QUERIES RESPONSIVE
-        ============================================ */
-        @media (max-width: 767.98px) {
-            .sidebar .nav-link {
-                padding: 15px 20px;
-                min-height: 50px;
-                display: flex;
-                align-items: center;
-                cursor: pointer;
-            }
-
-            .sidebar .nav-link:active {
-                background: rgba(255, 255, 255, 0.2);
-                transform: translateX(5px);
-                transition: all 0.1s ease;
-            }
-
-            .sidebar-toggle {
-                display: block;
-            }
-
-            .sidebar {
-                position: fixed;
-                top: 56px;
-                left: 0;
-                transform: translateX(-100%);
-                width: 280px;
-                height: calc(100vh - 56px);
-                z-index: 1050;
-                overflow-y: auto;
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
-            }
-
-            .sidebar.show {
-                transform: translateX(0);
-                box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
-            }
-
-            main {
-                margin-left: 0 !important;
-                padding: 0.75rem !important;
-                transition: transform 0.3s ease-out;
-            }
-
-            body.sidebar-open main {
-                transform: translateX(280px);
-            }
-
-            .table-responsive {
-                display: none !important;
-            }
-
-            .users-cards-container {
-                display: block;
-            }
-
-            .stat-card .card-body {
-                padding: 1rem;
-            }
-
-            .metric-value {
-                font-size: 1.3rem;
-            }
-
-            .pagination-container {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-
-            .pagination {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-
-            .pagination .page-link {
-                padding: 0.375rem 0.75rem;
-                font-size: 0.8rem;
-            }
-        }
-
-        @media (max-width: 575.98px) {
-            .col-md-3 {
-                flex: 0 0 50%;
-                max-width: 50%;
-            }
-
-            .header-actions {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .header-actions .btn {
-                width: 100%;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .users-cards-container {
-                display: none;
-            }
-            
-            .table-responsive {
-                display: block !important;
-            }
-        }
-
-        .table th {
-            border-top: none;
-            font-weight: 600;
-            color: #495057;
-            background-color: #f8f9fa;
-        }
-
-        .table td {
-            vertical-align: middle;
-        }
-
-        /* Estilos para botones de acción dentro del modal */
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #e9ecef;
-        }
-        
-        .modal-actions .btn {
-            flex: 1;
-        }
-        
-        /* Estilo para el badge del estado en el modal */
-        .user-status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            margin-left: 10px;
-        }
-    </style>
     <!-- Tema unificado LibertyFin (estilo landing) -->
-    <!-- <link rel="stylesheet" href="css/crm-theme.css"> -->
+    <link rel="stylesheet" href="css/crm-theme.css">
 </head>
 
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <button class="sidebar-toggle" type="button" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
+    <!-- ========== NAVBAR INCLUIDO DESDE includes/navbar.php ========== -->
+    <?php include 'includes/navbar.php'; ?>
 
-            <a class="navbar-brand d-flex align-items-center" href="Inicio">
-                <?php if ($logo_src_base64): ?>
-                    <img src="<?php echo $logo_src_base64; ?>"
-                        alt="<?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>"
-                        class="me-2">
-                    <span><?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></span>
-                <?php elseif ($logo_empresa && file_exists($logo_empresa)): ?>
-                    <img src="<?php echo htmlspecialchars($logo_empresa); ?>"
-                        alt="<?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>"
-                        class="me-2"
-                        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
-                    <i class="fas fa-cash-register me-2" style="display: none;"></i>
-                    <span><?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></span>
-                <?php else: ?>
-                    <i class="fas fa-cash-register me-2"></i>
-                    <span><?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></span>
-                <?php endif; ?>
-            </a>
-
-            <div class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle me-1"></i>
-                        <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
-                        <span class="plan-badge ms-2">
-                            <?php echo ucfirst($empresa_plan); ?>
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><span class="dropdown-item-text">
-                                <small>Empresa: <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></small>
-                            </span></li>
-                        <li><span class="dropdown-item-text">
-                                <small>Plan: <?php echo ucfirst($empresa_plan); ?> (Límite: <?php echo $limite_usuarios; ?> usuarios)</small>
-                            </span></li>
-                        <li><span class="dropdown-item-text">
-                                <small>Rol: <?php echo htmlspecialchars($_SESSION['usuario_rol']); ?></small>
-                            </span></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
-                    </ul>
-                </li>
-            </div>
-        </div>
-    </nav>
-
+    <!-- Backdrop para móvil -->
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar" id="sidebar">
-                <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="Inicio">
-                                <i class="fas fa-tachometer-alt"></i>
-                                Inicio
-                            </a>
-                        </li>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link active" href="Usuarios">
-                                    <i class="fas fa-user-cog"></i>
-                                    Usuarios
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Caja">
-                                <i class="fas fa-cash-register"></i>
-                                Caja
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Productos">
-                                <i class="fas fa-boxes"></i>
-                                Productos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Clientes">
-                                <i class="fas fa-users"></i>
-                                Clientes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Ventas">
-                                <i class="fas fa-receipt"></i>
-                                Ventas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="CortesCaja">
-                                <i class="fas fa-cash-register"></i>
-                                Cortes de Caja
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="Proveedores">
-                                <i class="fas fa-truck"></i>
-                                Proveedores
-                            </a>
-                        </li>
-                        <?php if ($empresa_plan !== 'basico' && $_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="Sucursales">
-                                    <i class="fas fa-store"></i>
-                                    Sucursales
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin' && $_SESSION['sucursal_id'] == 1 && $timbres_disponibles > 0) : ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="Facturacion/inicio.php">
-                                    <i class="fas fa-file-invoice-dollar"></i>
-                                    Facturación
-                                    <?php if ($timbres_disponibles > 0): ?>
-                                        <span class="badge bg-success ms-2" style="font-size: 0.65rem;">
-                                            <?php echo $timbres_disponibles; ?> timbres
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="badge bg-warning ms-2" style="font-size: 0.65rem;">
-                                            Sin timbres
-                                        </span>
-                                    <?php endif; ?>
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="reportes.php">
-                                <i class="fas fa-chart-bar"></i>
-                                Reportes
-                            </a>
-                        </li>
-                        <?php if ($empresa_plan === 'premium'): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="../EmidaServicios/inicio.php">
-                                <img src="../images/emidalogo.png" alt="" style="width: 20px; height: 20px; margin-right: 10px; object-fit: contain;">
-                                Emida Servicios
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="comisiones_config.php">
-                                    <i class="fas fa-percentage"></i>
-                                    Comisiones
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="configuracion.php">
-                                    <i class="fas fa-cogs"></i>
-                                    Configuración
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
-            </div>
+            <!-- ========== SIDEBAR INCLUIDO DESDE includes/sidebar.php ========== -->
+            <?php include 'includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4" id="mainContent">
@@ -1179,9 +453,9 @@ function eliminarUsuario($conn)
                     <?php unset($_SESSION['mensaje'], $_SESSION['tipo_mensaje']); ?>
                 <?php endif; ?>
 
-                <!-- Estadísticas (Ahora clickeables) -->
+                <!-- Estadísticas (clickeables) -->
                 <div class="row mb-4">
-                    <!-- Tarjeta Total Usuarios -->
+                    <!-- Total Usuarios -->
                     <div class="col-md-3 mb-3">
                         <div class="card stat-card h-100" data-stat-type="total" data-bs-toggle="modal" data-bs-target="#modalListaUsuarios">
                             <div class="card-body">
@@ -1204,7 +478,7 @@ function eliminarUsuario($conn)
                             </div>
                         </div>
                     </div>
-                    <!-- Tarjeta Administradores -->
+                    <!-- Administradores -->
                     <div class="col-md-3 mb-3">
                         <div class="card stat-card h-100" data-stat-type="admin" data-bs-toggle="modal" data-bs-target="#modalListaUsuarios">
                             <div class="card-body">
@@ -1220,7 +494,7 @@ function eliminarUsuario($conn)
                             </div>
                         </div>
                     </div>
-                    <!-- Tarjeta Cajeros -->
+                    <!-- Cajeros -->
                     <div class="col-md-3 mb-3">
                         <div class="card stat-card h-100" data-stat-type="cajero" data-bs-toggle="modal" data-bs-target="#modalListaUsuarios">
                             <div class="card-body">
@@ -1236,7 +510,7 @@ function eliminarUsuario($conn)
                             </div>
                         </div>
                     </div>
-                    <!-- Tarjeta Activos -->
+                    <!-- Activos -->
                     <div class="col-md-3 mb-3">
                         <div class="card stat-card h-100" data-stat-type="activo" data-bs-toggle="modal" data-bs-target="#modalListaUsuarios">
                             <div class="card-body">
@@ -1274,7 +548,7 @@ function eliminarUsuario($conn)
                     </div>
                 </div>
 
-                <!-- Tabla de Usuarios (Desktop) -->
+                <!-- Tabla de Usuarios -->
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">Lista de Usuarios <small class="text-muted ms-2"><i class="fas fa-hand-pointer"></i> Haz clic en cualquier usuario para ver/editar</small></h5>
@@ -1288,7 +562,7 @@ function eliminarUsuario($conn)
                         </div>
                     </div>
                     <div class="card-body">
-                        <!-- TABLA (DESKTOP) - SIN COLUMNA DE ACCIONES -->
+                        <!-- Tabla (Desktop) -->
                         <div class="table-responsive">
                             <table class="table table-hover" id="usersTable">
                                 <thead>
@@ -1342,7 +616,7 @@ function eliminarUsuario($conn)
                             </table>
                         </div>
 
-                        <!-- TARJETAS DE USUARIOS (MÓVIL) - TODA LA TARJETA ES CLICKEABLE -->
+                        <!-- Tarjetas de usuarios (Móvil) -->
                         <div class="users-cards-container" id="usersCardsContainer">
                             <?php if (empty($usuarios)): ?>
                                 <div class="text-center text-muted py-4">
@@ -1454,7 +728,6 @@ function eliminarUsuario($conn)
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body user-list-modal" id="modalListaUsuariosBody">
-                    <!-- Aquí se cargará dinámicamente la lista de usuarios -->
                     <div class="text-center py-4">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Cargando...</span>
@@ -1468,7 +741,7 @@ function eliminarUsuario($conn)
         </div>
     </div>
 
-    <!-- Modal para Nuevo/Editar Usuario (Ahora con botones de acción dentro) -->
+    <!-- Modal para Nuevo/Editar Usuario -->
     <div class="modal fade" id="userModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -1557,7 +830,7 @@ function eliminarUsuario($conn)
                             </div>
                         </div>
 
-                        <!-- Sección de botones de acción para usuario existente -->
+                        <!-- Botones de acción para usuario existente -->
                         <div class="modal-actions" id="modalActions" style="display: none;">
                             <button type="button" class="btn btn-outline-warning" id="toggleStatusBtn">
                                 <i class="fas fa-ban me-2"></i><span id="toggleStatusText">Desactivar</span>
@@ -1590,10 +863,8 @@ function eliminarUsuario($conn)
             activo: <?php echo json_encode($activos_lista); ?>
         };
 
-        // Variable para almacenar el usuario actual en edición
         let currentEditUser = null;
 
-        // Función para generar el HTML de la lista de usuarios
         function generarListaUsuarios(tipo) {
             let usuarios = [];
             let titulo = '';
@@ -1620,7 +891,6 @@ function eliminarUsuario($conn)
                     titulo = 'Usuarios';
             }
             
-            // Actualizar título del modal
             document.getElementById('modalListaUsuariosLabel').textContent = titulo;
             
             if (!usuarios || usuarios.length === 0) {
@@ -1660,7 +930,6 @@ function eliminarUsuario($conn)
             return html;
         }
         
-        // Función auxiliar para escapar HTML
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, function(m) {
@@ -1671,7 +940,6 @@ function eliminarUsuario($conn)
             });
         }
         
-        // Función para confirmar y eliminar usuario con SweetAlert
         function confirmDeleteUser(userId, userName) {
             Swal.fire({
                 title: '¿Eliminar usuario?',
@@ -1708,9 +976,7 @@ function eliminarUsuario($conn)
             });
         }
 
-        // Función para confirmar cambio de estado
         function confirmToggleStatus(userId, userName, currentStatus) {
-            const newStatus = currentStatus === 1 ? 'desactivar' : 'activar';
             const newStatusText = currentStatus === 1 ? 'desactivar' : 'activar';
             
             Swal.fire({
@@ -1754,7 +1020,6 @@ function eliminarUsuario($conn)
             });
         }
 
-        // Función para abrir el modal de edición con los datos del usuario
         function openEditModal(userData) {
             currentEditUser = userData;
             
@@ -1779,12 +1044,10 @@ function eliminarUsuario($conn)
             const submitBtn = document.getElementById('submitUserBtn');
             if (submitBtn) submitBtn.disabled = false;
             
-            // Mostrar botones de acción para edición
             const modalActions = document.getElementById('modalActions');
             if (modalActions) {
                 modalActions.style.display = 'flex';
                 
-                // Configurar botón de cambio de estado
                 const toggleStatusBtn = document.getElementById('toggleStatusBtn');
                 const toggleStatusText = document.getElementById('toggleStatusText');
                 const isActive = userData.activo == 1;
@@ -1794,7 +1057,6 @@ function eliminarUsuario($conn)
                     toggleStatusBtn.className = isActive ? 'btn btn-outline-warning' : 'btn btn-outline-success';
                     toggleStatusBtn.innerHTML = isActive ? '<i class="fas fa-ban me-2"></i>Desactivar' : '<i class="fas fa-check me-2"></i>Activar';
                     
-                    // Remover eventos anteriores y agregar nuevo
                     const newToggleBtn = toggleStatusBtn.cloneNode(true);
                     toggleStatusBtn.parentNode.replaceChild(newToggleBtn, toggleStatusBtn);
                     newToggleBtn.addEventListener('click', function() {
@@ -1802,7 +1064,6 @@ function eliminarUsuario($conn)
                     });
                 }
                 
-                // Configurar botón de eliminar
                 const deleteFromModalBtn = document.getElementById('deleteFromModalBtn');
                 if (deleteFromModalBtn) {
                     const usuarioActualId = <?php echo $usuario_actual_id; ?>;
@@ -1814,7 +1075,6 @@ function eliminarUsuario($conn)
                         deleteFromModalBtn.title = "";
                     }
                     
-                    // Remover eventos anteriores y agregar nuevo
                     const newDeleteBtn = deleteFromModalBtn.cloneNode(true);
                     deleteFromModalBtn.parentNode.replaceChild(newDeleteBtn, deleteFromModalBtn);
                     newDeleteBtn.addEventListener('click', function() {
@@ -1827,7 +1087,6 @@ function eliminarUsuario($conn)
             modal.show();
         }
 
-        // Función para resetear el formulario (modo nuevo usuario)
         function resetFormForNew() {
             currentEditUser = null;
             document.getElementById('userForm').reset();
@@ -1850,7 +1109,6 @@ function eliminarUsuario($conn)
                 submitBtn.disabled = (totalUsuarios >= limiteUsuarios);
             }
             
-            // Ocultar botones de acción
             const modalActions = document.getElementById('modalActions');
             if (modalActions) {
                 modalActions.style.display = 'none';
@@ -1859,7 +1117,6 @@ function eliminarUsuario($conn)
             toggleNuevaSucursal(false);
         }
 
-        // Función para crear una nueva sucursal
         function toggleNuevaSucursal(mostrar) {
             const nuevaSucursalRow = document.getElementById('nuevaSucursalRow');
             const sucursalSelect = document.getElementById('sucursal_id');
@@ -1918,7 +1175,7 @@ function eliminarUsuario($conn)
             });
         }
 
-        // Agregar evento a las tarjetas de estadísticas
+        // Eventos de estadísticas
         document.querySelectorAll('.stat-card').forEach(card => {
             card.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -1942,15 +1199,9 @@ function eliminarUsuario($conn)
             });
         });
 
-        // Variables para swipe sidebar
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchEndX = 0;
-        let touchEndY = 0;
-        let isTouchActive = false;
-        const SWIPE_THRESHOLD = 50;
-        const SWIPE_EDGE_ZONE = 30;
-        const VERTICAL_THRESHOLD = 30;
+        // Sidebar swipe (mismo código que en dashboard)
+        let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0, isTouchActive = false;
+        const SWIPE_THRESHOLD = 50, SWIPE_EDGE_ZONE = 30, VERTICAL_THRESHOLD = 30;
 
         function openSidebarAuto() {
             const sidebar = document.getElementById('sidebar');
@@ -2046,13 +1297,9 @@ function eliminarUsuario($conn)
                 }
             });
 
-            // ============================================
-            // CLICK EN FILAS DE TABLA (DESKTOP)
-            // ============================================
-            const clickableRows = document.querySelectorAll('.clickable-row');
-            clickableRows.forEach(row => {
+            // Click en filas de tabla (Desktop)
+            document.querySelectorAll('.clickable-row').forEach(row => {
                 row.addEventListener('click', function(e) {
-                    // Evitar que el click se propague si se hizo clic en un enlace o botón dentro de la fila
                     if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('a') || e.target.closest('button')) {
                         return;
                     }
@@ -2064,11 +1311,8 @@ function eliminarUsuario($conn)
                 });
             });
 
-            // ============================================
-            // CLICK EN TARJETAS DE USUARIO (MÓVIL)
-            // ============================================
-            const clickableCards = document.querySelectorAll('.clickable-card');
-            clickableCards.forEach(card => {
+            // Click en tarjetas (Móvil)
+            document.querySelectorAll('.clickable-card').forEach(card => {
                 card.addEventListener('click', function(e) {
                     const userDataAttr = this.getAttribute('data-user');
                     if (userDataAttr) {
@@ -2086,9 +1330,8 @@ function eliminarUsuario($conn)
                 const searchTerm = (searchInput ? searchInput.value.toLowerCase() : '');
                 const showInactive = showInactiveCheckbox ? showInactiveCheckbox.checked : true;
 
-                // Filtrar tabla (desktop)
-                const tableRows = document.querySelectorAll('#usersTable tbody tr');
-                tableRows.forEach(row => {
+                // Filtrar tabla
+                document.querySelectorAll('#usersTable tbody tr').forEach(row => {
                     const text = row.textContent.toLowerCase();
                     const isActive = row.querySelector('.status-badge')?.classList.contains('status-active');
                     const matchesSearch = text.includes(searchTerm);
@@ -2096,9 +1339,8 @@ function eliminarUsuario($conn)
                     row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
                 });
 
-                // Filtrar tarjetas (móvil)
-                const cards = document.querySelectorAll('#usersCardsContainer .user-card');
-                cards.forEach(card => {
+                // Filtrar tarjetas
+                document.querySelectorAll('#usersCardsContainer .user-card').forEach(card => {
                     const cardText = (card.getAttribute('data-username') || '') + ' ' + 
                                      (card.getAttribute('data-nombre') || '') + ' ' + 
                                      (card.getAttribute('data-email') || '');
@@ -2116,13 +1358,11 @@ function eliminarUsuario($conn)
                 showInactiveCheckbox.addEventListener('change', filterUsers);
             }
 
-            // Resetear formulario para nuevo usuario
             const newUserBtn = document.getElementById('newUserBtn');
             if (newUserBtn) {
                 newUserBtn.addEventListener('click', resetFormForNew);
             }
 
-            // Al cerrar el modal, resetear
             const userModal = document.getElementById('userModal');
             if (userModal) {
                 userModal.addEventListener('hidden.bs.modal', function() {
@@ -2130,7 +1370,7 @@ function eliminarUsuario($conn)
                 });
             }
 
-            // Funciones para nueva sucursal
+            // Nueva sucursal
             const btnNuevaSucursal = document.getElementById('btnNuevaSucursal');
             const btnCancelarSucursal = document.getElementById('btnCancelarSucursal');
             const btnGuardarSucursal = document.getElementById('btnGuardarSucursal');
@@ -2155,5 +1395,4 @@ function eliminarUsuario($conn)
         });
     </script>
 </body>
-
 </html>

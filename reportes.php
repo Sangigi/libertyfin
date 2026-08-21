@@ -651,211 +651,14 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reportes - <?php echo safe_html($_SESSION['empresa_nombre'] ?? ''); ?></title>
+        <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --primary-color: <?php echo safe_html($empresa_info['color_primario'] ?? '#27ae60'); ?>;
-            --secondary-color: <?php echo safe_html($empresa_info['color_secundario'] ?? '#2ecc71'); ?>;
-        }
-
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .navbar-brand img {
-            height: 40px;
-            width: auto;
-            max-width: 120px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-
-        .sidebar {
-            background: #2c3e50;
-            color: white;
-            min-height: calc(100vh - 56px);
-            transition: all 0.3s ease;
-        }
-
-        .sidebar .nav-link {
-            color: #ecf0f1;
-            padding: 12px 20px;
-            border-left: 3px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar .nav-link.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left-color: var(--secondary-color);
-            color: white;
-        }
-
-        .sidebar .nav-link i {
-            width: 20px;
-            margin-right: 10px;
-        }
-
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-        }
-
-        .stat-card {
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .stat-card .card-body {
-            padding: 1.5rem;
-        }
-
-        .sidebar-toggle {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.25rem;
-            padding: 0.5rem;
-            margin-right: 1rem;
-        }
-
-        .sidebar-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1040;
-        }
-
-        .metric-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-        }
-
-        .metric-label {
-            font-size: 0.875rem;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
-        }
-
-        .chart-container-sm {
-            height: 250px;
-        }
-
-        .filtros-card {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
-
-        .filtros-card .form-label {
-            color: white;
-            font-weight: 500;
-        }
-
-        .progress {
-            height: 8px;
-            border-radius: 4px;
-        }
-
-        .bg-efectivo { background: linear-gradient(45deg, #28a745, #20c997); }
-        .bg-tarjeta { background: linear-gradient(45deg, #17a2b8, #6f42c1); }
-        .bg-transferencia { background: linear-gradient(45deg, #ffc107, #fd7e14); }
-
-        .list-group-item {
-            border: none;
-            border-bottom: 1px solid #eee;
-            padding: 1rem 1.25rem;
-        }
-
-        .badge-ventas { background: var(--primary-color); }
-        .badge-stock-bajo { background: #e74c3c; }
-        .badge-cliente-frecuente { background: #f39c12; }
-
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        }
-
-        /* Loading overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 9999;
-            display: none;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .loading-spinner {
-            background: white;
-            padding: 20px 40px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        
-        .loading-spinner i {
-            font-size: 40px;
-            color: var(--primary-color);
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 767.98px) {
-            .sidebar-toggle { display: block; }
-            .sidebar {
-                position: fixed;
-                top: 56px;
-                left: -100%;
-                width: 280px;
-                height: calc(100vh - 56px);
-                z-index: 1050;
-                overflow-y: auto;
-            }
-            .sidebar.show { left: 0; }
-            .sidebar-backdrop.show { display: block; }
-            main { margin-left: 0 !important; }
-            .metric-value { font-size: 1.5rem; }
-            .col-xl-3 { flex: 0 0 50%; max-width: 50%; }
-        }
-    </style>
+    <link rel="stylesheet" href="css/crm-theme.css">
 </head>
 
 <body>
@@ -868,73 +671,14 @@ try {
     </div>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <button class="sidebar-toggle" type="button" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <a class="navbar-brand d-flex align-items-center" href="#">
-                <?php if ($logo_src_base64): ?>
-                    <img src="<?php echo $logo_src_base64; ?>"
-                        alt="<?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>"
-                        class="me-2" style="height: 40px;">
-                    <span><?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></span>
-                <?php else: ?>
-                    <i class="fas fa-cash-register me-2"></i>
-                    <span><?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></span>
-                <?php endif; ?>
-            </a>
-
-            <div class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle me-1"></i>
-                        <?php echo safe_html($_SESSION['usuario_nombre'] ?? ''); ?>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
-                            <span class="badge bg-primary ms-1">Admin</span>
-                        <?php endif; ?>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
-                    </ul>
-                </li>
-            </div>
-        </div>
-    </nav>
+    <?php include 'includes/navbar.php'; ?>
 
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar" id="sidebar">
-                <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item"><a class="nav-link" href="Inicio"><i class="fas fa-tachometer-alt"></i> Inicio</a></li>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item"><a class="nav-link" href="Usuarios"><i class="fas fa-user-cog"></i> Usuarios</a></li>
-                        <?php endif; ?>
-                        <li class="nav-item"><a class="nav-link" href="Caja"><i class="fas fa-cash-register"></i> Caja</a></li>
-                        <li class="nav-item"><a class="nav-link" href="Productos"><i class="fas fa-boxes"></i> Productos</a></li>
-                        <li class="nav-item"><a class="nav-link" href="Clientes"><i class="fas fa-users"></i> Clientes</a></li>
-                        <li class="nav-item"><a class="nav-link" href="Ventas"><i class="fas fa-receipt"></i> Ventas</a></li>
-                        <li class="nav-item"><a class="nav-link" href="CortesCaja"><i class="fas fa-cash-register"></i> Cortes de Caja</a></li>
-                        <li class="nav-item"><a class="nav-link" href="Proveedores"><i class="fas fa-truck"></i> Proveedores</a></li>
-                        <?php if ($empresa_plan !== 'basico' && $_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item"><a class="nav-link" href="Sucursales"><i class="fas fa-store"></i> Sucursales</a></li>
-                        <?php endif; ?>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin' && $_SESSION['sucursal_id'] == 1 && $timbres_disponibles > 0): ?>
-                            <li class="nav-item"><a class="nav-link" href="Facturacion/inicio.php"><i class="fas fa-file-invoice-dollar"></i> Facturación <span class="badge bg-success ms-2"><?php echo $timbres_disponibles; ?></span></a></li>
-                        <?php endif; ?>
-                        <li class="nav-item"><a class="nav-link active" href="Reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-                        <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
-                            <li class="nav-item"><a class="nav-link" href="comisiones_config.php"><i class="fas fa-percentage"></i> Comisiones</a></li>
-                            <li class="nav-item"><a class="nav-link" href="Configuracion"><i class="fas fa-cogs"></i> Configuración</a></li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
-            </div>
+            <?php include 'includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">

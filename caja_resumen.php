@@ -149,98 +149,13 @@ function getDiferenciaClass($diferencia)
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumen de Caja - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
+        <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #27ae60;
-            --secondary-color: #2ecc71;
-        }
-
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .navbar-brand img {
-            height: 40px;
-            width: auto;
-            max-width: 120px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-
-
-        .resumen-container {
-            max-width: 800px;
-            margin: 30px auto;
-        }
-
-        .header-resumen {
-            border-bottom: 2px solid #dee2e6;
-            padding-bottom: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .totales-card {
-            border-left: 4px solid #28a745;
-        }
-
-        .diferencia {
-            font-size: 1.3rem;
-            font-weight: bold;
-        }
-
-        .diferencia.positiva {
-            color: #28a745;
-        }
-
-        .diferencia.negativa {
-            color: #dc3545;
-        }
-
-        .diferencia.cero {
-            color: #6c757d;
-        }
-
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1rem;
-        }
-
-        @media print {
-            .no-print {
-                display: none;
-            }
-
-            .container {
-                max-width: 100% !important;
-            }
-
-            .navbar {
-                display: none;
-            }
-
-            body {
-                background-color: white;
-            }
-
-            .card {
-                box-shadow: none;
-                border: 1px solid #dee2e6;
-            }
-        }
-    </style>
     <!-- Tema unificado LibertyFin (estilo landing) -->
-    <!-- <link rel="stylesheet" href="css/crm-theme.css"> -->
+    <link rel="stylesheet" href="css/crm-theme.css">
 </head>
 
 <body>

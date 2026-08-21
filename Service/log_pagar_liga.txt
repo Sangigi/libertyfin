@@ -1,0 +1,3 @@
+2026-08-12 16:51:37
+{"reference":"0000600000005749427453","response":"denied","foliocpagos":"","auth":"","cd_response":"R03","cd_error":"","nb_error":"La tarjeta no pudo ser autenticada en 3DS.","time":"17:51:36","date":"12/08/2026","nb_company":"","nb_merchant":"","cc_type":"","tp_operation":"","cc_name":"","cc_number":"7942","cc_expmonth":"06","cc_expyear":"31","amount":"0","emv_key_date":"","id_url":"1QE94DYR","email":"sanchez.vanegas.alexis@gmail.com","payment_type":"41","promocion":null,"number_tkn":null,"cc_mask":null}
+--------------------------------------------------
