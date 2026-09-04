@@ -1,1 +1,2 @@
 2026-08-12 16:51:37 Pago guardado ID: 54 - Folio:  - Response: denied
+2026-08-27 10:52:56 Pago guardado ID: 55 - Folio: F123456 - Response: approved

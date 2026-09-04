@@ -38,14 +38,6 @@ function cargarCatalogosComision(callback) {
 function poblarSelectAreasComision() {
     const sel = document.getElementById('comisionArea');
     sel.innerHTML = catalogosComision.areas.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('');
-    poblarSelectReglasComision();
-}
-
-function poblarSelectReglasComision() {
-    const areaId = document.getElementById('comisionArea').value;
-    const reglas = catalogosComision.reglas.filter(r => r.area_id == areaId);
-    const sel = document.getElementById('comisionRegla');
-    sel.innerHTML = reglas.map(r => `<option value="${r.id}">${r.concepto} (${r.porcentaje}%)</option>`).join('');
 }
 
 function poblarSelectColaboradoresComision() {
@@ -53,28 +45,45 @@ function poblarSelectColaboradoresComision() {
     sel.innerHTML = catalogosComision.colaboradores.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
 }
 
-function poblarSelectPorcentajeRepartoComision() {
-    const sel = document.getElementById('comisionPorcentajeReparto');
-    let html = '<option value="100">100% (una sola persona)</option>';
-    catalogosComision.porcentajes.forEach(p => {
-        html += `<option value="${p.valor}">${p.valor}%</option>`;
-    });
-    sel.innerHTML = html;
+// El porcentaje lo captura la persona al momento en el modal. Ya no se lee
+// de comision_reglas ni se usa el catalogo de "porcentajes de reparto":
+// ese catalogo era la causa del error 41% x 41%.
+function sumaPorcentajesComision(lista) {
+    return (lista || []).reduce((acc, c) => acc + (parseFloat(c.porcentaje) || 0), 0);
 }
 
 function renderizarListaComisiones() {
     const item = window.currentCarrito[comisionIndexActual];
     const tbody = document.getElementById('comisionesListaTbody');
     const lista = (item && item.comisiones) || [];
+
     tbody.innerHTML = lista.map((c, i) => `
         <tr>
             <td>${c.area_nombre}</td>
-            <td>${c.concepto}</td>
             <td>${c.colaborador_nombre}</td>
-            <td>${c.porcentaje_reparto}%</td>
+            <td class="text-end">${parseFloat(c.porcentaje).toFixed(2)}%</td>
             <td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-comision" data-i="${i}"><i class="fas fa-times"></i></button></td>
         </tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Sin comisiones asignadas</td></tr>';
+    `).join('') || '<tr><td colspan="4" class="text-center text-muted">Sin comisiones asignadas</td></tr>';
+
+    // Total de porcentajes asignados al producto, con aviso si pasa de 100.
+    const tfoot = document.getElementById('comisionesListaTfoot');
+    if (tfoot) {
+        if (lista.length === 0) {
+            tfoot.innerHTML = '';
+        } else {
+            const suma = sumaPorcentajesComision(lista);
+            const excede = suma > 100.01;
+            tfoot.innerHTML = `
+                <tr class="${excede ? 'table-danger' : 'table-light'}">
+                    <td colspan="2" class="text-end fw-bold">Total asignado</td>
+                    <td class="text-end fw-bold">${suma.toFixed(2)}%</td>
+                    <td></td>
+                </tr>
+                ${excede ? `<tr><td colspan="4" class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Pasa del 100%: se repartiria mas que la utilidad del producto.</td></tr>` : ''}
+            `;
+        }
+    }
 }
 
 function guardarComisionesPendientesEnSesion() {
@@ -96,7 +105,6 @@ function setupAsignarComision() {
             cargarCatalogosComision(function () {
                 poblarSelectAreasComision();
                 poblarSelectColaboradoresComision();
-                poblarSelectPorcentajeRepartoComision();
                 renderizarListaComisiones();
                 new bootstrap.Modal(document.getElementById('asignarComisionModal')).show();
             });
@@ -111,37 +119,125 @@ function setupAsignarComision() {
         }
     });
 
-    document.getElementById('comisionArea')?.addEventListener('change', poblarSelectReglasComision);
-
     document.getElementById('btnAgregarComisionLinea')?.addEventListener('click', function () {
         const areaSel = document.getElementById('comisionArea');
-        const reglaSel = document.getElementById('comisionRegla');
         const colabSel = document.getElementById('comisionColaborador');
-        const porcentajeReparto = document.getElementById('comisionPorcentajeReparto').value;
+        const pctInput = document.getElementById('comisionPorcentaje');
+        const porcentaje = parseFloat(pctInput.value);
 
-        if (!areaSel.value || !reglaSel.value || !colabSel.value) {
-            mostrarNotificacionError('Selecciona área, concepto y colaborador');
+        if (!areaSel.value || !colabSel.value) {
+            mostrarNotificacionError('Selecciona área y colaborador');
+            return;
+        }
+        if (!porcentaje || porcentaje <= 0 || porcentaje > 100) {
+            mostrarNotificacionError('Captura un porcentaje entre 0.01 y 100');
+            pctInput.focus();
             return;
         }
 
         const item = window.currentCarrito[comisionIndexActual];
         if (!item.comisiones) item.comisiones = [];
+
+        // No permitir al mismo colaborador dos veces en el mismo concepto
+        // (eso generaba cobros duplicados).
+        const yaEsta = item.comisiones.some(c =>
+            String(c.area_id) === String(areaSel.value) &&
+            String(c.colaborador_id) === String(colabSel.value));
+        if (yaEsta) {
+            mostrarNotificacionError('Ese colaborador ya tiene una comisión en esta área para el producto');
+            return;
+        }
+
         item.comisiones.push({
             area_id: areaSel.value,
             area_nombre: areaSel.selectedOptions[0].textContent,
-            regla_id: reglaSel.value,
-            concepto: reglaSel.selectedOptions[0].textContent,
             colaborador_id: colabSel.value,
             colaborador_nombre: colabSel.selectedOptions[0].textContent,
-            porcentaje_reparto: porcentajeReparto
+            porcentaje: porcentaje,
+            porcentaje_reparto: 100
         });
 
+        pctInput.value = '';
         renderizarListaComisiones();
         guardarComisionesPendientesEnSesion();
     });
 }
 
 setupAsignarComision();
+
+// ========== FUNCIONES PARA GASTOS DE OPERACIÓN DE LA VENTA ==========
+// A diferencia de las comisiones, estos gastos aplican a toda la venta,
+// no a un producto específico. Se guardan en window.gastosOperacionCarrito
+// y se sincronizan con la sesión igual que las comisiones.
+window.gastosOperacionCarrito = window.gastosOperacionCarrito || [];
+
+function renderizarListaGastosOperacion() {
+    const tbody = document.getElementById('gastosOperacionListaTbody');
+    if (!tbody) return;
+    const lista = window.gastosOperacionCarrito;
+    tbody.innerHTML = lista.map((g, i) => `
+        <tr>
+            <td>${g.concepto}</td>
+            <td>$${parseFloat(g.monto).toFixed(2)}</td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-gasto-operacion" data-i="${i}"><i class="fas fa-times"></i></button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="3" class="text-center text-muted">Sin gastos agregados</td></tr>';
+
+    const badge = document.getElementById('badgeGastosOperacionCount');
+    if (badge) {
+        if (lista.length > 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = lista.length;
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
+function guardarGastosOperacionPendientesEnSesion() {
+    const formData = new FormData();
+    formData.append('actualizar_gastos_operacion_ajax', 'true');
+    formData.append('gastos_operacion', JSON.stringify(window.gastosOperacionCarrito));
+    fetch('caja.php', { method: 'POST', body: formData });
+}
+
+function setupGastosOperacion() {
+    renderizarListaGastosOperacion();
+
+    document.getElementById('btnAgregarGastoOperacionLinea')?.addEventListener('click', function () {
+        const conceptoInput = document.getElementById('gastoOperacionConcepto');
+        const montoInput = document.getElementById('gastoOperacionMonto');
+        const concepto = conceptoInput.value.trim();
+        const monto = parseFloat(montoInput.value);
+
+        if (!concepto) {
+            mostrarNotificacionError('Escribe el concepto del gasto');
+            return;
+        }
+        if (!monto || monto <= 0) {
+            mostrarNotificacionError('Escribe un monto válido');
+            return;
+        }
+
+        window.gastosOperacionCarrito.push({ concepto: concepto, monto: monto });
+        conceptoInput.value = '';
+        montoInput.value = '';
+
+        renderizarListaGastosOperacion();
+        guardarGastosOperacionPendientesEnSesion();
+    });
+
+    document.addEventListener('click', function (e) {
+        const btnQuitar = e.target.closest('.btn-quitar-gasto-operacion');
+        if (btnQuitar) {
+            window.gastosOperacionCarrito.splice(parseInt(btnQuitar.dataset.i), 1);
+            renderizarListaGastosOperacion();
+            guardarGastosOperacionPendientesEnSesion();
+        }
+    });
+}
+
+setupGastosOperacion();
 
 // ========== FUNCIONES PARA DETECTAR DISPOSITIVOS ==========
 function esDispositivoMovil() {
@@ -985,6 +1081,75 @@ function addNumberModal(num) {
     efectivoInput.focus();
 }
 
+// ========== IVA OPCIONAL DE LA VENTA ==========
+// El IVA se captura en el modal de cobro y se aplica sobre el subtotal ya
+// con descuento. Se guarda aparte del subtotal porque NO entra en la base
+// de comisión: las comisiones se calculan sobre montos sin IVA.
+window._subtotalConDescuento = 0;
+
+function leerIvaPorcentaje() {
+    const input = document.getElementById('modal-iva-porcentaje');
+    let pct = parseFloat(input?.value);
+    if (isNaN(pct) || pct < 0) pct = 0;
+    if (pct > 100) pct = 100;
+    return pct;
+}
+
+function aplicarIvaModal() {
+    // El precio capturado YA TRAE EL IVA INCLUIDO. El total no cambia al
+    // mover el porcentaje: lo que cambia es cuanto de ese total es base y
+    // cuanto es impuesto.
+    //
+    //   8,000 al 16%  ->  base 6,896.55  +  IVA 1,103.45  =  8,000
+    const total = Math.round((parseFloat(window._subtotalConDescuento) || 0) * 100) / 100;
+    const pct = leerIvaPorcentaje();
+    const factor = 1 + (pct / 100);
+    const base = Math.round((total / factor) * 100) / 100;
+    const iva = Math.round((total - base) * 100) / 100;
+
+    const elBase = document.getElementById('modal-base-sin-iva');
+    if (elBase) elBase.textContent = '$' + base.toFixed(2);
+
+    const elIva = document.getElementById('modal-iva');
+    if (elIva) elIva.textContent = '$' + iva.toFixed(2);
+
+    const hidden = document.getElementById('modal-ivaPorcentajeHidden');
+    if (hidden) hidden.value = pct.toFixed(2);
+
+    const modalTotal = document.getElementById('modal-total');
+    if (modalTotal) modalTotal.textContent = '$' + total.toFixed(2);
+
+    const modalTotalPagar = document.getElementById('modal-total-pagar');
+    if (modalTotalPagar) {
+        modalTotalPagar.value = '$' + total.toFixed(2);
+        modalTotalPagar.setAttribute('value', '$' + total.toFixed(2));
+    }
+
+    const btnPagar = document.getElementById('modal-btnPagar');
+    if (btnPagar) {
+        btnPagar.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            CONFIRMAR PAGO - $${total.toFixed(2)}
+        `;
+    }
+
+    // El cambio depende del total, hay que recalcularlo
+    const efectivoInput = document.getElementById('modal-efectivo-recibido');
+    if (efectivoInput) updatePaymentValues(efectivoInput.value);
+
+    return total;
+}
+
+function setupIvaVenta() {
+    const input = document.getElementById('modal-iva-porcentaje');
+    if (!input) return;
+    input.addEventListener('input', aplicarIvaModal);
+    input.addEventListener('blur', function () {
+        this.value = leerIvaPorcentaje().toFixed(2);
+        aplicarIvaModal();
+    });
+}
+
 // ========== FUNCIÓN PARA ABRIR MODAL DE PAGO ==========
 function abrirModalPago() {
     if (!window.currentCarrito || window.currentCarrito.length === 0) {
@@ -1004,7 +1169,7 @@ function abrirModalPago() {
         });
     }
 
-    const total = subtotalConDescuento;
+    window._subtotalConDescuento = subtotalConDescuento;
     const modalElement = document.getElementById('pagoModal');
     if (!modalElement) {
         console.error('❌ No se encontró el elemento del modal');
@@ -1028,24 +1193,13 @@ function abrirModalPago() {
         modalSubtotalConDescuento.textContent = '$' + subtotalConDescuento.toFixed(2);
     }
 
-    const modalTotal = document.getElementById('modal-total');
-    if (modalTotal) {
-        modalTotal.textContent = '$' + total.toFixed(2);
+    // El IVA arranca en el valor sugerido por la configuración de la empresa
+    // y el cajero lo puede cambiar o dejar en 0.
+    const inputIva = document.getElementById('modal-iva-porcentaje');
+    if (inputIva) {
+        inputIva.value = parseFloat(window.CajaConfig.ivaPorcentajeDefault || 0).toFixed(2);
     }
-
-    const modalTotalPagar = document.getElementById('modal-total-pagar');
-    if (modalTotalPagar) {
-        modalTotalPagar.value = '$' + total.toFixed(2);
-        modalTotalPagar.setAttribute('value', '$' + total.toFixed(2));
-    }
-
-    const btnPagar = document.getElementById('modal-btnPagar');
-    if (btnPagar) {
-        btnPagar.innerHTML = `
-            <i class="fas fa-check-circle me-2"></i>
-            CONFIRMAR PAGO - $${total.toFixed(2)}
-        `;
-    }
+    const total = aplicarIvaModal();
 
     const efectivoSection = document.querySelector('.efectivo-section');
     const qrSection = document.getElementById('qrSection');
@@ -1115,9 +1269,12 @@ function abrirModalPago() {
         if (efectivoInputFocus) {
             efectivoInputFocus.focus();
             efectivoInputFocus.select();
-            if (total > 0) {
-                efectivoInputFocus.value = total.toFixed(2);
-                updatePaymentValues(total.toFixed(2));
+            const totalActual = parseFloat(
+                (document.getElementById('modal-total-pagar')?.value || '0').replace(/[^\d.]/g, '')
+            ) || 0;
+            if (totalActual > 0) {
+                efectivoInputFocus.value = totalActual.toFixed(2);
+                updatePaymentValues(totalActual.toFixed(2));
             }
         }
     }, 500);
@@ -2350,17 +2507,25 @@ function actualizarTotales(totales) {
     if (modalSubtotal) modalSubtotal.textContent = '$' + parseFloat(totales.subtotal).toFixed(2);
     if (modalDescuento) modalDescuento.textContent = '-$' + parseFloat(totales.descuento).toFixed(2);
     if (modalSubtotalConDescuento) modalSubtotalConDescuento.textContent = '$' + parseFloat(totales.subtotal_con_descuento).toFixed(2);
-    if (modalTotal) modalTotal.textContent = '$' + parseFloat(totales.total).toFixed(2);
-    if (modalTotalPagar) {
-        modalTotalPagar.value = '$' + parseFloat(totales.total).toFixed(2);
-        modalTotalPagar.setAttribute('value', '$' + parseFloat(totales.total).toFixed(2));
-    }
     if (modalDescuentoTotal) modalDescuentoTotal.value = parseFloat(totales.descuento).toFixed(2);
-    if (modalBtnPagar) {
-        modalBtnPagar.innerHTML = `
-            <i class="fas fa-check-circle me-2"></i>
-            CONFIRMAR PAGO - $${parseFloat(totales.total).toFixed(2)}
-        `;
+
+    // El total del modal se recalcula con el IVA capturado, no se toma
+    // directo de los totales del carrito (que vienen sin IVA).
+    window._subtotalConDescuento = parseFloat(totales.subtotal_con_descuento) || 0;
+    if (document.getElementById('modal-iva-porcentaje')) {
+        aplicarIvaModal();
+    } else {
+        if (modalTotal) modalTotal.textContent = '$' + parseFloat(totales.total).toFixed(2);
+        if (modalTotalPagar) {
+            modalTotalPagar.value = '$' + parseFloat(totales.total).toFixed(2);
+            modalTotalPagar.setAttribute('value', '$' + parseFloat(totales.total).toFixed(2));
+        }
+        if (modalBtnPagar) {
+            modalBtnPagar.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                CONFIRMAR PAGO - $${parseFloat(totales.total).toFixed(2)}
+            `;
+        }
     }
 
     if (mobileSubtotalDisplay) mobileSubtotalDisplay.textContent = '$' + parseFloat(totales.subtotal).toFixed(2);
@@ -3260,6 +3425,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupGlobalBarcodeScanner();
     setupPaymentMethods();
     setupEfectivoInput();
+    setupIvaVenta();
     setupDescripcionInput();
     setupNumpad();
     setupLinkPagoEvents();
