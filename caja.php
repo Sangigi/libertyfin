@@ -12,7 +12,7 @@ register_shutdown_function(function () {
     if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
         error_log("Fatal error: " . print_r($error, true));
         // Si es una petición AJAX, responder con JSON de error
-        if (isset($_POST['actualizar_descuento_ajax']) || isset($_POST['agregar_producto_ajax']) || isset($_POST['actualizar_cantidad_ajax']) || isset($_POST['actualizar_precio_ajax']) || isset($_POST['actualizar_comisiones_carrito_ajax'])) {
+        if (isset($_POST['actualizar_descuento_ajax']) || isset($_POST['agregar_producto_ajax']) || isset($_POST['actualizar_cantidad_ajax']) || isset($_POST['actualizar_precio_ajax']) || isset($_POST['actualizar_comisiones_carrito_ajax']) || isset($_POST['actualizar_gastos_operacion_ajax'])) {
             while (ob_get_level()) ob_end_clean();
             header('Content-Type: application/json');
             echo json_encode([
@@ -37,6 +37,187 @@ use Facturapi\Facturapi;
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: login.php");
     exit();
+}
+
+// =====================================================================
+// Guarda en venta_comisiones las comisiones que el cajero asignó a un
+// producto del carrito (item['comisiones']) durante la venta actual.
+// Se llama una vez por cada venta_detalle recién insertado, justo
+// después de conocer su $venta_detalle_id.
+// =====================================================================
+function guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, $usuario_id, $carrito = null, $factor_iva = 1.0) {
+    if (empty($item['comisiones']) || !is_array($item['comisiones'])) {
+        return;
+    }
+
+    $costo_unitario = (float)($item['costo'] ?? 0);
+    $cantidad       = (float)($item['cantidad'] ?? 0);
+
+    // Los precios del carrito TRAEN EL IVA INCLUIDO. Se dividen entre el
+    // factor para comisionar sobre la base, no sobre el impuesto.
+    // El costo no se toca: se captura sin IVA.
+    if ($factor_iva <= 0) $factor_iva = 1.0;
+    $precio_unitario = (float)($item['precio'] ?? 0) / $factor_iva;
+
+    // El descuento otorgado al cliente SÍ reduce la base de comisión: se
+    // comisiona sobre lo realmente cobrado, no sobre el precio de lista.
+    $descuento_linea = (float)($item['descuento'] ?? 0) / $factor_iva;
+
+    // Utilidad de la línea = (precio x cantidad) - descuento - (costo x cantidad)
+    $venta_linea    = $precio_unitario * $cantidad;
+    $utilidad_linea = ($venta_linea - $descuento_linea) - ($costo_unitario * $cantidad);
+
+    // -----------------------------------------------------------------
+    // GASTO DE OPERACIÓN
+    // Se resta de la utilidad ANTES de calcular la comisión.
+    //
+    // Solo cuentan los gastos MANUALES (tipo='manual'). Los automáticos
+    // los genera el sistema y representan el costo de mercancía, que YA
+    // está restado vía $costo_unitario; incluirlos restaría dos veces.
+    // El discriminador es `tipo`, NO `origen`: los gastos manuales
+    // ligados a una venta también se guardan con origen='venta'.
+    //
+    // Nota: guardarGastosOperacionDeVenta() ya corrió antes de este
+    // punto, así que los gastos de esta venta ya están en la tabla.
+    // -----------------------------------------------------------------
+    $stmt_gasto = $conn->prepare("
+        SELECT COALESCE(SUM(monto), 0)
+        FROM gastos
+        WHERE venta_id = ?
+          AND tipo      = 'manual'
+          AND categoria <> 'Costo de venta'
+    ");
+    $stmt_gasto->execute([$venta_id]);
+    $gasto_total_venta = (float)$stmt_gasto->fetchColumn();
+
+    // El gasto aplica a la VENTA completa, pero la comisión se calcula por
+    // línea. Se prorratea según la utilidad que aporta cada línea.
+    //
+    // El prorrateo se calcula sobre el CARRITO, no sobre venta_detalles:
+    // esta función se llama dentro del loop de productos, así que las
+    // líneas siguientes todavía no existen en la base.
+    $gasto_operacion = 0.0;
+    if ($gasto_total_venta > 0) {
+        $utilidad_total_venta = 0.0;
+        if (is_array($carrito)) {
+            foreach ($carrito as $it) {
+                $v_it = ((float)($it['precio'] ?? 0) / $factor_iva) * (float)($it['cantidad'] ?? 0);
+                $utilidad_total_venta += max(0,
+                    ($v_it - ((float)($it['descuento'] ?? 0) / $factor_iva))
+                    - ((float)($it['costo'] ?? 0) * (float)($it['cantidad'] ?? 0)));
+            }
+        }
+
+        if ($utilidad_total_venta > 0) {
+            $gasto_operacion = $gasto_total_venta * (max(0, $utilidad_linea) / $utilidad_total_venta);
+        } elseif (is_array($carrito) && count($carrito) > 0) {
+            // Venta sin utilidad: se reparte parejo para no cargarle todo
+            // el gasto a una sola línea.
+            $gasto_operacion = $gasto_total_venta / count($carrito);
+        } else {
+            $gasto_operacion = $gasto_total_venta;
+        }
+    }
+    $gasto_operacion = round($gasto_operacion, 2);
+
+    // Base comisionable = utilidad - gasto. Nunca negativa: si el gasto se
+    // come la utilidad, la comisión es 0, no un cargo al colaborador.
+    $monto_base = max(0, $utilidad_linea - $gasto_operacion);
+
+    // -----------------------------------------------------------------
+    // PORCENTAJE
+    // Lo captura el cajero al asignar la comision (item['comisiones'][]['porcentaje']),
+    // porque cambia de un caso a otro. Ya no se lee de comision_reglas.
+    //
+    // `porcentaje_reparto` se queda en 100 fijo: existia para dividir un
+    // concepto entre varias personas y provocaba multiplicar dos veces
+    // (41% x 41% = 16.8%, en vez del 41% que tocaba).
+    // -----------------------------------------------------------------
+
+    $stmt_ins = $conn->prepare("
+        INSERT INTO venta_comisiones
+            (venta_id, venta_detalle_id, area_id, area_nombre, regla_id, concepto,
+             colaborador_id, colaborador_nombre, porcentaje_regla, porcentaje_reparto,
+             costo_unitario, gasto_operacion, precio_unitario, descuento_linea,
+             cantidad, monto_base, monto_comision, usuario_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+
+    foreach ($item['comisiones'] as $com) {
+        $colaborador_id = intval($com['colaborador_id'] ?? 0);
+        $area_id_com    = intval($com['area_id'] ?? 0) ?: null;
+        $area_nombre    = trim($com['area_nombre'] ?? '');
+        if ($colaborador_id <= 0 || $area_id_com === null) {
+            continue;
+        }
+
+        // Ya no hay concepto/rol: la comision es area + colaborador + %.
+        // `venta_comisiones.concepto` es NOT NULL, asi que se guarda el
+        // nombre del area como etiqueta, y `regla_id` queda en NULL.
+        $regla_id = null;
+        $concepto = $area_nombre !== '' ? $area_nombre : 'Comisión';
+
+        $porcentaje_regla = floatval($com['porcentaje'] ?? 0);
+        if ($porcentaje_regla <= 0 || $porcentaje_regla > 100) {
+            continue; // sin porcentaje valido no se guarda la comision
+        }
+        $porcentaje_reparto = 100.00;
+        $monto_comision = round($monto_base * ($porcentaje_regla / 100), 2);
+
+        $stmt_ins->execute([
+            $venta_id,
+            $venta_detalle_id,
+            $area_id_com,
+            $area_nombre,
+            $regla_id,
+            $concepto,
+            $colaborador_id,
+            $com['colaborador_nombre'] ?? '',
+            $porcentaje_regla,
+            $porcentaje_reparto,
+            $costo_unitario,
+            $gasto_operacion,
+            round($precio_unitario, 2),
+            round($descuento_linea, 2),
+            $cantidad,
+            $monto_base,
+            $monto_comision,
+            $usuario_id
+        ]);
+    }
+}
+
+// =====================================================================
+// Guarda en `gastos` los gastos de operación que el cajero agregó
+// durante la venta actual (flete, empaque, comisión de plataforma de
+// pago, etc). Estos aplican a la venta completa, no a un producto.
+// =====================================================================
+function guardarGastosOperacionDeVenta($conn, $venta_id, $gastos_operacion, $usuario_id, $sucursal_id, $metodo_pago) {
+    if (empty($gastos_operacion) || !is_array($gastos_operacion)) {
+        return;
+    }
+
+    $stmt_ins = $conn->prepare("
+        INSERT INTO gastos (concepto, categoria, monto, tipo, origen, venta_id, usuario_id, sucursal_id, metodo_pago, descripcion, fecha)
+        VALUES (?, 'Gasto de operación', ?, 'manual', 'venta', ?, ?, ?, ?, ?, NOW())
+    ");
+
+    foreach ($gastos_operacion as $g) {
+        $concepto = trim($g['concepto'] ?? '');
+        $monto = floatval($g['monto'] ?? 0);
+        if ($concepto === '' || $monto <= 0) {
+            continue;
+        }
+        $stmt_ins->execute([
+            $concepto,
+            $monto,
+            $venta_id,
+            $usuario_id,
+            $sucursal_id,
+            $metodo_pago,
+            'Gasto de operación agregado durante el cobro de la venta'
+        ]);
+    }
 }
 
 // ========== FUNCIÓN PARA OBTENER PRECIO CON MAYOREO ==========
@@ -370,7 +551,9 @@ try {
     $stmt_config = $conn->query($sql_config);
     $config = $stmt_config->fetch();
 
-    $iva_porcentaje = 0;
+    // IVA sugerido para la venta. Es OPCIONAL: el cajero puede dejarlo en 0
+    // o cambiarlo en el modal de cobro segun aplique.
+    $iva_porcentaje = (float)($config['iva'] ?? 0);
     $moneda = $config['moneda'] ?? 'MXN';
     $color_primario = $config['color_primario'] ?? '#27ae60';
     $color_secundario = $config['color_secundario'] ?? '#2ecc71';
@@ -383,7 +566,7 @@ try {
 } catch (PDOException $e) {
     error_log("Error al obtener configuración: " . $e->getMessage());
     $iva_porcentaje = 0;
-    $moneda = 'MXN';
+    $moneda = 'MXN';   // fallback si falla la consulta de configuracion
     $color_primario = '#27ae60';
     $color_secundario = '#2ecc71';
     $paypal_client_id = '';
@@ -797,6 +980,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_comisiones
     } else {
         echo json_encode(['success' => false, 'message' => 'Producto no encontrado en el carrito']);
     }
+    exit();
+}
+
+// ========== MANEJO DE GASTOS DE OPERACIÓN DE LA VENTA EN CURSO ==========
+// A diferencia de las comisiones (que van por producto), los gastos de
+// operación aplican a la venta completa (flete, empaque, comisión de
+// plataforma de pago, etc.), así que se guardan aparte en la sesión y se
+// insertan en `gastos` hasta que se confirma el pago.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_gastos_operacion_ajax'])) {
+    header('Content-Type: application/json');
+    $gastos_operacion = json_decode($_POST['gastos_operacion'] ?? '[]', true);
+    $_SESSION['carrito_gastos_operacion'] = is_array($gastos_operacion) ? $gastos_operacion : [];
+    echo json_encode(['success' => true]);
     exit();
 }
 
@@ -1287,6 +1483,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vaciar_carrito_ajax']
 
     if (!empty($_SESSION['carrito'])) {
         $_SESSION['carrito'] = [];
+        $_SESSION['carrito_gastos_operacion'] = [];
         $response['success'] = true;
         $response['message'] = "Carrito vaciado exitosamente";
         $response['carrito_actualizado'] = $_SESSION['carrito'];
@@ -1448,10 +1645,38 @@ if (isset($_POST['procesar_pago'])) {
         $subtotal_sin_iva = 0;
     }
 
-    $iva_total = 0;
-    $total = $subtotal_sin_iva;
+    // -----------------------------------------------------------------
+    // IVA · el precio capturado YA LO TRAE INCLUIDO
+    //
+    // Si capturas 8,000 con IVA al 16%, el cliente paga 8,000. Ese monto se
+    // desglosa hacia atras:
+    //     base = 8000 / 1.16 = 6,896.55
+    //     IVA  = 8000 - 6896.55 = 1,103.45
+    //
+    // El total NO cambia al mover el IVA: lo que cambia es cuanto de ese
+    // total es base y cuanto es impuesto.
+    //
+    // La comision se calcula sobre la BASE (6,896.55), nunca sobre el
+    // total con IVA: el impuesto no es ingreso de la empresa.
+    // -----------------------------------------------------------------
+    $iva_porcentaje_venta = floatval($_POST['iva_porcentaje'] ?? 0);
+    if ($iva_porcentaje_venta < 0)   $iva_porcentaje_venta = 0;
+    if ($iva_porcentaje_venta > 100) $iva_porcentaje_venta = 100;
+
+    $factor_iva = 1 + ($iva_porcentaje_venta / 100);
+
+    // Lo que paga el cliente es el carrito tal cual (IVA ya incluido)
+    $total = round($subtotal_sin_iva, 2);
+
+    // Desglose sin IVA, que es lo que se guarda en la venta
+    $subtotal_sin_descuento = round($subtotal_sin_descuento / $factor_iva, 2);
+    $descuento_total        = round($descuento_total / $factor_iva, 2);
+    $base_sin_iva           = round($subtotal_sin_descuento - $descuento_total, 2);
+    if ($base_sin_iva < 0) $base_sin_iva = 0;
+    $iva_total              = round($total - $base_sin_iva, 2);
 
     // Si es PayPal, crear venta pendiente y redirigir
+    // ($factor_iva ya quedó calculado arriba y aplica igual en esta rama)
     if ($metodo_pago === 'paypal') {
         try {
             $conn->beginTransaction();
@@ -1484,6 +1709,10 @@ if (isset($_POST['procesar_pago'])) {
             
             $venta_id = $conn->lastInsertId();
             error_log("✅ Venta pendiente PayPal - ID: $venta_id, Código: $codigo_venta");
+            guardarGastosOperacionDeVenta(
+                $conn, $venta_id, $_SESSION['carrito_gastos_operacion'] ?? [],
+                $_SESSION['usuario_id'], $_SESSION['sucursal_id'] ?? null, 'paypal'
+            );
             
             // Insertar detalles
             $costo_total_venta = 0;
@@ -1518,6 +1747,9 @@ if (isset($_POST['procesar_pago'])) {
                     $total_producto,
                     $unidad_medida
                 ]);
+
+                $venta_detalle_id = $conn->lastInsertId();
+                guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, $_SESSION['usuario_id'], $_SESSION['carrito'], $factor_iva);
             }
             
             $conn->commit();
@@ -1585,6 +1817,10 @@ if (isset($_POST['procesar_pago'])) {
         
         $venta_id = $conn->lastInsertId();
         error_log("✅ Venta insertada - ID: $venta_id, Código: $codigo_venta");
+        guardarGastosOperacionDeVenta(
+            $conn, $venta_id, $_SESSION['carrito_gastos_operacion'] ?? [],
+            $_SESSION['usuario_id'], $_SESSION['sucursal_id'] ?? null, $metodo_pago
+        );
 
         $costo_total_venta = 0;
         foreach ($_SESSION['carrito'] as $item) {
@@ -1621,6 +1857,7 @@ if (isset($_POST['procesar_pago'])) {
                 $unidad_medida
             ]);
             $venta_detalle_id = $conn->lastInsertId();
+            guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, $_SESSION['usuario_id'], $_SESSION['carrito'], $factor_iva);
 
             $sql_update_stock = "
                 UPDATE producto_sucursal 
@@ -1790,7 +2027,7 @@ if (isset($_POST['procesar_pago'])) {
             'subtotal' => $subtotal_sin_descuento,
             'descuento' => $descuento_total,
             'iva' => $iva_total,
-            'iva_porcentaje' => 0,
+            'iva_porcentaje' => $iva_porcentaje_venta,
             'cliente_id' => $cliente_id,
             'venta_id' => $venta_id,
             'plan_empresa' => $empresa_plan,
@@ -1800,6 +2037,7 @@ if (isset($_POST['procesar_pago'])) {
         ];
 
         $_SESSION['carrito'] = [];
+        $_SESSION['carrito_gastos_operacion'] = [];
         unset($_SESSION['cliente_venta']);
 
         header("Location: caja.php?venta_exitosa=true");
@@ -2124,23 +2362,21 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                     <p class="mb-2">Producto: <strong id="comisionProductoNombre"></strong></p>
 
                     <div class="row g-2 mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label small">Área</label>
                             <select class="form-select form-select-sm" id="comisionArea"></select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label small">Concepto / Rol</label>
-                            <select class="form-select form-select-sm" id="comisionRegla"></select>
-                        </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label small">Colaborador</label>
                             <select class="form-select form-select-sm" id="comisionColaborador"></select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small">% de reparto</label>
-                            <select class="form-select form-select-sm" id="comisionPorcentajeReparto">
-                                <option value="100">100% (una sola persona)</option>
-                            </select>
+                            <label class="form-label small">Porcentaje (%)</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" step="0.01" min="0.01" max="100"
+                                       class="form-control" id="comisionPorcentaje" placeholder="Ej. 41">
+                                <span class="input-group-text">%</span>
+                            </div>
                         </div>
                         <div class="col-md-6 d-flex align-items-end">
                             <button type="button" class="btn btn-success btn-sm w-100" id="btnAgregarComisionLinea">
@@ -2150,10 +2386,49 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                     </div>
 
                     <table class="table table-sm">
-                        <thead><tr><th>Área</th><th>Concepto</th><th>Colaborador</th><th>% reparto</th><th></th></tr></thead>
+                        <thead><tr><th>Área</th><th>Colaborador</th><th class="text-end">%</th><th></th></tr></thead>
                         <tbody id="comisionesListaTbody"></tbody>
+                        <tfoot id="comisionesListaTfoot"></tfoot>
                     </table>
-                    <small class="text-muted">Estas comisiones se guardarán al confirmar el pago de la venta.</small>
+                    <small class="text-muted">Estas comisiones se guardarán al confirmar el pago de la venta. El porcentaje se aplica sobre la utilidad del producto menos los gastos de operación.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para gastos de operación (aplica a toda la venta, no a un producto) -->
+    <div class="modal fade" id="gastosOperacionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-money-bill-wave me-2"></i>Gastos de Operación de la Venta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-7">
+                            <label class="form-label small">Concepto</label>
+                            <input type="text" class="form-control form-control-sm" id="gastoOperacionConcepto" placeholder="Ej. Flete, empaque, comisión de plataforma...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Monto</label>
+                            <input type="number" step="0.01" min="0.01" class="form-control form-control-sm" id="gastoOperacionMonto" placeholder="0.00">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-warning btn-sm w-100" id="btnAgregarGastoOperacionLinea">
+                                <i class="fas fa-plus me-1"></i>Agregar
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm">
+                        <thead><tr><th>Concepto</th><th>Monto</th><th></th></tr></thead>
+                        <tbody id="gastosOperacionListaTbody"></tbody>
+                    </table>
+                    <small class="text-muted">Estos gastos se guardarán ligados a la venta al confirmar el pago. No afectan el total a cobrar al cliente, son para control interno.</small>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -2239,9 +2514,25 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                 <td class="label">Subtotal con Descuento:</td>
                                 <td class="value" id="modal-subtotal-con-descuento">$<?php echo number_format($subtotal_con_descuento_carrito, 2); ?></td>
                             </tr>
-                            <tr style="display: none;">
-                                <td class="label">IVA (0%):</td>
-                                <td class="value">$0.00</td>
+                            <tr>
+                                <td class="label text-muted">Base sin IVA:</td>
+                                <td class="value text-muted" id="modal-base-sin-iva">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="label">
+                                    IVA
+                                    <span class="input-group input-group-sm d-inline-flex align-items-center ms-2" style="width: 110px;">
+                                        <input type="number" step="0.01" min="0" max="100"
+                                               class="form-control form-control-sm text-end"
+                                               id="modal-iva-porcentaje"
+                                               value="<?php echo number_format($iva_porcentaje, 2, '.', ''); ?>"
+                                               data-form-field="true"
+                                               title="El precio capturado ya trae el IVA incluido. Déjalo en 0 si la venta no lleva IVA.">
+                                        <span class="input-group-text">%</span>
+                                    </span>
+                                    <small class="d-block text-muted" style="font-size:11px;">incluido en el precio</small>
+                                </td>
+                                <td class="value text-muted" id="modal-iva">$0.00</td>
                             </tr>
                             <tr style="border-top: 2px solid #dee2e6;">
                                 <td class="label"><strong>TOTAL A PAGAR:</strong></td>
@@ -2451,6 +2742,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                         <input type="hidden" name="cambio" id="modal-cambioHidden" value="0">
                         <input type="hidden" name="descuento_total" id="modal-descuentoTotal" value="<?php echo $descuento_carrito; ?>">
                         <input type="hidden" name="descripcion" id="modal-descripcionHidden" value="">
+                        <input type="hidden" name="iva_porcentaje" id="modal-ivaPorcentajeHidden" value="<?php echo number_format($iva_porcentaje, 2, '.', ''); ?>">
                         <button type="submit" name="procesar_pago" class="btn btn-pagar w-100" id="modal-btnPagar">
                             <i class="fas fa-check-circle me-2"></i>
                             CONFIRMAR PAGO - $<?php echo number_format($total_carrito, 2); ?>
@@ -2501,11 +2793,17 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                 <span class="badge bg-primary ms-2"><?php echo count($_SESSION['carrito']); ?> productos</span>
                             <?php endif; ?>
                         </div>
-                        <?php if (!empty($_SESSION['carrito'])): ?>
-                            <button type="button" class="btn btn-outline-danger btn-sm" id="btnVaciarCarrito">
-                                <i class="fas fa-trash me-1"></i>Vaciar Todo
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#gastosOperacionModal">
+                                <i class="fas fa-money-bill-wave me-1"></i>Gastos de Operación
+                                <span class="badge bg-warning text-dark ms-1" id="badgeGastosOperacionCount" style="display:none;">0</span>
                             </button>
-                        <?php endif; ?>
+                            <?php if (!empty($_SESSION['carrito'])): ?>
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="btnVaciarCarrito">
+                                    <i class="fas fa-trash me-1"></i>Vaciar Todo
+                                </button>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="cart-table-container">
                         <table class="cart-table">
@@ -3520,6 +3818,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         busquedaNombre: '<?php echo addslashes($busqueda_nombre ?? ''); ?>',
         ventaRealizada: <?php echo isset($_SESSION['venta_realizada']) ? json_encode($_SESSION['venta_realizada']) : 'null'; ?>,
         ventaId: <?php echo isset($_SESSION['venta_realizada']['venta_id']) ? $_SESSION['venta_realizada']['venta_id'] : '0'; ?>,
+        ivaPorcentajeDefault: <?php echo number_format($iva_porcentaje, 2, '.', ''); ?>,
         totalInicial: <?php echo $total_carrito ?? 0; ?>,
         subtotalInicial: <?php echo $subtotal_carrito ?? 0; ?>,
         descuentoInicial: <?php echo $descuento_carrito ?? 0; ?>,
@@ -3532,7 +3831,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
     };
 </script>
 
-<script src="js/cajas.js"></script>
+<script src="js/cajas.js?v=<?php echo @filemtime(__DIR__ . '/js/cajas.js') ?: time(); ?>"></script>
 </body>
 
 </html>

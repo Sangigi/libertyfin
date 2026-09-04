@@ -279,7 +279,8 @@ try {
                 p.nombre as producto_nombre,
                 p.codigo as producto_codigo,
                 p.precio as precio_unitario,
-                c.nombre as categoria_nombre
+                c.nombre as categoria_nombre,
+                (SELECT COUNT(*) FROM venta_comisiones vc WHERE vc.venta_detalle_id = vd.id) as num_comisiones
             FROM venta_detalles vd
             LEFT JOIN productos p ON vd.producto_id = p.id
             LEFT JOIN categorias c ON p.categoria_id = c.id
@@ -939,7 +940,19 @@ $usos_cfdi = [
                                 <tbody>
                                     <?php foreach ($detalles_venta as $detalle): ?>
                                         <tr>
-                                            <td><?php echo safe_html($detalle['producto_nombre']); ?></td>
+                                            <td>
+                                                <?php echo safe_html($detalle['producto_nombre']); ?>
+                                                <br>
+                                                <button type="button" class="btn btn-sm btn-outline-success mt-1 btn-asignar-comision-post-venta"
+                                                    data-venta-id="<?php echo $venta_especifica['id']; ?>"
+                                                    data-venta-detalle-id="<?php echo $detalle['id']; ?>"
+                                                    data-producto-nombre="<?php echo safe_html($detalle['producto_nombre']); ?>">
+                                                    <i class="fas fa-user-tag me-1"></i>Comisión
+                                                    <?php if (!empty($detalle['num_comisiones'])): ?>
+                                                        <span class="badge bg-success ms-1"><?php echo $detalle['num_comisiones']; ?></span>
+                                                    <?php endif; ?>
+                                                </button>
+                                            </td>
                                             <td><?php echo safe_html($detalle['producto_codigo']); ?></td>
                                             <td><?php echo $detalle['cantidad']; ?> <?php echo safe_html($detalle['unidad_medida'] ?? ''); ?></td>
                                             <td>$<?php echo number_format($detalle['precio_unitario'], 2); ?></td>
@@ -955,6 +968,90 @@ $usos_cfdi = [
                                     </tr>
                                 </tfoot>
                             </table>
+                        </div>
+
+                        <h6 class="mt-4"><i class="fas fa-money-bill-wave me-2"></i>Gastos de Operación de esta Venta</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm" id="tablaGastosOperacionVenta" data-venta-id="<?php echo $venta_especifica['id']; ?>">
+                                <thead class="table-light">
+                                    <tr><th>Concepto</th><th>Monto</th><th></th></tr>
+                                </thead>
+                                <tbody id="gastosOperacionVentaTbody">
+                                    <tr><td colspan="3" class="text-center text-muted">Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="row g-2">
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control form-control-sm" id="nuevoGastoOperacionConcepto" placeholder="Concepto del gasto (ej. flete, empaque...)">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" step="0.01" min="0.01" class="form-control form-control-sm" id="nuevoGastoOperacionMonto" placeholder="Monto">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-warning btn-sm w-100" id="btnAgregarGastoOperacionVenta">
+                                        <i class="fas fa-plus me-1"></i>Agregar
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <span class="badge bg-secondary me-1">1</span>
+                                Estos gastos se restan de la utilidad <strong>antes</strong> de calcular las comisiones.
+                            </small>
+                        </div>
+
+                        <!-- 2 · IVA de la venta (opcional) -->
+                        <h6 class="mt-4"><i class="fas fa-percent me-2"></i>IVA de esta Venta</h6>
+                        <div id="ivaVentaContenedor" data-venta-id="<?php echo $venta_especifica['id']; ?>">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label small mb-1">Porcentaje</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="0.01" min="0" max="100"
+                                               class="form-control" id="ivaVentaPorcentaje" placeholder="0.00">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small mb-1">Base (sin IVA)</label>
+                                    <input type="text" class="form-control form-control-sm" id="ivaVentaBase" readonly>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small mb-1">IVA</label>
+                                    <input type="text" class="form-control form-control-sm" id="ivaVentaMonto" readonly>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-primary btn-sm w-100" id="btnGuardarIvaVenta">
+                                        <i class="fas fa-save me-1"></i>Guardar IVA
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <span class="badge bg-secondary me-1">2</span>
+                                Opcional: déjalo en 0 si la venta no lleva IVA. Ajusta el total de la venta,
+                                pero <strong>no cambia las comisiones</strong>: éstas se calculan sobre montos sin IVA.
+                            </small>
+                        </div>
+
+                        <!-- 3 · Comisiones de la venta -->
+                        <h6 class="mt-4"><i class="fas fa-user-tag me-2"></i>Comisiones de esta Venta</h6>
+                        <div class="table-responsive" id="comisionesVentaContenedor" data-venta-id="<?php echo $venta_especifica['id']; ?>">
+                            <table class="table table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Producto</th><th>Área</th><th>Colaborador</th>
+                                        <th class="text-end">%</th><th class="text-end">Monto</th>
+                                        <th style="width:44px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comisionesVentaTbody">
+                                    <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+                                </tbody>
+                                <tfoot id="comisionesVentaTfoot"></tfoot>
+                            </table>
+                            <small class="text-muted d-block">
+                                <span class="badge bg-secondary me-1">3</span>
+                                Para agregar una comisión, usa el botón <em>Comisión</em> del producto en la tabla de arriba.
+                            </small>
                         </div>
                     <?php else: ?>
                         <div class="alert alert-warning">No se encontraron detalles para esta venta.</div>
@@ -978,6 +1075,55 @@ $usos_cfdi = [
                             </button>
                         <?php endif; ?>
                     <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para asignar comisión a un producto de una venta ya cerrada.
+         La comisión es área + colaborador + porcentaje: no hay concepto/rol
+         ni "% de reparto". El porcentaje se captura aquí mismo. -->
+    <div class="modal fade" id="asignarComisionPostVentaModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-tag me-2"></i>Asignar Comisión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Producto: <strong id="pvComisionProductoNombre"></strong></p>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">Área</label>
+                            <select class="form-select form-select-sm" id="pvComisionArea"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Colaborador</label>
+                            <select class="form-select form-select-sm" id="pvComisionColaborador"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Porcentaje (%)</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" step="0.01" min="0.01" max="100"
+                                       class="form-control" id="pvComisionPorcentaje" placeholder="Ej. 41">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="button" class="btn btn-success btn-sm w-100" id="btnGuardarComisionPostVenta">
+                                <i class="fas fa-plus me-1"></i>Guardar Comisión
+                            </button>
+                        </div>
+                    </div>
+                    <table class="table table-sm">
+                        <thead><tr><th>Área</th><th>Colaborador</th><th class="text-end">%</th><th class="text-end">Monto</th><th style="width:44px;"></th></tr></thead>
+                        <tbody id="pvComisionesListaTbody"></tbody>
+                        <tfoot id="pvComisionesListaTfoot"></tfoot>
+                    </table>
+                    <small class="text-muted">El porcentaje se aplica sobre la utilidad del producto menos los gastos de operación de la venta.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -1400,6 +1546,404 @@ $usos_cfdi = [
                         }
                     }
                 });
+            });
+
+            // ===== Gastos de Operación de la venta =====
+            const tablaGastos = document.getElementById('tablaGastosOperacionVenta');
+            if (tablaGastos) {
+                const ventaIdGastos = tablaGastos.dataset.ventaId;
+
+                function cargarGastosOperacionVenta() {
+                    fetch('gastos_venta.php?accion=listar_gastos_venta&venta_id=' + ventaIdGastos)
+                        .then(r => r.json())
+                        .then(data => {
+                            const tbody = document.getElementById('gastosOperacionVentaTbody');
+                            if (!data.success) {
+                                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error al cargar</td></tr>';
+                                return;
+                            }
+                            if (data.gastos.length === 0) {
+                                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Sin gastos agregados</td></tr>';
+                                return;
+                            }
+                            tbody.innerHTML = data.gastos.map(g => `
+                                <tr>
+                                    <td>${g.concepto}</td>
+                                    <td>$${parseFloat(g.monto).toFixed(2)}</td>
+                                    <td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-gasto-operacion-venta" data-id="${g.id}"><i class="fas fa-times"></i></button></td>
+                                </tr>
+                            `).join('');
+                        })
+                        .catch(() => {
+                            document.getElementById('gastosOperacionVentaTbody').innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error de conexión</td></tr>';
+                        });
+                }
+
+                cargarGastosOperacionVenta();
+
+                document.getElementById('btnAgregarGastoOperacionVenta')?.addEventListener('click', function() {
+                    const conceptoInput = document.getElementById('nuevoGastoOperacionConcepto');
+                    const montoInput = document.getElementById('nuevoGastoOperacionMonto');
+                    const concepto = conceptoInput.value.trim();
+                    const monto = parseFloat(montoInput.value);
+
+                    if (!concepto) { alert('Escribe el concepto del gasto'); return; }
+                    if (!monto || monto <= 0) { alert('Escribe un monto válido'); return; }
+
+                    const formData = new FormData();
+                    formData.append('accion', 'agregar_gasto');
+                    formData.append('venta_id', ventaIdGastos);
+                    formData.append('concepto', concepto);
+                    formData.append('monto', monto);
+
+                    fetch('gastos_venta.php', { method: 'POST', body: formData })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                conceptoInput.value = '';
+                                montoInput.value = '';
+                                cargarGastosOperacionVenta();
+                            } else {
+                                alert('❌ ' + (data.message || 'No se pudo agregar el gasto'));
+                            }
+                        })
+                        .catch(() => alert('❌ Error de conexión al agregar el gasto'));
+                });
+
+                document.getElementById('gastosOperacionVentaTbody')?.addEventListener('click', function(e) {
+                    const btn = e.target.closest('.btn-quitar-gasto-operacion-venta');
+                    if (!btn) return;
+                    if (!confirm('¿Eliminar este gasto de operación?')) return;
+
+                    const formData = new FormData();
+                    formData.append('accion', 'eliminar_gasto');
+                    formData.append('id', btn.dataset.id);
+
+                    fetch('gastos_venta.php', { method: 'POST', body: formData })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                cargarGastosOperacionVenta();
+                            } else {
+                                alert('❌ ' + (data.message || 'No se pudo eliminar el gasto'));
+                            }
+                        })
+                        .catch(() => alert('❌ Error de conexión al eliminar el gasto'));
+                });
+            }
+
+            // ===== 2 · IVA de la venta =====
+            // Opcional. Ajusta el total de la venta pero no toca comisiones:
+            // la base de comisión son montos sin IVA.
+            const ivaCont = document.getElementById('ivaVentaContenedor');
+            if (ivaCont) {
+                const ivaVentaId = ivaCont.dataset.ventaId;
+                let ivaBase = 0;
+                let ivaEsAdmin = false;
+
+                function pintarIva(pct) {
+                    const iva = Math.round(ivaBase * (pct / 100) * 100) / 100;
+                    document.getElementById('ivaVentaBase').value = '$' + ivaBase.toFixed(2);
+                    document.getElementById('ivaVentaMonto').value = '$' + iva.toFixed(2);
+                }
+
+                function cargarIvaVenta() {
+                    fetch('iva_venta.php?accion=obtener_iva_venta&venta_id=' + ivaVentaId)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (!data.success) return;
+                            ivaBase = parseFloat(data.base) || 0;
+                            ivaEsAdmin = data.es_admin === true;
+                            document.getElementById('ivaVentaPorcentaje').value = parseFloat(data.porcentaje).toFixed(2);
+                            pintarIva(parseFloat(data.porcentaje) || 0);
+
+                            // Sin permisos: se muestra, pero no se edita.
+                            if (!ivaEsAdmin) {
+                                document.getElementById('ivaVentaPorcentaje').disabled = true;
+                                const btn = document.getElementById('btnGuardarIvaVenta');
+                                btn.disabled = true;
+                                btn.title = 'Solo un administrador puede modificar el IVA';
+                            }
+                        })
+                        .catch(() => {});
+                }
+
+                cargarIvaVenta();
+
+                document.getElementById('ivaVentaPorcentaje')?.addEventListener('input', function () {
+                    let pct = parseFloat(this.value);
+                    if (isNaN(pct) || pct < 0) pct = 0;
+                    if (pct > 100) pct = 100;
+                    pintarIva(pct);
+                });
+
+                document.getElementById('btnGuardarIvaVenta')?.addEventListener('click', function () {
+                    let pct = parseFloat(document.getElementById('ivaVentaPorcentaje').value);
+                    if (isNaN(pct) || pct < 0 || pct > 100) {
+                        alert('El IVA debe estar entre 0 y 100');
+                        return;
+                    }
+
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Guardando...';
+
+                    const formData = new FormData();
+                    formData.append('accion', 'actualizar_iva_venta');
+                    formData.append('venta_id', ivaVentaId);
+                    formData.append('porcentaje', pct);
+
+                    fetch('iva_venta.php', { method: 'POST', body: formData })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('✅ ' + data.message + '\nNuevo total de la venta: $' + parseFloat(data.total).toFixed(2));
+                                location.reload();
+                            } else {
+                                alert('❌ ' + (data.message || 'No se pudo actualizar el IVA'));
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="fas fa-save me-1"></i>Guardar IVA';
+                            }
+                        })
+                        .catch(() => {
+                            alert('❌ Error de conexión al actualizar el IVA');
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-save me-1"></i>Guardar IVA';
+                        });
+                });
+            }
+
+            // ===== 3 · Comisiones de toda la venta =====
+            const comVentaCont = document.getElementById('comisionesVentaContenedor');
+            function cargarComisionesVenta() {
+                if (!comVentaCont) return;
+                fetch('guardar_comision_producto.php?accion=listar_comisiones_venta&venta_id=' + comVentaCont.dataset.ventaId)
+                    .then(r => r.json())
+                    .then(data => {
+                        const tbody = document.getElementById('comisionesVentaTbody');
+                        const tfoot = document.getElementById('comisionesVentaTfoot');
+                        if (!data.success || data.comisiones.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Sin comisiones asignadas en esta venta</td></tr>';
+                            if (tfoot) tfoot.innerHTML = '';
+                            return;
+                        }
+                        const puedeCancelar = data.es_admin === true;
+                        tbody.innerHTML = data.comisiones.map(c => `
+                            <tr>
+                                <td>${c.producto_nombre || '<span class="text-muted">—</span>'}</td>
+                                <td>${c.area_nombre}</td>
+                                <td>${c.colaborador_nombre}</td>
+                                <td class="text-end">${parseFloat(c.porcentaje_regla).toFixed(2)}%</td>
+                                <td class="text-end">$${parseFloat(c.monto_comision).toFixed(2)}</td>
+                                <td class="text-end">
+                                    ${puedeCancelar ? `<button type="button"
+                                        class="btn btn-sm btn-outline-danger btn-cancelar-comision"
+                                        data-id="${c.id}"
+                                        data-colaborador="${c.colaborador_nombre}"
+                                        data-monto="${parseFloat(c.monto_comision).toFixed(2)}"
+                                        title="Cancelar la comisión de esta persona">
+                                        <i class="fas fa-times"></i></button>` : ''}
+                                </td>
+                            </tr>
+                        `).join('');
+
+                        if (tfoot) {
+                            const suma = data.comisiones.reduce((a, c) => a + parseFloat(c.monto_comision || 0), 0);
+                            tfoot.innerHTML = `
+                                <tr class="table-light">
+                                    <td colspan="4" class="text-end fw-bold">TOTAL DE COMISIONES DE LA VENTA</td>
+                                    <td class="text-end fw-bold">$${suma.toFixed(2)}</td>
+                                    <td></td>
+                                </tr>`;
+                        }
+                    })
+                    .catch(() => {
+                        document.getElementById('comisionesVentaTbody').innerHTML =
+                            '<tr><td colspan="6" class="text-center text-danger">Error de conexión</td></tr>';
+                    });
+            }
+            cargarComisionesVenta();
+
+            // ===== Asignar comisión a un producto de una venta ya cerrada =====
+            // Area + colaborador + porcentaje. Ya no hay concepto/rol ni
+            // "% de reparto": ese segundo porcentaje era el que provocaba
+            // multiplicar dos veces (41% x 41%).
+            let pvCatalogosComision = null;
+            let pvVentaIdActual = null;
+            let pvVentaDetalleIdActual = null;
+
+            function pvCargarCatalogos(callback) {
+                if (pvCatalogosComision) { callback(); return; }
+                fetch('guardar_comision_producto.php?accion=obtener_catalogos')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            pvCatalogosComision = data;
+                            callback();
+                        } else {
+                            alert('No se pudieron cargar los catálogos de comisión');
+                        }
+                    })
+                    .catch(() => alert('Error de conexión al cargar catálogos de comisión'));
+            }
+
+            function pvPoblarAreas() {
+                const sel = document.getElementById('pvComisionArea');
+                sel.innerHTML = pvCatalogosComision.areas.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('');
+            }
+
+            function pvPoblarColaboradores() {
+                document.getElementById('pvComisionColaborador').innerHTML =
+                    pvCatalogosComision.colaboradores.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+            }
+
+            function pvCargarComisionesDetalle() {
+                fetch('guardar_comision_producto.php?accion=listar_comisiones_detalle&venta_detalle_id=' + pvVentaDetalleIdActual)
+                    .then(r => r.json())
+                    .then(data => {
+                        const tbody = document.getElementById('pvComisionesListaTbody');
+                        const tfoot = document.getElementById('pvComisionesListaTfoot');
+                        if (!data.success || data.comisiones.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Sin comisiones asignadas</td></tr>';
+                            if (tfoot) tfoot.innerHTML = '';
+                            return;
+                        }
+                        // El botón de cancelar solo se dibuja para admin. El
+                        // endpoint valida el rol otra vez del lado servidor.
+                        const puedeCancelar = data.es_admin === true;
+                        tbody.innerHTML = data.comisiones.map(c => `
+                            <tr>
+                                <td>${c.area_nombre}</td>
+                                <td>${c.colaborador_nombre}</td>
+                                <td class="text-end">${parseFloat(c.porcentaje_regla).toFixed(2)}%</td>
+                                <td class="text-end">$${parseFloat(c.monto_comision).toFixed(2)}</td>
+                                <td class="text-end">
+                                    ${puedeCancelar ? `<button type="button"
+                                        class="btn btn-sm btn-outline-danger btn-cancelar-comision"
+                                        data-id="${c.id}"
+                                        data-colaborador="${c.colaborador_nombre}"
+                                        data-monto="${parseFloat(c.monto_comision).toFixed(2)}"
+                                        title="Cancelar la comisión de esta persona">
+                                        <i class="fas fa-times"></i></button>` : ''}
+                                </td>
+                            </tr>
+                        `).join('');
+
+                        if (tfoot) {
+                            const sumaPct = data.comisiones.reduce((a, c) => a + parseFloat(c.porcentaje_regla || 0), 0);
+                            const sumaMonto = data.comisiones.reduce((a, c) => a + parseFloat(c.monto_comision || 0), 0);
+                            const excede = sumaPct > 100.01;
+                            tfoot.innerHTML = `
+                                <tr class="${excede ? 'table-danger' : 'table-light'}">
+                                    <td colspan="2" class="text-end fw-bold">Total asignado</td>
+                                    <td class="text-end fw-bold">${sumaPct.toFixed(2)}%</td>
+                                    <td class="text-end fw-bold">$${sumaMonto.toFixed(2)}</td>
+                                    <td></td>
+                                </tr>
+                                ${excede ? '<tr><td colspan="5" class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Pasa del 100%: se reparte más que la utilidad del producto.</td></tr>' : ''}
+                            `;
+                        }
+                    });
+            }
+
+            document.querySelectorAll('.btn-asignar-comision-post-venta').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    pvVentaIdActual = this.dataset.ventaId;
+                    pvVentaDetalleIdActual = this.dataset.ventaDetalleId;
+                    document.getElementById('pvComisionProductoNombre').textContent = this.dataset.productoNombre;
+
+                    pvCargarCatalogos(function() {
+                        pvPoblarAreas();
+                        pvPoblarColaboradores();
+                        pvCargarComisionesDetalle();
+                        new bootstrap.Modal(document.getElementById('asignarComisionPostVentaModal')).show();
+                    });
+                });
+            });
+
+            // Cancelar la comisión de una persona. Es cancelación lógica: la
+            // fila se conserva marcada, con quién la canceló y por qué.
+            document.addEventListener('click', function(e) {
+                const btn = e.target.closest('.btn-cancelar-comision');
+                if (!btn) return;
+
+                const quien = btn.dataset.colaborador;
+                const monto = btn.dataset.monto;
+
+                if (!confirm(`¿Cancelar la comisión de ${quien} por $${monto}?\n\nLa comisión deja de contar en los reportes, pero queda registrada para auditoría.`)) {
+                    return;
+                }
+                const motivo = prompt('Motivo de la cancelación (obligatorio):', '');
+                if (motivo === null) return;
+                if (!motivo.trim()) {
+                    alert('Hay que escribir un motivo.');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                const formData = new FormData();
+                formData.append('accion', 'cancelar_comision');
+                formData.append('id', btn.dataset.id);
+                formData.append('motivo', motivo.trim());
+
+                fetch('guardar_comision_producto.php', { method: 'POST', body: formData })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (pvVentaDetalleIdActual) pvCargarComisionesDetalle();
+                            cargarComisionesVenta();
+                        } else {
+                            alert('❌ ' + (data.message || 'No se pudo cancelar la comisión'));
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-times"></i>';
+                        }
+                    })
+                    .catch(() => {
+                        alert('❌ Error de conexión al cancelar la comisión');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-times"></i>';
+                    });
+            });
+
+            document.getElementById('btnGuardarComisionPostVenta')?.addEventListener('click', function() {
+                const areaSel = document.getElementById('pvComisionArea');
+                const colabSel = document.getElementById('pvComisionColaborador');
+                const pctInput = document.getElementById('pvComisionPorcentaje');
+                const porcentaje = parseFloat(pctInput.value);
+
+                if (!areaSel.value || !colabSel.value) {
+                    alert('Selecciona área y colaborador');
+                    return;
+                }
+                if (!porcentaje || porcentaje <= 0 || porcentaje > 100) {
+                    alert('Captura un porcentaje entre 0.01 y 100');
+                    pctInput.focus();
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('accion', 'guardar_comision');
+                formData.append('venta_id', pvVentaIdActual);
+                formData.append('venta_detalle_id', pvVentaDetalleIdActual);
+                formData.append('area_id', areaSel.value);
+                formData.append('colaborador_id', colabSel.value);
+                formData.append('porcentaje', porcentaje);
+
+                fetch('guardar_comision_producto.php', { method: 'POST', body: formData })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            pctInput.value = '';
+                            if (data.aviso) alert('⚠️ ' + data.aviso);
+                            pvCargarComisionesDetalle();
+                            cargarComisionesVenta();
+                        } else {
+                            alert('❌ ' + (data.message || 'No se pudo guardar la comisión'));
+                        }
+                    })
+                    .catch(() => alert('❌ Error de conexión al guardar la comisión'));
             });
 
             // Mostrar modal si hay parámetro

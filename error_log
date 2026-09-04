@@ -66,3 +66,116 @@ Stack trace:
 [20-Aug-2026 17:39:16 America/Mexico_City] Login exitoso - Usuario: agt_admin, Empresa: AGT, IP: 153.54.200.234
 [21-Aug-2026 10:38:16 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.184.208
 [21-Aug-2026 13:40:42 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[21-Aug-2026 14:05:19 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 74
+[21-Aug-2026 14:14:09 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[21-Aug-2026 14:14:47 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[21-Aug-2026 14:14:47 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[21-Aug-2026 14:15:09 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[21-Aug-2026 14:15:09 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[21-Aug-2026 14:15:56 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[21-Aug-2026 14:15:56 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[21-Aug-2026 14:15:59 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[21-Aug-2026 14:15:59 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[21-Aug-2026 16:31:17 America/Mexico_City] Error de login: Usuario/Email o contraseña incorrectos. - IP: 201.103.184.208
+[21-Aug-2026 16:31:22 America/Mexico_City] Error de login: Usuario/Email o contraseña incorrectos. - IP: 201.103.184.208
+[21-Aug-2026 16:32:46 America/Mexico_City] Error de login: Usuario/Email o contraseña incorrectos. - IP: 201.103.184.208
+[21-Aug-2026 16:39:33 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[21-Aug-2026 16:39:44 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[21-Aug-2026 16:41:20 America/Mexico_City] Error de login: Usuario/Email o contraseña incorrectos. - IP: 201.103.184.208
+[21-Aug-2026 16:41:35 America/Mexico_City] Error de login: Usuario/Email o contraseña incorrectos. - IP: 201.103.184.208
+[21-Aug-2026 16:42:41 America/Mexico_City] Error de login: Usuario/Email o contraseña incorrectos. - IP: 201.103.184.208
+[21-Aug-2026 16:44:03 America/Mexico_City] Login exitoso - Usuario: facturacion, Empresa: Ideas Mx, IP: 201.103.184.208
+[21-Aug-2026 16:45:00 America/Mexico_City] Login exitoso - Usuario: facturacion, Empresa: Ideas Mx, IP: 153.54.200.234
+[21-Aug-2026 16:45:25 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 201.103.184.208
+[21-Aug-2026 17:28:39 America/Mexico_City] Login exitoso - Usuario: agt_admin, Empresa: AGT, IP: 187.189.92.3
+[24-Aug-2026 16:33:46 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[24-Aug-2026 16:34:34 America/Mexico_City] Caja abierta - ID: 6, Usuario: 5, Sucursal: 1, Monto: 0
+[24-Aug-2026 16:35:42 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.142.242.220
+[24-Aug-2026 17:03:01 America/Mexico_City] Login exitoso - Usuario: aurova_admin, Empresa: AUROVA, IP: 187.142.242.220
+[24-Aug-2026 17:12:27 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[25-Aug-2026 09:07:10 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[25-Aug-2026 12:55:09 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.142.242.220
+[25-Aug-2026 12:57:25 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 187.142.242.220
+[25-Aug-2026 13:00:05 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[25-Aug-2026 15:00:29 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[25-Aug-2026 15:00:29 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[25-Aug-2026 16:38:53 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 187.142.242.220
+[25-Aug-2026 16:49:57 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[25-Aug-2026 16:49:57 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[25-Aug-2026 16:53:33 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[25-Aug-2026 16:53:33 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[25-Aug-2026 16:55:47 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[25-Aug-2026 16:55:47 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[25-Aug-2026 16:58:11 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[25-Aug-2026 16:58:11 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[25-Aug-2026 16:59:10 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[25-Aug-2026 16:59:10 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[25-Aug-2026 17:46:22 America/Mexico_City] Login exitoso - Usuario: facturacion, Empresa: Ideas Mx, IP: 187.142.242.220
+[26-Aug-2026 15:09:40 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 187.142.242.220
+[26-Aug-2026 15:57:02 America/Mexico_City] Login exitoso - Usuario: facturacion, Empresa: Ideas Mx, IP: 187.142.242.220
+[26-Aug-2026 15:58:18 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 187.142.242.220
+[26-Aug-2026 16:01:53 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[26-Aug-2026 16:01:53 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[26-Aug-2026 16:01:59 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[26-Aug-2026 16:01:59 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[26-Aug-2026 16:02:03 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[26-Aug-2026 16:02:03 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[26-Aug-2026 16:04:57 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[26-Aug-2026 16:04:57 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[26-Aug-2026 16:13:31 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[26-Aug-2026 16:13:31 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[26-Aug-2026 16:13:37 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[26-Aug-2026 16:13:37 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[26-Aug-2026 17:02:56 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[26-Aug-2026 17:13:27 America/Mexico_City] Login exitoso - Usuario: facturacion, Empresa: Ideas Mx, IP: 153.54.200.234
+[26-Aug-2026 17:13:58 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[26-Aug-2026 17:18:16 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[27-Aug-2026 07:26:10 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 189.203.193.75
+[27-Aug-2026 09:29:55 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 187.142.242.220
+[27-Aug-2026 09:30:46 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[27-Aug-2026 09:30:46 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[27-Aug-2026 09:32:46 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.142.242.220
+[27-Aug-2026 09:52:28 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[27-Aug-2026 09:52:28 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[27-Aug-2026 09:55:16 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[27-Aug-2026 09:55:16 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[27-Aug-2026 10:26:03 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.142.242.220
+[27-Aug-2026 10:33:50 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[27-Aug-2026 10:33:50 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[27-Aug-2026 10:33:55 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[27-Aug-2026 10:33:55 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[27-Aug-2026 10:34:15 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[27-Aug-2026 10:34:15 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[27-Aug-2026 10:34:24 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[27-Aug-2026 10:34:24 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[27-Aug-2026 10:35:23 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[27-Aug-2026 10:35:23 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[27-Aug-2026 10:58:03 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.142.242.220
+[27-Aug-2026 12:01:53 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[27-Aug-2026 14:47:52 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[27-Aug-2026 14:47:52 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[27-Aug-2026 16:40:13 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[27-Aug-2026 17:06:57 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[27-Aug-2026 17:18:35 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 187.142.242.220
+[27-Aug-2026 22:27:42 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[28-Aug-2026 08:49:52 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 187.142.242.220
+[28-Aug-2026 09:13:53 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[28-Aug-2026 09:13:53 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[28-Aug-2026 10:38:36 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[28-Aug-2026 11:17:06 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[31-Aug-2026 17:04:35 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 69
+[31-Aug-2026 17:04:35 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:69
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(69): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 69
+[31-Aug-2026 17:05:23 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[31-Aug-2026 18:08:09 America/Mexico_City] Posible secuestro de sesión - User Agent cambio
+[31-Aug-2026 18:08:11 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 187.142.242.220
+[02-Sep-2026 12:20:05 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.189.242.252
+[02-Sep-2026 15:18:06 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.220.136
+[02-Sep-2026 15:24:28 America/Mexico_City] Login exitoso - Usuario: michelle_p_admin, Empresa: Michelle Pruebas, IP: 201.103.220.136
+[02-Sep-2026 15:42:27 America/Mexico_City] Login exitoso - Usuario: michelle_p_admin, Empresa: Michelle Pruebas, IP: 187.184.158.16
+[03-Sep-2026 11:25:14 America/Mexico_City] Login exitoso - Usuario: michelle_p_admin, Empresa: Michelle Pruebas, IP: 187.184.158.16
+[03-Sep-2026 17:07:40 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 201.103.24.36
+[04-Sep-2026 10:03:42 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 201.103.24.36

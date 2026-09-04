@@ -107,77 +107,6 @@ try {
             $tipo_mensaje = 'success';
         }
 
-        // ---- Reglas (conceptos + %) por área — totalmente editable, no fijo ----
-        if ($_POST['accion'] === 'guardar_reglas_area') {
-            $area_id = intval($_POST['area_id'] ?? 0);
-            $conceptos = $_POST['concepto'] ?? [];
-            $porcentajes = $_POST['porcentaje'] ?? [];
-
-            if ($area_id <= 0) {
-                $mensaje = 'Área no válida';
-                $tipo_mensaje = 'danger';
-            } else {
-                $conn->beginTransaction();
-                try {
-                    $stmt_del = $conn->prepare("DELETE FROM comision_reglas WHERE area_id = ?");
-                    $stmt_del->execute([$area_id]);
-
-                    $stmt_ins = $conn->prepare("INSERT INTO comision_reglas (area_id, concepto, porcentaje, orden) VALUES (?, ?, ?, ?)");
-                    $orden = 1;
-                    foreach ($conceptos as $i => $concepto) {
-                        $concepto = trim($concepto);
-                        $porcentaje = floatval($porcentajes[$i] ?? 0);
-                        if ($concepto === '') continue;
-                        $stmt_ins->execute([$area_id, $concepto, $porcentaje, $orden]);
-                        $orden++;
-                    }
-                    $conn->commit();
-                    $mensaje = 'Reglas guardadas correctamente';
-                    $tipo_mensaje = 'success';
-                } catch (Exception $e) {
-                    $conn->rollBack();
-                    $mensaje = 'Error al guardar reglas: ' . $e->getMessage();
-                    $tipo_mensaje = 'danger';
-                }
-            }
-        }
-
-        // ---- Porcentajes de reparto ----
-        if ($_POST['accion'] === 'crear_porcentaje_reparto') {
-            $valor = floatval($_POST['valor'] ?? 0);
-            if ($valor <= 0 || $valor > 100) {
-                $mensaje = 'El porcentaje debe estar entre 0 y 100';
-                $tipo_mensaje = 'danger';
-            } else {
-                try {
-                    $stmt = $conn->prepare("INSERT INTO comision_porcentajes_reparto (valor) VALUES (?)");
-                    $stmt->execute([$valor]);
-                    $mensaje = 'Porcentaje de reparto agregado';
-                    $tipo_mensaje = 'success';
-                } catch (Exception $e) {
-                    $mensaje = 'Ese porcentaje ya existe o hubo un error';
-                    $tipo_mensaje = 'danger';
-                }
-            }
-        }
-
-        if ($_POST['accion'] === 'cambiar_estado_porcentaje') {
-            $id = intval($_POST['id'] ?? 0);
-            $activo = intval($_POST['activo'] ?? 0);
-            $stmt = $conn->prepare("UPDATE comision_porcentajes_reparto SET activo = ? WHERE id = ?");
-            $stmt->execute([$activo, $id]);
-            $mensaje = $activo ? 'Porcentaje activado' : 'Porcentaje desactivado';
-            $tipo_mensaje = 'success';
-        }
-
-        if ($_POST['accion'] === 'eliminar_porcentaje') {
-            $id = intval($_POST['id'] ?? 0);
-            $stmt = $conn->prepare("DELETE FROM comision_porcentajes_reparto WHERE id = ?");
-            $stmt->execute([$id]);
-            $mensaje = 'Porcentaje eliminado';
-            $tipo_mensaje = 'success';
-        }
-
         $_SESSION['comisiones_mensaje'] = $mensaje;
         $_SESSION['comisiones_tipo_mensaje'] = $tipo_mensaje;
         header('Location: comisiones_config.php');
@@ -201,14 +130,6 @@ try {
         LEFT JOIN comision_areas ca ON cc.area_id = ca.id
         ORDER BY cc.activo DESC, cc.nombre ASC
     ")->fetchAll(PDO::FETCH_ASSOC);
-
-    $reglas_por_area = [];
-    $stmt_reglas = $conn->query("SELECT * FROM comision_reglas ORDER BY area_id, orden ASC, id ASC");
-    while ($r = $stmt_reglas->fetch(PDO::FETCH_ASSOC)) {
-        $reglas_por_area[$r['area_id']][] = $r;
-    }
-
-    $porcentajes_reparto = $conn->query("SELECT * FROM comision_porcentajes_reparto ORDER BY valor DESC")->fetchAll(PDO::FETCH_ASSOC);
 
     // Colores de la empresa (para mantener consistencia visual con el resto del sistema)
     $sql_colores = "SELECT color_primario, color_secundario FROM sistema_config LIMIT 1";
@@ -258,24 +179,21 @@ try {
         <div class="alert alert-info">
             <i class="fas fa-info-circle me-2"></i>
             Las comisiones se calculan sobre la <strong>utilidad de cada producto vendido</strong>
-            (precio de venta menos el costo del producto, antes de IVA). Puedes crear las áreas,
-            conceptos/roles y porcentajes que necesites — nada aquí es fijo.
+            menos los <strong>gastos de operación</strong> de la venta.
+            Aquí defines las <strong>áreas</strong> y los <strong>colaboradores</strong>.
+            Al asignar la comisión en caja (o al editar la venta) eliges área, colaborador
+            y <strong>capturas el porcentaje</strong>, porque cambia de un caso a otro.
         </div>
 
         <ul class="nav nav-tabs mb-4" id="comisionesTabs">
             <li class="nav-item">
                 <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-areas">
-                    <i class="fas fa-folder me-1"></i>Áreas y Reglas
+                    <i class="fas fa-folder me-1"></i>Áreas
                 </button>
             </li>
             <li class="nav-item">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-colaboradores">
                     <i class="fas fa-users me-1"></i>Colaboradores
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reparto">
-                    <i class="fas fa-percent me-1"></i>Porcentajes de Reparto
                 </button>
             </li>
         </ul>
@@ -285,7 +203,7 @@ try {
             <!-- ===================== ÁREAS Y REGLAS ===================== -->
             <div class="tab-pane fade show active" id="tab-areas">
                 <div class="row">
-                    <div class="col-lg-4">
+                    <div class="col-lg-6">
                         <div class="card">
                             <div class="card-header bg-primary text-white">
                                 <i class="fas fa-folder-plus me-2"></i>Nueva Área
@@ -295,7 +213,7 @@ try {
                                     <input type="hidden" name="accion" value="crear_area">
                                     <div class="mb-3">
                                         <label class="form-label">Nombre del área</label>
-                                        <input type="text" class="form-control" name="nombre" required placeholder="Ej. Legal, Marketing...">
+                                        <input type="text" class="form-control" name="nombre" required placeholder="Ej. Legal, Marketing, Contabilidad...">
                                     </div>
                                     <button type="submit" class="btn btn-primary w-100">
                                         <i class="fas fa-save me-1"></i>Agregar Área
@@ -322,7 +240,7 @@ try {
                                                     <input type="hidden" name="activo" value="<?php echo $a['activo'] ? 0 : 1; ?>">
                                                     <button type="submit" class="btn btn-sm btn-outline-warning"><i class="fas fa-power-off"></i></button>
                                                 </form>
-                                                <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar el área \'<?php echo htmlspecialchars($a['nombre']); ?>\'? Se borrarán también sus reglas.');">
+                                                <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar el área \'<?php echo htmlspecialchars($a['nombre']); ?>\'?');">
                                                     <input type="hidden" name="accion" value="eliminar_area">
                                                     <input type="hidden" name="id" value="<?php echo $a['id']; ?>">
                                                     <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i></button>
@@ -339,65 +257,6 @@ try {
                         </div>
                     </div>
 
-                    <div class="col-lg-8">
-                        <?php foreach ($areas as $area): ?>
-                            <?php $reglas = $reglas_por_area[$area['id']] ?? []; ?>
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <span><i class="fas fa-sitemap me-2"></i><?php echo htmlspecialchars($area['nombre']); ?></span>
-                                    <span class="suma-indicador suma-neutral" id="suma-<?php echo $area['id']; ?>">Suma: 0%</span>
-                                </div>
-                                <div class="card-body">
-                                    <form method="POST" class="form-reglas-area" data-area="<?php echo $area['id']; ?>">
-                                        <input type="hidden" name="accion" value="guardar_reglas_area">
-                                        <input type="hidden" name="area_id" value="<?php echo $area['id']; ?>">
-                                        <div class="table-responsive">
-                                            <table class="table table-sm align-middle filas-reglas" data-area="<?php echo $area['id']; ?>">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>Concepto / Rol</th>
-                                                        <th style="width: 140px;">Porcentaje (%)</th>
-                                                        <th style="width: 50px;"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                <?php if (!empty($reglas)): ?>
-                                                    <?php foreach ($reglas as $r): ?>
-                                                    <tr>
-                                                        <td><input type="text" class="form-control form-control-sm" name="concepto[]" value="<?php echo htmlspecialchars($r['concepto']); ?>" required></td>
-                                                        <td><input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm porcentaje-input input-porcentaje" name="porcentaje[]" value="<?php echo $r['porcentaje']; ?>" required></td>
-                                                        <td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-fila"><i class="fas fa-times"></i></button></td>
-                                                    </tr>
-                                                    <?php endforeach; ?>
-                                                <?php else: ?>
-                                                    <tr>
-                                                        <td><input type="text" class="form-control form-control-sm" name="concepto[]" placeholder="ej. Vendedor" required></td>
-                                                        <td><input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm porcentaje-input input-porcentaje" name="porcentaje[]" value="0" required></td>
-                                                        <td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-fila"><i class="fas fa-times"></i></button></td>
-                                                    </tr>
-                                                <?php endif; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary btn-agregar-fila" data-area="<?php echo $area['id']; ?>">
-                                            <i class="fas fa-plus me-1"></i>Agregar concepto
-                                        </button>
-                                        <button type="submit" class="btn btn-sm btn-success float-end">
-                                            <i class="fas fa-save me-1"></i>Guardar reglas
-                                        </button>
-                                    </form>
-                                    <small class="text-muted d-block mt-2">
-                                        <i class="fas fa-info-circle me-1"></i>No es obligatorio que sume 100% — se muestra solo como referencia, ya que los conceptos son libres.
-                                    </small>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                        <?php if (empty($areas)): ?>
-                            <div class="card"><div class="card-body text-center text-muted py-5">
-                                <i class="fas fa-folder-open fa-3x mb-3"></i><p>Crea primero un área para poder definir sus reglas</p>
-                            </div></div>
-                        <?php endif; ?>
-                    </div>
                 </div>
             </div>
 
@@ -480,67 +339,6 @@ try {
                 </div>
             </div>
 
-            <!-- ===================== PORCENTAJES DE REPARTO ===================== -->
-            <div class="tab-pane fade" id="tab-reparto">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Estos porcentajes se usan cuando un concepto (rol) se reparte entre varios
-                    colaboradores. Al asignar la comisión en caja por producto, se elige cuál de
-                    estos porcentajes le corresponde a cada colaborador dentro de ese concepto.
-                </div>
-                <div class="row">
-                    <div class="col-lg-5">
-                        <div class="card">
-                            <div class="card-header bg-primary text-white">
-                                <i class="fas fa-plus-circle me-2"></i>Nuevo Porcentaje
-                            </div>
-                            <div class="card-body">
-                                <form method="POST">
-                                    <input type="hidden" name="accion" value="crear_porcentaje_reparto">
-                                    <div class="mb-3">
-                                        <label class="form-label">Valor (%)</label>
-                                        <input type="number" step="0.01" min="0.01" max="100" class="form-control" name="valor" required placeholder="Ej. 20">
-                                    </div>
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="fas fa-save me-1"></i>Agregar
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-7">
-                        <div class="card">
-                            <div class="card-header"><i class="fas fa-list me-2"></i>Porcentajes disponibles</div>
-                            <div class="card-body p-0">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light"><tr><th>Valor</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
-                                    <tbody>
-                                    <?php foreach ($porcentajes_reparto as $p): ?>
-                                        <tr>
-                                            <td><strong><?php echo number_format($p['valor'], 2); ?>%</strong></td>
-                                            <td><?php echo $p['activo'] ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>'; ?></td>
-                                            <td class="text-end">
-                                                <form method="POST" class="d-inline">
-                                                    <input type="hidden" name="accion" value="cambiar_estado_porcentaje">
-                                                    <input type="hidden" name="id" value="<?php echo $p['id']; ?>">
-                                                    <input type="hidden" name="activo" value="<?php echo $p['activo'] ? 0 : 1; ?>">
-                                                    <button type="submit" class="btn btn-sm btn-outline-warning"><i class="fas fa-power-off"></i></button>
-                                                </form>
-                                                <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este porcentaje?');">
-                                                    <input type="hidden" name="accion" value="eliminar_porcentaje">
-                                                    <input type="hidden" name="id" value="<?php echo $p['id']; ?>">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i></button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -604,50 +402,6 @@ try {
             });
         });
 
-        document.querySelectorAll('.btn-agregar-fila').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const area = this.dataset.area;
-                const tabla = document.querySelector(`.filas-reglas[data-area="${area}"] tbody`);
-                const fila = document.createElement('tr');
-                fila.innerHTML = `
-                    <td><input type="text" class="form-control form-control-sm" name="concepto[]" placeholder="ej. Vendedor" required></td>
-                    <td><input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm porcentaje-input input-porcentaje" name="porcentaje[]" value="0" required></td>
-                    <td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-fila"><i class="fas fa-times"></i></button>
-                `;
-                tabla.appendChild(fila);
-                calcularSuma(area);
-            });
-        });
-
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.btn-quitar-fila')) {
-                const fila = e.target.closest('tr');
-                const tabla = fila.closest('.filas-reglas');
-                const area = tabla.dataset.area;
-                fila.remove();
-                calcularSuma(area);
-            }
-        });
-
-        document.addEventListener('input', function (e) {
-            if (e.target.classList.contains('input-porcentaje')) {
-                const tabla = e.target.closest('.filas-reglas');
-                calcularSuma(tabla.dataset.area);
-            }
-        });
-
-        function calcularSuma(area) {
-            const tabla = document.querySelector(`.filas-reglas[data-area="${area}"]`);
-            let suma = 0;
-            tabla.querySelectorAll('.input-porcentaje').forEach(input => {
-                suma += parseFloat(input.value) || 0;
-            });
-            const indicador = document.getElementById('suma-' + area);
-            indicador.textContent = 'Suma: ' + suma.toFixed(2) + '%';
-            indicador.classList.toggle('suma-ok', Math.abs(suma - 100) < 0.01);
-        }
-
-        document.querySelectorAll('.filas-reglas').forEach(tabla => calcularSuma(tabla.dataset.area));
     </script>
 </body>
 </html>

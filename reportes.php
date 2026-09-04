@@ -146,6 +146,8 @@ try {
         $fecha_fin = isset($_GET['fecha_fin']) && validar_fecha($_GET['fecha_fin']) ? $_GET['fecha_fin'] : date('Y-m-d');
         $tipo_reporte = isset($_GET['tipo_reporte']) ? $_GET['tipo_reporte'] : 'general';
         $sucursal_id_ajax = isset($_GET['sucursal_id']) && is_numeric($_GET['sucursal_id']) ? (int)$_GET['sucursal_id'] : '';
+        // Filtro por colaborador: aplica SOLO al bloque de comisiones.
+        $colaborador_id = isset($_GET['colaborador_id']) && is_numeric($_GET['colaborador_id']) ? (int)$_GET['colaborador_id'] : 0;
         
         // Validar tipo_reporte contra lista blanca
         $tipos_permitidos = ['general', 'ventas', 'inventario', 'clientes'];
@@ -448,41 +450,243 @@ try {
                 $response['vendedores_top'] = $vendedores;
             }
 
-            // Comisiones por colaborador
+            // El filtro por colaborador se arma aparte porque solo aplica a
+            // comisiones, no al resto del reporte.
+            $colaborador_filtro  = '';
+            $params_comisiones   = $params_comunes;
+            if (!empty($colaborador_id)) {
+                $colaborador_filtro = " AND vc.colaborador_id = ?";
+                $params_comisiones[] = $colaborador_id;
+            }
+
+            // =========================================================
+            // COMISIONES · tabla cruzada por area (mismo formato que el
+            // Excel): una fila por venta, una columna por colaborador.
+            //   TOTAL A COMISIONAR = DEPOSITADO - COSTO SERVICIO - IVA
+            // =========================================================
             $sql_comisiones = "
                 SELECT
-                    vc.colaborador_nombre,
                     vc.area_nombre,
-                    vc.concepto,
-                    COUNT(*) as veces,
-                    SUM(vc.monto_comision) as total_comision
+                    vc.colaborador_nombre,
+                    vc.monto_base,
+                    vc.monto_comision,
+                    vc.venta_detalle_id,
+                    vc.precio_unitario,
+                    vc.descuento_linea,
+                    vc.costo_unitario,
+                    vc.cantidad,
+                    vc.gasto_operacion,
+                    v.descuento AS venta_descuento,
+                    v.id AS venta_id,
+                    v.codigo_venta,
+                    v.fecha,
+                    v.metodo_pago,
+                    v.total AS venta_total,
+                    v.iva   AS venta_iva,
+                    COALESCE(cl.nombre, 'Cliente General') AS cliente_nombre
                 FROM venta_comisiones vc
                 INNER JOIN ventas v ON vc.venta_id = v.id
+                LEFT JOIN clientes cl ON v.cliente_id = cl.id
                 WHERE DATE(v.fecha) BETWEEN ? AND ?
                 AND v.estado = 'completada'
+                AND vc.cancelada = 0
                 $sucursal_filtro
-                GROUP BY vc.colaborador_nombre, vc.area_nombre, vc.concepto
-                ORDER BY total_comision DESC";
+                $colaborador_filtro
+                ORDER BY vc.area_nombre, v.fecha, v.id";
 
             $stmt_comisiones = $conn->prepare($sql_comisiones);
             if ($stmt_comisiones) {
-                if (!empty($params_comunes)) {
-                    $stmt_comisiones->execute($params_comunes);
-                }
+                $stmt_comisiones->execute($params_comisiones);
 
-                $comisiones = [];
-                while ($row = $stmt_comisiones->fetch(PDO::FETCH_ASSOC)) {
-                    $comisiones[] = [
-                        'colaborador' => safe_html($row['colaborador_nombre']),
-                        'area' => safe_html($row['area_nombre']),
-                        'concepto' => safe_html($row['concepto']),
-                        'veces' => $row['veces'],
-                        'total' => formatMoney($row['total_comision'])
-                    ];
+                $areas_com = [];
+                $ventas_vist = [];
+                while ($r = $stmt_comisiones->fetch(PDO::FETCH_ASSOC)) {
+                    $area  = $r['area_nombre'] !== '' ? $r['area_nombre'] : 'Sin área';
+                    $vid   = (int)$r['venta_id'];
+                    $colab = $r['colaborador_nombre'];
+
+                    if (!isset($areas_com[$area])) {
+                        $areas_com[$area] = ['ventas' => [], 'colaboradores' => []];
+                    }
+                    if (!isset($areas_com[$area]['ventas'][$vid])) {
+                        $areas_com[$area]['ventas'][$vid] = [
+                            'folio'      => $r['codigo_venta'],
+                            'concepto'   => $r['cliente_nombre'],
+                            'fecha'      => $r['fecha'],
+                            'banco'      => ucfirst($r['metodo_pago']),
+                            'depositado' => (float)$r['venta_total'],
+                            'descuento'  => (float)$r['venta_descuento'],
+                            'iva'        => (float)$r['venta_iva'],
+                            'bases'      => [],
+                            'subtot'     => [],
+                            'costos'     => [],
+                            'gastos'     => [],
+                            'descs'      => [],
+                            'colab'      => []
+                        ];
+                    }
+                    // Se indexan por venta_detalle_id porque se repiten en
+                    // cada fila del mismo producto (una por colaborador).
+                    $did = (int)$r['venta_detalle_id'];
+                    $areas_com[$area]['ventas'][$vid]['bases'][$did]  = (float)$r['monto_base'];
+                    $areas_com[$area]['ventas'][$vid]['subtot'][$did] = (float)$r['precio_unitario'] * (float)$r['cantidad'];
+                    $areas_com[$area]['ventas'][$vid]['costos'][$did] = (float)$r['costo_unitario']  * (float)$r['cantidad'];
+                    $areas_com[$area]['ventas'][$vid]['gastos'][$did] = (float)$r['gasto_operacion'];
+                    $areas_com[$area]['ventas'][$vid]['descs'][$did]  = (float)$r['descuento_linea'];
+                    $areas_com[$area]['ventas'][$vid]['colab'][$colab] =
+                        ($areas_com[$area]['ventas'][$vid]['colab'][$colab] ?? 0) + (float)$r['monto_comision'];
+                    $areas_com[$area]['colaboradores'][$colab] = true;
+                    $ventas_vist[$vid] = true;
                 }
                 $stmt_comisiones = null;
 
-                $response['comisiones'] = $comisiones;
+                // Gastos de operación manuales por venta ("costo de servicio")
+                $gastos_venta = [];
+                if (!empty($ventas_vist)) {
+                    $ids = implode(',', array_map('intval', array_keys($ventas_vist)));
+                    $res_g = $conn->query("
+                        SELECT venta_id, SUM(monto) AS gasto
+                        FROM gastos
+                        WHERE venta_id IN ($ids)
+                          AND tipo = 'manual'
+                          AND categoria <> 'Costo de venta'
+                        GROUP BY venta_id");
+                    if ($res_g) {
+                        while ($g = $res_g->fetch(PDO::FETCH_ASSOC)) {
+                            $gastos_venta[(int)$g['venta_id']] = (float)$g['gasto'];
+                        }
+                    }
+                }
+
+                // Armar la respuesta ya formateada para el front
+                $comisiones_areas = [];
+                $gran = ['venta' => 0, 'desc' => 0, 'dep' => 0, 'costo' => 0,
+                         'gasto' => 0, 'iva' => 0, 'base' => 0];
+                $gran_colab   = [];
+                $colab_areas  = [];   // colaborador => [area => true]
+                $colab_conteo = [];   // colaborador => cuantas comisiones tuvo
+                $ventas_gt = [];
+
+                foreach ($areas_com as $area => $datos) {
+                    $colabs = array_keys($datos['colaboradores']);
+                    sort($colabs);
+
+                    $filas = [];
+                    $tot = ['venta' => 0, 'desc' => 0, 'dep' => 0, 'costo' => 0,
+                            'gasto' => 0, 'iva' => 0, 'base' => 0];
+                    $tot_colab = array_fill_keys($colabs, 0.0);
+
+                    foreach ($datos['ventas'] as $vid => $vta) {
+                        // Del snapshot de la comisión, no de la tabla gastos:
+                        // así la resta cuadra exacto con monto_base.
+                        $gasto    = array_sum($vta['gastos']);
+                        $base     = array_sum($vta['bases']);
+                        $subtotal = array_sum($vta['subtot']);
+                        $costo    = array_sum($vta['costos']);
+                        $descuento = array_sum($vta['descs']);
+
+                        $montos = [];
+                        foreach ($colabs as $c) {
+                            $m = $vta['colab'][$c] ?? 0;
+                            $montos[] = $m > 0 ? formatMoney($m) : '';
+                            $tot_colab[$c] += $m;
+                            if ($m > 0) {
+                                $colab_areas[$c][$area] = true;
+                                $colab_conteo[$c] = ($colab_conteo[$c] ?? 0) + 1;
+                            }
+                        }
+
+                        $filas[] = [
+                            'folio'      => safe_html($vta['folio']),
+                            'concepto'   => safe_html($vta['concepto']),
+                            'fecha'      => date('d/m/Y', strtotime($vta['fecha'])),
+                            'banco'      => safe_html($vta['banco']),
+                            'venta'      => formatMoney($subtotal),
+                            'descuento'  => $descuento > 0 ? formatMoney($descuento) : '',
+                            'depositado' => formatMoney($vta['depositado']),
+                            'costo'      => $costo > 0 ? formatMoney($costo) : '',
+                            'gasto'      => $gasto > 0 ? formatMoney($gasto) : '',
+                            'iva'        => $vta['iva'] > 0 ? formatMoney($vta['iva']) : '',
+                            'base'       => formatMoney($base),
+                            'montos'     => $montos
+                        ];
+
+                        $tot['venta'] += $subtotal;
+                        $tot['desc']  += $descuento;
+                        $tot['dep']   += $vta['depositado'];
+                        $tot['costo'] += $costo;
+                        $tot['gasto'] += $gasto;
+                        $tot['iva']   += $vta['iva'];
+                        $tot['base']  += $base;
+
+                        if (!isset($ventas_gt[$vid])) {
+                            $gran['dep']  += $vta['depositado'];
+                            $gran['desc'] += $descuento;
+                            $gran['iva']  += $vta['iva'];
+                            $ventas_gt[$vid] = true;
+                        }
+                        $gran['venta'] += $subtotal;
+                        $gran['costo'] += $costo;
+                        $gran['gasto'] += $gasto;
+                        $gran['base']  += $base;
+                        foreach ($colabs as $c) {
+                            $gran_colab[$c] = ($gran_colab[$c] ?? 0) + ($vta['colab'][$c] ?? 0);
+                        }
+                    }
+
+                    $comisiones_areas[] = [
+                        'area'          => safe_html($area),
+                        'colaboradores' => array_map('safe_html', $colabs),
+                        'filas'         => $filas,
+                        'totales'       => [
+                            'venta'      => formatMoney($tot['venta']),
+                            'descuento'  => formatMoney($tot['desc']),
+                            'depositado' => formatMoney($tot['dep']),
+                            'costo'      => formatMoney($tot['costo']),
+                            'gasto'      => formatMoney($tot['gasto']),
+                            'iva'        => formatMoney($tot['iva']),
+                            'base'       => formatMoney($tot['base']),
+                            'montos'     => array_map(function ($c) use ($tot_colab) {
+                                return formatMoney($tot_colab[$c]);
+                            }, $colabs)
+                        ]
+                    ];
+                }
+
+                $por_pagar = array_sum($gran_colab);
+                arsort($gran_colab);   // de mayor a menor para el desglose de pago
+                $colabs_gt = array_keys($gran_colab);
+
+                // Si se filtró por una persona, se manda su nombre para
+                // encabezar el reporte individual.
+                $colaborador_nombre_filtro = '';
+                if (!empty($colaborador_id)) {
+                    $stmt_cn = $conn->prepare("SELECT nombre FROM comision_colaboradores WHERE id = ?");
+                    $stmt_cn->execute([$colaborador_id]);
+                    $colaborador_nombre_filtro = (string)$stmt_cn->fetchColumn();
+                }
+
+                $response['comisiones_colaborador'] = safe_html($colaborador_nombre_filtro);
+                $response['comisiones_areas'] = $comisiones_areas;
+                $response['comisiones_resumen'] = [
+                    'periodo'      => strtoupper(date('m/Y', strtotime($fecha_inicio))),
+                    'venta'        => formatMoney($gran['venta']),
+                    'descuento'    => formatMoney($gran['desc']),
+                    'depositado'   => formatMoney($gran['dep']),
+                    'costo'        => formatMoney($gran['costo']),
+                    'gasto'        => formatMoney($gran['gasto']),
+                    'iva'          => formatMoney($gran['iva']),
+                    'base'         => formatMoney($gran['base']),
+                    'por_pagar'    => formatMoney($por_pagar),
+                    'colaboradores'=> array_map(function ($c) use ($gran_colab, $colab_areas, $colab_conteo) {
+                        return [
+                            'nombre' => safe_html($c),
+                            'areas'  => safe_html(implode(', ', array_keys($colab_areas[$c] ?? []))),
+                            'coms'   => (int)($colab_conteo[$c] ?? 0),
+                            'monto'  => formatMoney($gran_colab[$c])
+                        ];
+                    }, $colabs_gt)
+                ];
             }
         }
         
@@ -606,7 +810,18 @@ try {
     $fecha_fin = isset($_GET['fecha_fin']) && validar_fecha($_GET['fecha_fin']) ? $_GET['fecha_fin'] : date('Y-m-d');
     $tipo_reporte = isset($_GET['tipo_reporte']) ? $_GET['tipo_reporte'] : 'general';
     $sucursal_id = isset($_GET['sucursal_id']) && is_numeric($_GET['sucursal_id']) ? (int)$_GET['sucursal_id'] : '';
-    
+    $colaborador_id = isset($_GET['colaborador_id']) && is_numeric($_GET['colaborador_id']) ? (int)$_GET['colaborador_id'] : 0;
+
+    // Colaboradores para el filtro de comisiones
+    $colaboradores_filtro = [];
+    try {
+        $colaboradores_filtro = $conn->query("
+            SELECT id, nombre FROM comision_colaboradores WHERE activo = 1 ORDER BY nombre
+        ")->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        $colaboradores_filtro = [];
+    }
+
     // Validar tipo_reporte contra lista blanca
     $tipos_permitidos = ['general', 'ventas', 'inventario', 'clientes'];
     if (!in_array($tipo_reporte, $tipos_permitidos)) {
@@ -764,9 +979,28 @@ try {
                                     <option value="clientes" <?php echo $tipo_reporte === 'clientes' ? 'selected' : ''; ?>>Clientes</option>
                                 </select>
                             </div>
-                            <div class="col-12 mt-3">
-                                <button type="button" class="btn btn-light w-100" id="btnAplicarFiltros">
+                            <div class="col-md-4">
+                                <label for="colaborador_id" class="form-label">
+                                    Comisiones de
+                                    <i class="fas fa-info-circle text-muted" title="Solo filtra el bloque de comisiones"></i>
+                                </label>
+                                <select class="form-select" id="colaborador_id" name="colaborador_id">
+                                    <option value="">Todos los colaboradores</option>
+                                    <?php foreach ($colaboradores_filtro as $c): ?>
+                                        <option value="<?php echo safe_html($c['id']); ?>"
+                                            <?php echo $colaborador_id == $c['id'] ? 'selected' : ''; ?>>
+                                            <?php echo safe_html($c['nombre']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-8 d-flex align-items-end gap-2">
+                                <button type="button" class="btn btn-light flex-grow-1" id="btnAplicarFiltros">
                                     <i class="fas fa-filter me-2"></i>Aplicar Filtros y Generar Reporte
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnImprimirComisiones"
+                                        title="Imprime solo el bloque de comisiones">
+                                    <i class="fas fa-print me-2"></i>Imprimir comisiones
                                 </button>
                             </div>
                         </div>
@@ -903,6 +1137,7 @@ try {
             const fechaFin = document.getElementById('fecha_fin').value;
             const sucursalId = document.getElementById('sucursal_id').value;
             const tipoReporte = document.getElementById('tipo_reporte').value;
+            const colaboradorId = document.getElementById('colaborador_id')?.value || '';
             
             // Actualizar título
             const titulos = {
@@ -932,7 +1167,8 @@ try {
                     fecha_inicio: fechaInicio,
                     fecha_fin: fechaFin,
                     sucursal_id: sucursalId,
-                    tipo_reporte: tipoReporte
+                    tipo_reporte: tipoReporte,
+                    colaborador_id: colaboradorId
                 },
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -1130,35 +1366,172 @@ try {
                 clone.querySelector('#vendedoresContainer').innerHTML = '<div class="card"><div class="card-body"><p class="text-muted text-center">No hay datos de vendedores</p></div></div>';
             }
 
-            // Renderizar comisiones por colaborador
-            if (data.comisiones && data.comisiones.length > 0) {
-                const comisionesContainer = clone.querySelector('#comisionesContainer');
-                let comisionesHtml = `
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Comisiones por Colaborador</h5>
-                        </div>
-                        <div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover">
-                            <thead class="table-light"><tr><th>Colaborador</th><th>Área</th><th>Concepto</th><th class="text-center">Veces</th><th class="text-end">Total</th></tr></thead>
-                            <tbody>
-                `;
-                data.comisiones.forEach(c => {
-                    comisionesHtml += `
-                        <tr>
-                            <td>${c.colaborador}</td>
-                            <td>${c.area}</td>
-                            <td>${c.concepto}</td>
-                            <td class="text-center">${c.veces}</td>
-                            <td class="text-end text-success fw-bold">${c.total}</td>
-                        </tr>
-                    `;
+            // Renderizar comisiones: una tabla por área (mismo formato que
+            // el Excel) más el resumen general por colaborador.
+            const comisionesContainer = clone.querySelector('#comisionesContainer');
+            if (comisionesContainer && data.comisiones_areas && data.comisiones_areas.length > 0) {
+                const money = v => v && v !== '' ? v : '<span class="text-muted">–</span>';
+                let html = '';
+
+                // Encabezado cuando el reporte es de una sola persona
+                if (data.comisiones_colaborador) {
+                    html += `
+                        <div class="alert alert-primary d-flex align-items-center">
+                            <i class="fas fa-user-tag fa-lg me-3"></i>
+                            <div>
+                                <strong>Comisiones de ${data.comisiones_colaborador}</strong>
+                                <div class="small">Solo se muestran las comisiones de esta persona en el período.</div>
+                            </div>
+                        </div>`;
+                }
+
+                data.comisiones_areas.forEach(area => {
+                    let ths = '';
+                    area.colaboradores.forEach(c => {
+                        ths += `<th class="text-end text-nowrap">${c}</th>`;
+                    });
+
+                    let trs = '';
+                    area.filas.forEach(f => {
+                        let tds = '';
+                        f.montos.forEach(m => { tds += `<td class="text-end">${money(m)}</td>`; });
+                        trs += `
+                            <tr>
+                                <td class="text-nowrap"><code>${f.folio}</code></td>
+                                <td>${f.concepto}</td>
+                                <td class="text-nowrap">${f.fecha}</td>
+                                <td>${f.banco}</td>
+                                <td class="text-end">${f.venta}</td>
+                                <td class="text-end text-warning">${money(f.descuento)}</td>
+                                <td class="text-end">${f.depositado}</td>
+                                <td class="text-end text-danger">${money(f.costo)}</td>
+                                <td class="text-end text-danger">${money(f.gasto)}</td>
+                                <td class="text-end">${money(f.iva)}</td>
+                                <td class="text-end fw-bold">${f.base}</td>
+                                ${tds}
+                            </tr>`;
+                    });
+
+                    let totTds = '';
+                    area.totales.montos.forEach(m => { totTds += `<td class="text-end fw-bold">${m}</td>`; });
+
+                    html += `
+                        <div class="card mb-3">
+                            <div class="card-header bg-gradient-primary text-white">
+                                <h6 class="card-title mb-0"><i class="fas fa-layer-group me-2"></i>${area.area}</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover table-bordered mb-0" style="font-size:.82rem;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="text-nowrap">Folio</th>
+                                                <th>Concepto</th>
+                                                <th class="text-nowrap">Fecha de pago</th>
+                                                <th>Banco / método</th>
+                                                <th class="text-end text-nowrap">Precio de venta</th>
+                                                <th class="text-end text-nowrap">Descuento</th>
+                                                <th class="text-end text-nowrap">Depositado</th>
+                                                <th class="text-end text-nowrap">Costo mercancía</th>
+                                                <th class="text-end text-nowrap">Costo servicio</th>
+                                                <th class="text-end">IVA</th>
+                                                <th class="text-end text-nowrap">A comisionar</th>
+                                                ${ths}
+                                            </tr>
+                                        </thead>
+                                        <tbody>${trs}</tbody>
+                                        <tfoot class="table-light">
+                                            <tr>
+                                                <td colspan="4" class="text-end fw-bold">TOTAL DE COMISIONES</td>
+                                                <td class="text-end fw-bold">${area.totales.venta}</td>
+                                                <td class="text-end fw-bold text-warning">${area.totales.descuento}</td>
+                                                <td class="text-end fw-bold">${area.totales.depositado}</td>
+                                                <td class="text-end fw-bold text-danger">${area.totales.costo}</td>
+                                                <td class="text-end fw-bold text-danger">${area.totales.gasto}</td>
+                                                <td class="text-end fw-bold">${area.totales.iva}</td>
+                                                <td class="text-end fw-bold">${area.totales.base}</td>
+                                                ${totTds}
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>`;
                 });
-                comisionesHtml += '</tbody></table></div></div></div>';
-                comisionesContainer.innerHTML = comisionesHtml;
-            } else if (clone.querySelector('#comisionesContainer')) {
-                clone.querySelector('#comisionesContainer').innerHTML = '<div class="card"><div class="card-body"><p class="text-muted text-center">No hay comisiones registradas en este periodo</p></div></div>';
+
+                // Resumen general
+                const res = data.comisiones_resumen;
+                if (res) {
+                    let colabRows = '';
+                    res.colaboradores.forEach(c => {
+                        colabRows += `<tr>
+                            <td>${c.nombre}</td>
+                            <td class="text-muted small">${c.areas}</td>
+                            <td class="text-center">${c.coms}</td>
+                            <td class="text-end fw-bold">${c.monto}</td>
+                        </tr>`;
+                    });
+                    html += `
+                        <div class="card">
+                            <div class="card-header bg-dark text-white">
+                                <h6 class="card-title mb-0"><i class="fas fa-calculator me-2"></i>Comisiones por pagar</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3 mb-2">
+                                    <div class="col"><div class="border rounded p-2">
+                                        <div class="metric-label">PRECIO DE VENTA</div>
+                                        <div class="fw-bold">${res.venta}</div></div></div>
+                                    <div class="col"><div class="border rounded p-2">
+                                        <div class="metric-label">(−) DESCUENTOS</div>
+                                        <div class="fw-bold text-warning">${res.descuento}</div></div></div>
+                                    <div class="col"><div class="border rounded p-2">
+                                        <div class="metric-label">(−) COSTO DE MERCANCÍA</div>
+                                        <div class="fw-bold text-danger">${res.costo}</div></div></div>
+                                    <div class="col"><div class="border rounded p-2">
+                                        <div class="metric-label">(−) GASTOS DE OPERACIÓN</div>
+                                        <div class="fw-bold text-danger">${res.gasto}</div></div></div>
+                                    <div class="col"><div class="border rounded p-2 border-primary">
+                                        <div class="metric-label">(=) TOTAL A COMISIONAR</div>
+                                        <div class="fw-bold text-primary">${res.base}</div></div></div>
+                                </div>
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6"><div class="border rounded p-2 bg-light">
+                                        <div class="metric-label">DEPÓSITOS TOTALES (informativo)</div>
+                                        <div class="fw-bold">${res.depositado}</div></div></div>
+                                    <div class="col-md-6"><div class="border rounded p-2 bg-light">
+                                        <div class="metric-label">IVA COBRADO (informativo)</div>
+                                        <div class="fw-bold">${res.iva}</div></div></div>
+                                </div>
+                                <div class="alert alert-light border py-2 small mb-3">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    El descuento otorgado al cliente <strong>sí reduce la base de comisión</strong>:
+                                    se comisiona sobre lo realmente cobrado, no sobre el precio de lista.
+                                    El IVA no entra en la base.
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead class="table-light"><tr>
+                                            <th>Colaborador</th>
+                                            <th>Área(s)</th>
+                                            <th class="text-center">Coms.</th>
+                                            <th class="text-end">Monto a pagar</th>
+                                        </tr></thead>
+                                        <tbody>${colabRows}</tbody>
+                                        <tfoot><tr class="table-success">
+                                            <td colspan="3" class="fw-bold text-end">TOTAL DE COMISIONES POR PAGAR</td>
+                                            <td class="text-end fw-bold">${res.por_pagar}</td>
+                                        </tr></tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+
+                comisionesContainer.innerHTML = html;
+            } else if (comisionesContainer) {
+                comisionesContainer.innerHTML = '<div class="card"><div class="card-body"><p class="text-muted text-center mb-0">No hay comisiones registradas en este periodo</p></div></div>';
             }
-            
+
             // Renderizar clientes frecuentes
             if (data.clientes_frecuentes && data.clientes_frecuentes.length > 0) {
                 const clientesContainer = clone.querySelector('#clientesContainer');
@@ -1409,7 +1782,8 @@ try {
             const fechaFin = document.getElementById('fecha_fin').value;
             const sucursalId = document.getElementById('sucursal_id').value;
             const tipoReporte = document.getElementById('tipo_reporte').value;
-            window.open(`exportar_excel.php?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&sucursal_id=${sucursalId}&tipo_reporte=${tipoReporte}`, '_blank');
+            const colaboradorId = document.getElementById('colaborador_id')?.value || '';
+            window.open(`exportar_excel.php?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&sucursal_id=${sucursalId}&tipo_reporte=${tipoReporte}&colaborador_id=${colaboradorId}`, '_blank');
         }
         
         function exportarPDF() {
@@ -1417,14 +1791,22 @@ try {
             const fechaFin = document.getElementById('fecha_fin').value;
             const sucursalId = document.getElementById('sucursal_id').value;
             const tipoReporte = document.getElementById('tipo_reporte').value;
-            window.open(`exportar_pdf.php?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&sucursal_id=${sucursalId}&tipo_reporte=${tipoReporte}`, '_blank');
+            const colaboradorId = document.getElementById('colaborador_id')?.value || '';
+            window.open(`exportar_pdf.php?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&sucursal_id=${sucursalId}&tipo_reporte=${tipoReporte}&colaborador_id=${colaboradorId}`, '_blank');
         }
         
         window.exportarExcel = exportarExcel;
         window.exportarPDF = exportarPDF;
         
+        // Imprimir solo el bloque de comisiones: abre el PDF con el filtro
+        // de la persona ya aplicado.
+        document.getElementById('btnImprimirComisiones')?.addEventListener('click', function () {
+            exportarPDF();
+        });
+
         // Event listeners
         document.getElementById('btnAplicarFiltros').addEventListener('click', cargarReportes);
+        document.getElementById('colaborador_id')?.addEventListener('change', cargarReportes);
         document.getElementById('fecha_inicio').addEventListener('change', cargarReportes);
         document.getElementById('fecha_fin').addEventListener('change', cargarReportes);
         document.getElementById('tipo_reporte').addEventListener('change', cargarReportes);

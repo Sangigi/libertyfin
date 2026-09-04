@@ -31,6 +31,9 @@ $fecha_inicio = $_GET['fecha_inicio'] ?? date('Y-m-01');
 $fecha_fin = $_GET['fecha_fin'] ?? date('Y-m-d');
 $tipo_reporte = $_GET['tipo_reporte'] ?? 'general';
 $sucursal_id = $_GET['sucursal_id'] ?? '';
+// Filtro por colaborador: aplica SOLO al bloque de comisiones.
+$colaborador_id = isset($_GET['colaborador_id']) && is_numeric($_GET['colaborador_id'])
+                ? (int)$_GET['colaborador_id'] : 0;
 
 try {
     $conn = new mysqli($servername, $username, $password, $dbname);
@@ -177,6 +180,15 @@ try {
     $sheet->setCellValue('A6', 'Generado por: ' . ($_SESSION['usuario_nombre'] ?? 'Usuario'));
 
     $row += 2; // Espacio
+
+
+// Nombre del mes y año en español, para el titulo del reporte de comisiones.
+function strftime_es($fecha) {
+    $meses = [1=>'ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO',
+              'AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+    $ts = strtotime($fecha);
+    return $meses[(int)date('n', $ts)] . ' ' . date('Y', $ts);
+}
 
     // Función para agregar tabla
     function agregarTabla($sheet, &$row, $titulo, $headers, $data, $moneyColumns = []) {
@@ -520,48 +532,455 @@ try {
             $row = agregarTabla($sheet, $row, 'TOP 10 CLIENTES MÁS FRECUENTES', $headers, $clientes_frecuentes, [4]);
         }
 
-        // Comisiones por colaborador
+        // =============================================================
+        // COMISIONES · formato de reporte mensual por area (tabla cruzada)
+        //
+        // Una fila por venta, una columna por colaborador, agrupado por
+        // area, con subtotal por area y gran total al final.
+        //
+        //   TOTAL A COMISIONAR = DEPOSITADO - COSTO DE SERVICIO - IVA
+        //
+        // El "costo de servicio" son los gastos de operacion manuales de
+        // la venta (tipo='manual'); los automaticos son costo de
+        // mercancia y ya vienen restados en monto_base.
+        // =============================================================
+        $where_colaborador = !empty($colaborador_id) ? " AND vc.colaborador_id = ?" : "";
+
         $sql_comisiones = "
             SELECT
-                vc.colaborador_nombre,
                 vc.area_nombre,
+                vc.colaborador_nombre,
                 vc.concepto,
                 vc.porcentaje_regla,
-                vc.porcentaje_reparto,
+                vc.monto_base,
                 vc.monto_comision,
+                vc.venta_detalle_id,
+                vc.precio_unitario,
+                vc.descuento_linea,
+                vc.costo_unitario,
+                vc.cantidad,
+                vc.gasto_operacion,
+                v.descuento     AS venta_descuento,
+                v.id            AS venta_id,
                 v.codigo_venta,
-                v.fecha
+                v.fecha,
+                v.metodo_pago,
+                v.total         AS venta_total,
+                v.iva           AS venta_iva,
+                COALESCE(cl.nombre, 'Cliente General') AS cliente_nombre
             FROM venta_comisiones vc
-            INNER JOIN ventas v ON vc.venta_id = v.id
+            INNER JOIN ventas v   ON vc.venta_id = v.id
+            LEFT  JOIN clientes cl ON v.cliente_id = cl.id
             WHERE DATE(v.fecha) BETWEEN ? AND ?
             AND v.estado = 'completada'
+            AND vc.cancelada = 0
             $where_sucursal
-            ORDER BY vc.colaborador_nombre, v.fecha
+            $where_colaborador
+            ORDER BY vc.area_nombre, v.fecha, v.id
         ";
+
+        // El filtro de colaborador se agrega aparte: solo aplica aqui.
+        $params_com = $params;
+        $types_com  = $types;
+        if (!empty($colaborador_id)) {
+            $params_com[] = $colaborador_id;
+            $types_com   .= 'i';
+        }
+
         $stmt_comisiones = $conn->prepare($sql_comisiones);
-        if (!empty($params)) {
-            $stmt_comisiones->bind_param($types, ...$params);
+        if (!empty($params_com)) {
+            $stmt_comisiones->bind_param($types_com, ...$params_com);
         }
         $stmt_comisiones->execute();
         $result_comisiones = $stmt_comisiones->get_result();
 
-        $comisiones_data = [];
-        while ($row_data = $result_comisiones->fetch_assoc()) {
-            $comisiones_data[] = [
-                $row_data['colaborador_nombre'],
-                $row_data['area_nombre'],
-                $row_data['concepto'],
-                $row_data['porcentaje_regla'] . '%',
-                $row_data['porcentaje_reparto'] . '%',
-                $row_data['monto_comision'],
-                $row_data['codigo_venta'],
-                date('d/m/Y', strtotime($row_data['fecha']))
-            ];
+        // Armar la estructura: areas -> ventas -> colaboradores
+        $areas_com   = [];   // area => ['ventas'=>[], 'colaboradores'=>[]]
+        $ventas_vist = [];   // venta_id => true (para el gran total)
+        while ($r = $result_comisiones->fetch_assoc()) {
+            $area  = $r['area_nombre'] !== '' ? $r['area_nombre'] : 'SIN ÁREA';
+            $vid   = (int)$r['venta_id'];
+            $colab = $r['colaborador_nombre'];
+
+            if (!isset($areas_com[$area])) {
+                $areas_com[$area] = ['ventas' => [], 'colaboradores' => []];
+            }
+            if (!isset($areas_com[$area]['ventas'][$vid])) {
+                $areas_com[$area]['ventas'][$vid] = [
+                    'folio'     => $r['codigo_venta'],
+                    'concepto'  => $r['cliente_nombre'],
+                    'fecha'     => $r['fecha'],
+                    'banco'     => ucfirst($r['metodo_pago']),
+                    'depositado'=> (float)$r['venta_total'],
+                    'descuento' => (float)$r['venta_descuento'],
+                    'iva'       => (float)$r['venta_iva'],
+                    'bases'     => [],   // venta_detalle_id => monto_base (sin duplicar)
+                    'subtot'    => [],   // venta_detalle_id => precio * cantidad
+                    'costos'    => [],   // venta_detalle_id => costo  * cantidad
+                    'gastos'    => [],   // venta_detalle_id => gasto de operacion
+                    'colab'     => []
+                ];
+            }
+            // Estos valores se repiten en cada fila del mismo producto (una
+            // por colaborador), asi que se indexan por venta_detalle_id para
+            // tomarlos una sola vez.
+            $did = (int)$r['venta_detalle_id'];
+            $areas_com[$area]['ventas'][$vid]['bases'][$did]  = (float)$r['monto_base'];
+            $areas_com[$area]['ventas'][$vid]['subtot'][$did] = (float)$r['precio_unitario'] * (float)$r['cantidad'];
+            $areas_com[$area]['ventas'][$vid]['costos'][$did] = (float)$r['costo_unitario']  * (float)$r['cantidad'];
+            $areas_com[$area]['ventas'][$vid]['gastos'][$did] = (float)$r['gasto_operacion'];
+            $areas_com[$area]['ventas'][$vid]['descs'][$did]  = (float)$r['descuento_linea'];
+            $areas_com[$area]['ventas'][$vid]['colab'][$colab] =
+                ($areas_com[$area]['ventas'][$vid]['colab'][$colab] ?? 0) + (float)$r['monto_comision'];
+            $areas_com[$area]['colaboradores'][$colab] = true;
+            $ventas_vist[$vid] = true;
         }
 
-        if (!empty($comisiones_data)) {
-            $headers = ['Colaborador', 'Área', 'Concepto', '% Rol', '% Reparto', 'Comisión', 'Venta', 'Fecha'];
-            $row = agregarTabla($sheet, $row, 'COMISIONES POR COLABORADOR', $headers, $comisiones_data, [5]);
+        // Gastos de operacion manuales por venta = "costo de servicio"
+        $gastos_venta = [];
+        if (!empty($ventas_vist)) {
+            $ids = implode(',', array_map('intval', array_keys($ventas_vist)));
+            $res_g = $conn->query("
+                SELECT venta_id, SUM(monto) AS gasto
+                FROM gastos
+                WHERE venta_id IN ($ids)
+                  AND tipo = 'manual'
+                  AND categoria <> 'Costo de venta'
+                GROUP BY venta_id
+            ");
+            if ($res_g) {
+                while ($g = $res_g->fetch_assoc()) {
+                    $gastos_venta[(int)$g['venta_id']] = (float)$g['gasto'];
+                }
+            }
+        }
+
+        if (!empty($areas_com)) {
+            $mesTitulo = strtoupper(strftime_es($fecha_inicio));
+
+            // Si se filtro por una persona, se rotula el reporte
+            $colab_titulo = '';
+            if (!empty($colaborador_id)) {
+                $st = $conn->prepare("SELECT nombre FROM comision_colaboradores WHERE id = ?");
+                $st->bind_param("i", $colaborador_id);
+                $st->execute();
+                $rs = $st->get_result();
+                if ($rn = $rs->fetch_assoc()) {
+                    $colab_titulo = ' · ' . mb_strtoupper($rn['nombre']);
+                }
+            }
+            $mesTitulo .= $colab_titulo;
+
+            // Encabezado del reporte de comisiones
+            $sheet->setCellValue('B' . $row, $mesTitulo);
+            $sheet->getStyle('B' . $row)->applyFromArray([
+                'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1F4E78']],
+            ]);
+            $sheet->getRowDimension($row)->setRowHeight(22);
+            $row += 2;
+
+            // El desglose completo, para que la fila se pueda reconstruir:
+            //   PRECIO DE VENTA - COSTO DE MERCANCÍA - COSTO DE SERVICIO = A COMISIONAR
+            // DESCUENTO y CANTIDAD DEPOSITADA son informativos: hoy el
+            // descuento NO reduce la base de comisión.
+            $fijas = ['FOLIO DE VENTA', 'CONCEPTO', 'FECHA DE PAGO', 'BANCO EN EL QUE ESTÁ',
+                      'PRECIO DE VENTA', 'DESCUENTO', 'CANTIDAD DEPOSITADA',
+                      'COSTO DE MERCANCÍA', 'COSTO DE SERVICIO', 'IVA', 'TOTAL A COMISIONAR'];
+            $N_FIJAS   = count($fijas);   // 11
+            $IDX_MONEY = 4;               // desde aquí las columnas son dinero
+
+            $gran_total   = ['venta' => 0, 'desc' => 0, 'dep' => 0, 'costo' => 0,
+                             'gasto' => 0, 'iva' => 0, 'base' => 0];
+            $gran_colab   = [];
+            $colab_areas  = [];   // colaborador => [area => true]  (para el desglose de pago)
+            $colab_conteo = [];   // colaborador => cuantas comisiones tuvo
+            $ventas_en_gt = [];
+
+            foreach ($areas_com as $area => $datos) {
+                $colabs = array_keys($datos['colaboradores']);
+                sort($colabs);
+
+                // --- Titulo del area ---
+                $sheet->setCellValue('B' . $row, strtoupper($area));
+                $sheet->getStyle('B' . $row)->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '2E86C1']],
+                ]);
+                $row++;
+
+                // --- Encabezados ---
+                $headers = array_merge($fijas, $colabs);
+                $col = 'B';
+                foreach ($headers as $h) {
+                    $sheet->setCellValue($col . $row, $h);
+                    $col = chr(ord($col) + 1);
+                }
+                $colFin = chr(ord('B') + count($headers) - 1);
+                $sheet->getStyle('B' . $row . ':' . $colFin . $row)->applyFromArray([
+                    'font'      => ['bold' => true, 'size' => 9, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '5B9BD5']],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER,
+                                    'vertical'   => Alignment::VERTICAL_CENTER,
+                                    'wrapText'   => true],
+                    'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                ]);
+                $sheet->getRowDimension($row)->setRowHeight(32);
+                $filaEncabezado = $row;
+                $row++;
+                $filaPrimerDato = $row;
+
+                $tot = ['venta' => 0, 'desc' => 0, 'dep' => 0, 'costo' => 0,
+                        'gasto' => 0, 'iva' => 0, 'base' => 0];
+                $tot_colab = array_fill_keys($colabs, 0.0);
+
+                foreach ($datos['ventas'] as $vid => $vta) {
+                    // El gasto se toma del snapshot de la comisión (ya
+                    // prorrateado por línea), no de la tabla gastos, para que
+                    // la resta cuadre exactamente con monto_base.
+                    $gasto    = array_sum($vta['gastos']);
+                    $base     = array_sum($vta['bases']);
+                    $subtotal = array_sum($vta['subtot']);
+                    $costo    = array_sum($vta['costos']);
+                    $descuento = array_sum($vta['descs']);
+
+                    $vals = [
+                        $vta['folio'],
+                        $vta['concepto'],
+                        date('d/m/Y', strtotime($vta['fecha'])),
+                        $vta['banco'],
+                        $subtotal,
+                        $descuento,
+                        $vta['depositado'],
+                        $costo,
+                        $gasto,
+                        $vta['iva'],
+                        $base,
+                    ];
+                    foreach ($colabs as $c) {
+                        $vals[] = $vta['colab'][$c] ?? null;
+                    }
+
+                    $col = 'B';
+                    foreach ($vals as $idx => $v) {
+                        if ($v === null) {
+                            $col = chr(ord($col) + 1);
+                            continue;
+                        }
+                        if ($idx === 0) {
+                            // El folio son 14 digitos (YmdHis). Si se escribe
+                            // como numero, Excel lo muestra como 2.02608E+13.
+                            $sheet->setCellValueExplicit($col . $row, (string)$v,
+                                \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+                            $sheet->getStyle($col . $row)->getNumberFormat()->setFormatCode('@');
+                            $sheet->getStyle($col . $row)->getAlignment()
+                                  ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                            $col = chr(ord($col) + 1);
+                            continue;
+                        }
+                        $sheet->setCellValue($col . $row, $v);
+                        if ($idx >= $IDX_MONEY) {
+                            $sheet->getStyle($col . $row)->getNumberFormat()
+                                  ->setFormatCode('$#,##0.00;[Red]($#,##0.00);"-"');
+                        }
+                        $col = chr(ord($col) + 1);
+                    }
+
+                    $tot['venta'] += $subtotal;
+                    $tot['desc']  += $descuento;
+                    $tot['dep']   += $vta['depositado'];
+                    $tot['costo'] += $costo;
+                    $tot['gasto'] += $gasto;
+                    $tot['iva']   += $vta['iva'];
+                    $tot['base']  += $base;
+                    foreach ($colabs as $c) {
+                        $tot_colab[$c] += $vta['colab'][$c] ?? 0;
+                    }
+
+                    // Acumular al gran total (una sola vez por venta)
+                    if (!isset($ventas_en_gt[$vid])) {
+                        $gran_total['dep']   += $vta['depositado'];
+                        $gran_total['desc']  += $descuento;
+                        $gran_total['iva']   += $vta['iva'];
+                        $ventas_en_gt[$vid] = true;
+                    }
+                    $gran_total['venta'] += $subtotal;
+                    $gran_total['costo'] += $costo;
+                    $gran_total['gasto'] += $gasto;
+                    $gran_total['base']  += $base;
+                    foreach ($colabs as $c) {
+                        $monto_c = $vta['colab'][$c] ?? 0;
+                        $gran_colab[$c] = ($gran_colab[$c] ?? 0) + $monto_c;
+                        if ($monto_c > 0) {
+                            $colab_areas[$c][$area] = true;
+                            $colab_conteo[$c] = ($colab_conteo[$c] ?? 0) + 1;
+                        }
+                    }
+
+                    $row++;
+                }
+
+                // Bordes y cebra en los datos
+                if ($row > $filaPrimerDato) {
+                    $sheet->getStyle('B' . $filaPrimerDato . ':' . $colFin . ($row - 1))
+                          ->applyFromArray([
+                              'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN,
+                                                             'color' => ['rgb' => 'D9D9D9']]],
+                          ]);
+                }
+
+                // --- Subtotal del area ---
+                $sheet->setCellValue('B' . $row, 'TOTAL DE COMISIONES');
+                $col = chr(ord('B') + $IDX_MONEY);   // primera columna de dinero
+                foreach ([$tot['venta'], $tot['desc'], $tot['dep'], $tot['costo'],
+                          $tot['gasto'], $tot['iva'], $tot['base']] as $v) {
+                    $sheet->setCellValue($col . $row, $v);
+                    $col = chr(ord($col) + 1);
+                }
+                foreach ($colabs as $c) {
+                    $sheet->setCellValue($col . $row, $tot_colab[$c]);
+                    $col = chr(ord($col) + 1);
+                }
+                $sheet->getStyle('B' . $row . ':' . $colFin . $row)->applyFromArray([
+                    'font'    => ['bold' => true],
+                    'fill'    => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DDEBF7']],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                ]);
+                $sheet->getStyle(chr(ord('B') + $IDX_MONEY) . $row . ':' . $colFin . $row)
+                      ->getNumberFormat()->setFormatCode('$#,##0.00;[Red]($#,##0.00);"-"');
+
+                // Congelar y autofiltro por area no aplica a varias tablas;
+                // se deja el encabezado en negritas como referencia visual.
+                unset($filaEncabezado);
+                $row += 2;
+            }
+
+            // --- GRAN TOTAL ---
+            $colabs_gt = array_keys($gran_colab);
+            sort($colabs_gt);   // el cruzado va alfabetico; el desglose de pago va por monto
+            $headers_gt = array_merge(
+                ['', 'PRECIO DE VENTA', 'DESCUENTOS', 'DEPÓSITOS TOTALES',
+                 'COSTO DE MERCANCÍA', 'GASTOS DE OPERACIÓN', 'IVA COBRADO',
+                 'TOTAL A COMISIONAR'],
+                $colabs_gt
+            );
+            $col = 'B';
+            foreach ($headers_gt as $h) {
+                $sheet->setCellValue($col . $row, $h);
+                $col = chr(ord($col) + 1);
+            }
+            $colFinGt = chr(ord('B') + count($headers_gt) - 1);
+            $sheet->getStyle('B' . $row . ':' . $colFinGt . $row)->applyFromArray([
+                'font'      => ['bold' => true, 'size' => 9, 'color' => ['rgb' => 'FFFFFF']],
+                'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1F4E78']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true],
+                'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            ]);
+            $sheet->getRowDimension($row)->setRowHeight(32);
+            $row++;
+
+            $sheet->setCellValue('B' . $row, 'TOTAL DE COMISIONES ' . $mesTitulo);
+            $col = 'C';
+            foreach ([$gran_total['venta'], $gran_total['desc'], $gran_total['dep'],
+                      $gran_total['costo'], $gran_total['gasto'], $gran_total['iva'],
+                      $gran_total['base']] as $v) {
+                $sheet->setCellValue($col . $row, $v);
+                $col = chr(ord($col) + 1);
+            }
+            $total_pagar_colab = 0;
+            foreach ($colabs_gt as $c) {
+                $sheet->setCellValue($col . $row, $gran_colab[$c]);
+                $total_pagar_colab += $gran_colab[$c];
+                $col = chr(ord($col) + 1);
+            }
+            $sheet->getStyle('B' . $row . ':' . $colFinGt . $row)->applyFromArray([
+                'font'    => ['bold' => true],
+                'fill'    => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FCE4D6']],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            ]);
+            $sheet->getStyle('C' . $row . ':' . $colFinGt . $row)->getNumberFormat()
+                  ->setFormatCode('$#,##0.00;[Red]($#,##0.00);"-"');
+            $row += 2;
+
+            // Leyenda: como se lee cada fila
+            $sheet->setCellValue('B' . $row, 'Cómo se lee cada fila:  PRECIO DE VENTA  −  DESCUENTO  −  COSTO DE MERCANCÍA  −  COSTO DE SERVICIO  =  TOTAL A COMISIONAR');
+            $sheet->getStyle('B' . $row)->applyFromArray([
+                'font' => ['italic' => true, 'size' => 9, 'color' => ['rgb' => '555555']],
+            ]);
+            $row++;
+            $sheet->setCellValue('B' . $row, 'El descuento otorgado al cliente sí reduce la base: se comisiona sobre lo realmente cobrado, no sobre el precio de lista.');
+            $sheet->getStyle('B' . $row)->applyFromArray([
+                'font' => ['italic' => true, 'size' => 9, 'color' => ['rgb' => '555555']],
+            ]);
+            $row += 2;
+
+            // =========================================================
+            // TOTAL DE COMISIONES POR PAGAR · desglosado por persona
+            // Es la hoja que se usa para dispersar los pagos, asi que va
+            // una fila por colaborador con lo que le toca, y el total al
+            // final como control.
+            // =========================================================
+            $sheet->setCellValue('B' . $row, 'COMISIONES POR PAGAR ' . $mesTitulo);
+            $sheet->mergeCells('B' . $row . ':E' . $row);
+            $sheet->getStyle('B' . $row)->applyFromArray([
+                'font'      => ['bold' => true, 'size' => 12, 'color' => ['rgb' => 'FFFFFF']],
+                'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1F4E78']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            ]);
+            $sheet->getRowDimension($row)->setRowHeight(20);
+            $row++;
+
+            // Encabezados del desglose
+            $sheet->setCellValue('B' . $row, 'COLABORADOR');
+            $sheet->setCellValue('C' . $row, 'ÁREA(S)');
+            $sheet->setCellValue('D' . $row, 'COMISIONES');
+            $sheet->setCellValue('E' . $row, 'MONTO A PAGAR');
+            $sheet->getStyle('B' . $row . ':E' . $row)->applyFromArray([
+                'font'      => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
+                'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '5B9BD5']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            ]);
+            $row++;
+            $filaPrimerPago = $row;
+
+            // De mayor a menor, que es como se revisa una nomina
+            arsort($gran_colab);
+
+            $cebra = false;
+            foreach ($gran_colab as $c => $monto) {
+                $sheet->setCellValue('B' . $row, $c);
+                $sheet->setCellValue('C' . $row, implode(', ', array_keys($colab_areas[$c] ?? [])));
+                $sheet->setCellValue('D' . $row, $colab_conteo[$c] ?? 0);
+                $sheet->setCellValue('E' . $row, $monto);
+
+                $sheet->getStyle('B' . $row . ':E' . $row)->applyFromArray([
+                    'fill'    => ['fillType' => Fill::FILL_SOLID,
+                                  'startColor' => ['rgb' => $cebra ? 'F2F2F2' : 'FFFFFF']],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN,
+                                                   'color' => ['rgb' => 'D9D9D9']]],
+                ]);
+                $sheet->getStyle('D' . $row)->getAlignment()
+                      ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('E' . $row)->getNumberFormat()->setFormatCode('$#,##0.00');
+                $cebra = !$cebra;
+                $row++;
+            }
+
+            // Total de control
+            $sheet->setCellValue('B' . $row, 'TOTAL DE COMISIONES POR PAGAR');
+            $sheet->mergeCells('B' . $row . ':D' . $row);
+            $sheet->setCellValue('E' . $row, $total_pagar_colab);
+            $sheet->getStyle('B' . $row . ':E' . $row)->applyFromArray([
+                'font'    => ['bold' => true, 'size' => 12, 'color' => ['rgb' => 'FFFFFF']],
+                'fill'    => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '27AE60']],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            ]);
+            $sheet->getStyle('E' . $row)->getNumberFormat()->setFormatCode('$#,##0.00');
+            $sheet->getStyle('B' . $row)->getAlignment()
+                  ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->getRowDimension($row)->setRowHeight(20);
+            $row += 3;
         }
 
         // Productos con stock bajo
@@ -853,6 +1272,11 @@ try {
     foreach (range('A', $sheet->getHighestDataColumn()) as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
     }
+    // La columna A se usa como margen visual del reporte de comisiones
+    $sheet->getColumnDimension('A')->setAutoSize(false);
+    $sheet->getColumnDimension('A')->setWidth(3);
+    $sheet->getPageSetup()->setFitToWidth(1)->setFitToHeight(0);
+    $sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
 
     // Crear el archivo Excel
     $filename = 'reporte_' . $tipo_reporte . '_' . date('Ymd_His') . '.xlsx';
