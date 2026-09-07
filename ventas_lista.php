@@ -970,6 +970,170 @@ $usos_cfdi = [
                             </table>
                         </div>
 
+                        <!-- ⚠️ TEMPORAL · NORMALIZAR VENTA HISTÓRICA ⚠️
+                             Para ventas capturadas antes de que existieran los
+                             anticipos, donde se registró el anticipo como si
+                             fuera el total. Al terminar de normalizar, BORRAR
+                             este bloque y el archivo ajustar_venta.php. -->
+                        <?php if ($is_admin): ?>
+                        <div class="card border-warning mt-4" id="normalizarVentaCard"
+                             data-venta-id="<?php echo $venta_especifica['id']; ?>">
+                            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-wrench me-2"></i>Normalizar venta histórica</span>
+                                <span class="badge bg-dark">Temporal</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted mb-3">
+                                    Si en esta venta se capturó el <strong>anticipo</strong> en lugar del
+                                    <strong>total real</strong>, corrígelo aquí. Se recalculan en cadena los
+                                    precios de los productos, el IVA, las comisiones asignadas y las comisiones
+                                    ya generadas por cada pago.
+                                    <br>
+                                    <span class="text-danger">Los costos NO se escalan: el costo del producto fue el que fue.</span>
+                                </p>
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-3">
+                                        <label class="form-label small mb-1">Total real de la venta</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" step="0.01" min="0.01"
+                                                   class="form-control" id="normNuevoTotal" placeholder="30000.00">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small mb-1">Ya cobrado (anticipo)</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" step="0.01" min="0"
+                                                   class="form-control" id="normCobrado" placeholder="500.00">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-1">Motivo</label>
+                                        <input type="text" class="form-control form-control-sm" id="normMotivo"
+                                               placeholder="Ej. se capturó el anticipo como total">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-warning btn-sm w-100" id="btnNormalizarVenta">
+                                            <i class="fas fa-wrench me-1"></i>Ajustar
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="alert alert-secondary py-2 small mt-3 mb-0" id="normPreview" style="display:none;"></div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- COBRANZA · la venta vale su total; aquí se ve lo que realmente entró -->
+                        <h6 class="mt-4"><i class="fas fa-hand-holding-dollar me-2"></i>Cobranza de esta Venta</h6>
+                        <div id="cobranzaContenedor" data-venta-id="<?php echo $venta_especifica['id']; ?>">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-3"><div class="border rounded p-2">
+                                    <div class="text-muted small">TOTAL DE LA VENTA</div>
+                                    <div class="fw-bold" id="cobTotal">—</div></div></div>
+                                <div class="col-md-3"><div class="border rounded p-2">
+                                    <div class="text-muted small">COBRADO</div>
+                                    <div class="fw-bold text-success" id="cobCobrado">—</div></div></div>
+                                <div class="col-md-3"><div class="border rounded p-2">
+                                    <div class="text-muted small">SALDO</div>
+                                    <div class="fw-bold text-danger" id="cobSaldo">—</div></div></div>
+                                <div class="col-md-3"><div class="border rounded p-2">
+                                    <div class="text-muted small">% COBRADO</div>
+                                    <div class="fw-bold" id="cobPct">—</div></div></div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Fecha</th><th>Tipo</th><th>Método</th><th>Referencia</th>
+                                            <th class="text-end">Monto</th><th class="text-end">Comisión generada</th>
+                                            <th style="width:44px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pagosVentaTbody">
+                                        <tr><td colspan="7" class="text-center text-muted">Cargando...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="row g-2" id="formNuevoPago">
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">Monto</label>
+                                    <input type="number" step="0.01" min="0.01" class="form-control form-control-sm" id="pagoMonto" placeholder="0.00">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">Fecha del pago</label>
+                                    <input type="date" class="form-control form-control-sm" id="pagoFecha" value="<?php echo date('Y-m-d'); ?>">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">Tipo</label>
+                                    <select class="form-select form-select-sm" id="pagoTipo">
+                                        <option value="abono">Abono</option>
+                                        <option value="anticipo">Anticipo</option>
+                                        <option value="liquidacion">Liquidación</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">Método</label>
+                                    <select class="form-select form-select-sm" id="pagoMetodo">
+                                        <option value="transferencia">Transferencia</option>
+                                        <option value="efectivo">Efectivo</option>
+                                        <option value="tarjeta">Tarjeta</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">Referencia</label>
+                                    <input type="text" class="form-control form-control-sm" id="pagoReferencia" placeholder="Opcional">
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-success btn-sm w-100" id="btnRegistrarPago">
+                                        <i class="fas fa-plus me-1"></i>Registrar
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                Cada pago genera la comisión que le toca, en proporción a lo cobrado.
+                                Si el cliente nunca liquida, esa parte de comisión no se genera.
+                            </small>
+                        </div>
+
+                        <!-- FECHA DE LA VENTA -->
+                        <?php if ($is_admin): ?>
+                        <h6 class="mt-4"><i class="fas fa-calendar-day me-2"></i>Fecha de la Venta</h6>
+                        <div id="fechaVentaContenedor" data-venta-id="<?php echo $venta_especifica['id']; ?>">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label small mb-1">Fecha</label>
+                                    <input type="date" class="form-control form-control-sm" id="fechaVentaInput"
+                                           value="<?php echo date('Y-m-d', strtotime($venta_especifica['fecha'])); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small mb-1">Motivo del cambio</label>
+                                    <input type="text" class="form-control form-control-sm" id="fechaVentaMotivo"
+                                           placeholder="Ej. venta de agosto capturada en septiembre">
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-outline-primary btn-sm w-100" id="btnGuardarFechaVenta">
+                                        <i class="fas fa-save me-1"></i>Mover fecha
+                                    </button>
+                                </div>
+                            </div>
+                            <?php if (!empty($venta_especifica['fecha_original'])): ?>
+                                <div class="alert alert-warning py-2 small mt-2 mb-0">
+                                    <i class="fas fa-clock-rotate-left me-1"></i>
+                                    Fecha original: <strong><?php echo date('d/m/Y H:i', strtotime($venta_especifica['fecha_original'])); ?></strong>
+                                    <?php if (!empty($venta_especifica['motivo_fecha'])): ?>
+                                        · <?php echo safe_html($venta_especifica['motivo_fecha']); ?>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                            <small class="text-muted d-block mt-2">
+                                Mover una venta <strong>cambia los reportes de ambos meses</strong>. Queda registrado quién lo hizo.
+                            </small>
+                        </div>
+                        <?php endif; ?>
+
                         <h6 class="mt-4"><i class="fas fa-money-bill-wave me-2"></i>Gastos de Operación de esta Venta</h6>
                         <div class="table-responsive">
                             <table class="table table-sm" id="tablaGastosOperacionVenta" data-venta-id="<?php echo $venta_especifica['id']; ?>">
@@ -1631,6 +1795,238 @@ $usos_cfdi = [
                         .catch(() => alert('❌ Error de conexión al eliminar el gasto'));
                 });
             }
+
+            // ===== ⚠️ TEMPORAL · normalizar venta histórica ⚠️ =====
+            const normCard = document.getElementById('normalizarVentaCard');
+            if (normCard) {
+                const normVentaId = normCard.dataset.ventaId;
+                let normEstado = null;
+
+                fetch('ajustar_venta.php?accion=obtener_venta&venta_id=' + normVentaId)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (!d.success) return;
+                        normEstado = d;
+                        document.getElementById('normNuevoTotal').value = parseFloat(d.total).toFixed(2);
+                        document.getElementById('normCobrado').value = parseFloat(d.cobrado).toFixed(2);
+                    })
+                    .catch(() => {});
+
+                function normVistaPrevia() {
+                    if (!normEstado) return;
+                    const nuevo = parseFloat(document.getElementById('normNuevoTotal').value) || 0;
+                    const cob   = parseFloat(document.getElementById('normCobrado').value) || 0;
+                    const prev  = document.getElementById('normPreview');
+                    if (nuevo <= 0 || normEstado.total <= 0) { prev.style.display = 'none'; return; }
+
+                    const f = nuevo / normEstado.total;
+                    prev.style.display = '';
+                    prev.innerHTML = `
+                        <strong>Vista previa</strong><br>
+                        Total: $${parseFloat(normEstado.total).toFixed(2)} → <strong>$${nuevo.toFixed(2)}</strong>
+                        (los precios se multiplican por ${f.toFixed(4)})<br>
+                        Cobrado: <strong>$${cob.toFixed(2)}</strong> ·
+                        Saldo: <strong class="text-danger">$${(nuevo - cob).toFixed(2)}</strong> ·
+                        ${normEstado.n_comisiones} comisión(es) se recalculan`;
+                }
+
+                document.getElementById('normNuevoTotal')?.addEventListener('input', normVistaPrevia);
+                document.getElementById('normCobrado')?.addEventListener('input', normVistaPrevia);
+
+                document.getElementById('btnNormalizarVenta')?.addEventListener('click', function () {
+                    const nuevo  = parseFloat(document.getElementById('normNuevoTotal').value);
+                    const cob    = document.getElementById('normCobrado').value;
+                    const motivo = document.getElementById('normMotivo').value.trim();
+
+                    if (!nuevo || nuevo <= 0) { alert('Captura el total real de la venta'); return; }
+                    if (!motivo) { alert('Escribe el motivo del ajuste'); return; }
+                    if (parseFloat(cob) > nuevo) { alert('Lo cobrado no puede ser mayor al total'); return; }
+                    if (!confirm(`¿Ajustar el total a $${nuevo.toFixed(2)}?\n\nSe recalculan precios, IVA y comisiones de esta venta.`)) return;
+
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                    const fd = new FormData();
+                    fd.append('accion', 'ajustar_total');
+                    fd.append('venta_id', normVentaId);
+                    fd.append('nuevo_total', nuevo);
+                    fd.append('monto_cobrado', cob);
+                    fd.append('motivo', motivo);
+
+                    fetch('ajustar_venta.php', { method: 'POST', body: fd })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) { alert('✅ ' + data.message); location.reload(); }
+                            else {
+                                alert('❌ ' + (data.message || 'No se pudo ajustar la venta'));
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="fas fa-wrench me-1"></i>Ajustar';
+                            }
+                        })
+                        .catch(() => {
+                            alert('❌ Error de conexión');
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-wrench me-1"></i>Ajustar';
+                        });
+                });
+            }
+
+            // ===== COBRANZA · anticipos y abonos =====
+            const cobCont = document.getElementById('cobranzaContenedor');
+            if (cobCont) {
+                const cobVentaId = cobCont.dataset.ventaId;
+
+                function pintarResumenCobranza(r) {
+                    if (!r) return;
+                    document.getElementById('cobTotal').textContent   = '$' + parseFloat(r.total).toFixed(2);
+                    document.getElementById('cobCobrado').textContent = '$' + parseFloat(r.cobrado).toFixed(2);
+                    document.getElementById('cobSaldo').textContent   = '$' + parseFloat(r.saldo).toFixed(2);
+                    document.getElementById('cobPct').textContent     = parseFloat(r.pct_cobrado).toFixed(2) + '%';
+
+                    // Sin saldo no hay nada que cobrar
+                    const form = document.getElementById('formNuevoPago');
+                    if (form) form.style.display = parseFloat(r.saldo) > 0.005 ? '' : 'none';
+                    const inp = document.getElementById('pagoMonto');
+                    if (inp) inp.max = r.saldo;
+                }
+
+                function cargarPagos() {
+                    fetch('pagos_venta.php?accion=listar_pagos&venta_id=' + cobVentaId)
+                        .then(r => r.json())
+                        .then(data => {
+                            const tbody = document.getElementById('pagosVentaTbody');
+                            if (!data.success) {
+                                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error al cargar</td></tr>';
+                                return;
+                            }
+                            pintarResumenCobranza(data.resumen);
+
+                            if (data.pagos.length === 0) {
+                                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Sin pagos registrados</td></tr>';
+                                return;
+                            }
+                            const puede = data.es_admin === true;
+                            tbody.innerHTML = data.pagos.map(p => `
+                                <tr>
+                                    <td class="text-nowrap">${p.fecha_pago.split('-').reverse().join('/')}</td>
+                                    <td><span class="badge bg-secondary">${p.tipo}</span></td>
+                                    <td>${p.metodo_pago || '—'}</td>
+                                    <td>${p.referencia || '—'}</td>
+                                    <td class="text-end fw-bold">$${parseFloat(p.monto).toFixed(2)}</td>
+                                    <td class="text-end">$${parseFloat(p.comision_generada || 0).toFixed(2)}</td>
+                                    <td class="text-end">
+                                        ${puede ? `<button type="button" class="btn btn-sm btn-outline-danger btn-cancelar-pago"
+                                            data-id="${p.id}" data-monto="${parseFloat(p.monto).toFixed(2)}"
+                                            title="Cancelar este pago"><i class="fas fa-times"></i></button>` : ''}
+                                    </td>
+                                </tr>
+                            `).join('');
+                        })
+                        .catch(() => {
+                            document.getElementById('pagosVentaTbody').innerHTML =
+                                '<tr><td colspan="7" class="text-center text-danger">Error de conexión</td></tr>';
+                        });
+                }
+                cargarPagos();
+
+                document.getElementById('btnRegistrarPago')?.addEventListener('click', function () {
+                    const monto = parseFloat(document.getElementById('pagoMonto').value);
+                    const fecha = document.getElementById('pagoFecha').value;
+                    if (!monto || monto <= 0) { alert('Captura un monto mayor a 0'); return; }
+                    if (!fecha) { alert('Captura la fecha del pago'); return; }
+
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                    const fd = new FormData();
+                    fd.append('accion', 'registrar_pago');
+                    fd.append('venta_id', cobVentaId);
+                    fd.append('monto', monto);
+                    fd.append('fecha_pago', fecha);
+                    fd.append('tipo', document.getElementById('pagoTipo').value);
+                    fd.append('metodo_pago', document.getElementById('pagoMetodo').value);
+                    fd.append('referencia', document.getElementById('pagoReferencia').value);
+
+                    fetch('pagos_venta.php', { method: 'POST', body: fd })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.getElementById('pagoMonto').value = '';
+                                document.getElementById('pagoReferencia').value = '';
+                                cargarPagos();
+                                if (data.liquidada) alert('✅ ' + data.message + '\n\nLa venta quedó liquidada.');
+                            } else {
+                                alert('❌ ' + (data.message || 'No se pudo registrar el pago'));
+                            }
+                        })
+                        .catch(() => alert('❌ Error de conexión al registrar el pago'))
+                        .finally(() => {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-plus me-1"></i>Registrar';
+                        });
+                });
+
+                document.getElementById('pagosVentaTbody')?.addEventListener('click', function (e) {
+                    const btn = e.target.closest('.btn-cancelar-pago');
+                    if (!btn) return;
+                    if (!confirm(`¿Cancelar el pago de $${btn.dataset.monto}?\n\nSe van a retirar las comisiones que generó.`)) return;
+                    const motivo = prompt('Motivo de la cancelación (obligatorio):', '');
+                    if (motivo === null) return;
+                    if (!motivo.trim()) { alert('Hay que escribir un motivo.'); return; }
+
+                    const fd = new FormData();
+                    fd.append('accion', 'cancelar_pago');
+                    fd.append('id', btn.dataset.id);
+                    fd.append('motivo', motivo.trim());
+
+                    fetch('pagos_venta.php', { method: 'POST', body: fd })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) { cargarPagos(); }
+                            else { alert('❌ ' + (data.message || 'No se pudo cancelar el pago')); }
+                        })
+                        .catch(() => alert('❌ Error de conexión al cancelar el pago'));
+                });
+            }
+
+            // ===== FECHA DE LA VENTA (solo admin) =====
+            document.getElementById('btnGuardarFechaVenta')?.addEventListener('click', function () {
+                const cont = document.getElementById('fechaVentaContenedor');
+                const fecha = document.getElementById('fechaVentaInput').value;
+                const motivo = document.getElementById('fechaVentaMotivo').value.trim();
+
+                if (!fecha) { alert('Selecciona la fecha'); return; }
+                if (!motivo) { alert('Escribe el motivo del cambio de fecha'); return; }
+                if (!confirm('¿Mover la venta a ' + fecha.split('-').reverse().join('/') + '?\n\nLos reportes de ambos meses van a cambiar.')) return;
+
+                const btn = this;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                const fd = new FormData();
+                fd.append('accion', 'actualizar_fecha_venta');
+                fd.append('venta_id', cont.dataset.ventaId);
+                fd.append('fecha', fecha);
+                fd.append('motivo', motivo);
+
+                fetch('pagos_venta.php', { method: 'POST', body: fd })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) { alert('✅ ' + data.message); location.reload(); }
+                        else {
+                            alert('❌ ' + (data.message || 'No se pudo cambiar la fecha'));
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-save me-1"></i>Mover fecha';
+                        }
+                    })
+                    .catch(() => {
+                        alert('❌ Error de conexión');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-save me-1"></i>Mover fecha';
+                    });
+            });
 
             // ===== 2 · IVA de la venta =====
             // Opcional. Ajusta el total de la venta pero no toca comisiones:

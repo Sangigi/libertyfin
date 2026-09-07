@@ -188,6 +188,65 @@ function guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, 
 }
 
 // =====================================================================
+// Registra en `venta_pagos` el dinero que realmente entró por esta venta
+// y genera las comisiones que le corresponden a ese pago.
+//
+// La venta se guarda por su TOTAL; lo cobrado vive aparte. Si el cliente
+// dio un anticipo, solo esa parte genera comisión:
+//     comisión del pago = monto_comision x (monto del pago / total)
+//
+// Se llama DESPUÉS de insertar los detalles, porque las asignaciones de
+// comisión (venta_comisiones) tienen que existir ya.
+// =====================================================================
+function registrarPagoDeVenta($conn, $venta_id, $monto, $fecha_pago, $tipo,
+                              $metodo_pago, $usuario_id, $sucursal_id) {
+    $monto = round((float)$monto, 2);
+    if ($monto <= 0) return null;
+
+    $stmt = $conn->prepare("
+        INSERT INTO venta_pagos
+            (venta_id, tipo, monto, fecha_pago, metodo_pago, notas, usuario_id, sucursal_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+    $stmt->execute([
+        $venta_id, $tipo, $monto, $fecha_pago, $metodo_pago,
+        'Registrado al cobrar la venta en caja', $usuario_id, $sucursal_id
+    ]);
+    $pago_id = $conn->lastInsertId();
+
+    // Proporción cobrada de la venta
+    $stmt_v = $conn->prepare("SELECT total FROM ventas WHERE id = ?");
+    $stmt_v->execute([$venta_id]);
+    $total = (float)$stmt_v->fetchColumn();
+    if ($total <= 0) return $pago_id;
+    $proporcion = $monto / $total;
+
+    $stmt_c = $conn->prepare("
+        SELECT id, colaborador_id, colaborador_nombre, area_nombre,
+               porcentaje_regla, monto_comision
+        FROM venta_comisiones
+        WHERE venta_id = ? AND cancelada = 0
+    ");
+    $stmt_c->execute([$venta_id]);
+
+    $stmt_i = $conn->prepare("
+        INSERT INTO pago_comisiones
+            (pago_id, venta_comision_id, venta_id, colaborador_id, colaborador_nombre,
+             area_nombre, porcentaje, proporcion_cobrada, monto, fecha_pago)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+    while ($a = $stmt_c->fetch(PDO::FETCH_ASSOC)) {
+        $m = round((float)$a['monto_comision'] * $proporcion, 2);
+        if ($m <= 0) continue;
+        $stmt_i->execute([
+            $pago_id, $a['id'], $venta_id, $a['colaborador_id'], $a['colaborador_nombre'],
+            $a['area_nombre'], $a['porcentaje_regla'], round($proporcion, 6), $m, $fecha_pago
+        ]);
+    }
+    return $pago_id;
+}
+
+// =====================================================================
 // Guarda en `gastos` los gastos de operación que el cajero agregó
 // durante la venta actual (flete, empaque, comisión de plataforma de
 // pago, etc). Estos aplican a la venta completa, no a un producto.
@@ -1618,6 +1677,13 @@ if (isset($_POST['procesar_pago'])) {
     }
 
     $efectivo_recibido = floatval($_POST['efectivo_recibido'] ?? 0);
+
+    // Anticipo: cuánto de la venta se cobra AHORA. Si viene vacío o en 0,
+    // se asume que se cobra completa.
+    //
+    // No confundir con $efectivo_recibido, que es con cuánto te pagaron
+    // para calcular el cambio.
+    $monto_anticipo = floatval($_POST['monto_anticipo'] ?? 0);
     $cambio = floatval($_POST['cambio'] ?? 0);
     $descuento_total = floatval($_POST['descuento_total'] ?? 0);
 
@@ -1674,6 +1740,13 @@ if (isset($_POST['procesar_pago'])) {
     $base_sin_iva           = round($subtotal_sin_descuento - $descuento_total, 2);
     if ($base_sin_iva < 0) $base_sin_iva = 0;
     $iva_total              = round($total - $base_sin_iva, 2);
+
+    // El anticipo nunca puede pasar del total ni ser negativo. Vacío = todo.
+    if ($monto_anticipo <= 0 || $monto_anticipo > $total) {
+        $monto_anticipo = $total;
+    }
+    $monto_anticipo = round($monto_anticipo, 2);
+    $tipo_pago_inicial = ($monto_anticipo < $total - 0.005) ? 'anticipo' : 'liquidacion';
 
     // Si es PayPal, crear venta pendiente y redirigir
     // ($factor_iva ya quedó calculado arriba y aplica igual en esta rama)
@@ -1777,7 +1850,7 @@ if (isset($_POST['procesar_pago'])) {
     }
 
     // Para otros métodos de pago (efectivo, tarjeta, transferencia)
-    if ($metodo_pago === 'efectivo' && $efectivo_recibido < $total) {
+    if ($metodo_pago === 'efectivo' && $efectivo_recibido < $monto_anticipo) {
         $_SESSION['error_message'] = "El efectivo recibido es menor al total a pagar";
         header("Location: caja.php");
         exit();
@@ -1870,6 +1943,15 @@ if (isset($_POST['procesar_pago'])) {
             error_log("✅ STOCK ACTUALIZADO - Producto: {$item['nombre']}, Cantidad descontada: {$cantidad_a_descontar}");
         }
 
+        // El dinero cobrado se registra aparte de la venta. Va DESPUÉS del
+        // loop de detalles porque necesita que las asignaciones de comisión
+        // ya existan para poder generar la comisión de este pago.
+        registrarPagoDeVenta(
+            $conn, $venta_id, $monto_anticipo, date('Y-m-d'), $tipo_pago_inicial,
+            $metodo_pago, $_SESSION['usuario_id'] ?? null, $_SESSION['sucursal_id'] ?? null
+        );
+        error_log("✅ Pago registrado: $monto_anticipo de $total ($tipo_pago_inicial)");
+
         $caja_id = $_SESSION['caja_actual_id'] ?? $caja_actual['id'];
         $sql_update_caja = "
             UPDATE caja SET 
@@ -1880,12 +1962,14 @@ if (isset($_POST['procesar_pago'])) {
             WHERE id = ?
         ";
 
-        $ventas_efectivo_inc = $metodo_pago == 'efectivo' ? $total : 0;
-        $ventas_tarjeta_inc = $metodo_pago == 'tarjeta' ? $total : 0;
-        $ventas_transferencia_inc = $metodo_pago == 'transferencia' ? $total : 0;
+        // La caja registra lo que REALMENTE entró (el anticipo), no el total
+        // vendido: el resto todavía no está en el cajón.
+        $ventas_efectivo_inc = $metodo_pago == 'efectivo' ? $monto_anticipo : 0;
+        $ventas_tarjeta_inc = $metodo_pago == 'tarjeta' ? $monto_anticipo : 0;
+        $ventas_transferencia_inc = $metodo_pago == 'transferencia' ? $monto_anticipo : 0;
 
         $stmt = $conn->prepare($sql_update_caja);
-        $stmt->execute([$total, $ventas_efectivo_inc, $ventas_tarjeta_inc, $ventas_transferencia_inc, $caja_id]);
+        $stmt->execute([$monto_anticipo, $ventas_efectivo_inc, $ventas_tarjeta_inc, $ventas_transferencia_inc, $caja_id]);
         error_log("✅ Caja actualizada correctamente");
 
         if ($costo_total_venta > 0) {
@@ -2030,6 +2114,8 @@ if (isset($_POST['procesar_pago'])) {
             'iva_porcentaje' => $iva_porcentaje_venta,
             'cliente_id' => $cliente_id,
             'venta_id' => $venta_id,
+            'monto_anticipo' => $monto_anticipo,
+            'saldo_pendiente' => round($total - $monto_anticipo, 2),
             'plan_empresa' => $empresa_plan,
             'timbres_disponibles' => $timbres_disponibles,
             'facturapi_receipt_id' => $facturapi_receipt_id,
@@ -2535,8 +2621,26 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                 <td class="value text-muted" id="modal-iva">$0.00</td>
                             </tr>
                             <tr style="border-top: 2px solid #dee2e6;">
-                                <td class="label"><strong>TOTAL A PAGAR:</strong></td>
+                                <td class="label"><strong>TOTAL DE LA VENTA:</strong></td>
                                 <td class="value total-grande" id="modal-total">$<?php echo number_format($total_carrito, 2); ?></td>
+                            </tr>
+                            <tr>
+                                <td class="label">
+                                    Se cobra ahora
+                                    <small class="d-block text-muted" style="font-size:11px;">anticipo · déjalo igual al total si se paga completa</small>
+                                </td>
+                                <td class="value">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" min="0"
+                                               class="form-control form-control-sm text-end"
+                                               id="modal-anticipo" data-form-field="true">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr id="modal-fila-saldo" style="display:none;">
+                                <td class="label text-danger"><strong>Queda a deber:</strong></td>
+                                <td class="value text-danger fw-bold" id="modal-saldo">$0.00</td>
                             </tr>
                         </table>
                     </div>
@@ -2637,6 +2741,8 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                     style="font-size: 13px; font-weight: bold; color: var(--primary-color);">
                             </div>
                         </div>
+
+                        <div class="alert alert-warning py-2 px-3 small mb-2" id="modal-aviso-anticipo" style="display:none;"></div>
 
                         <div class="numpad">
                             <button type="button" class="numpad-btn" data-value="1">1</button>
@@ -2743,6 +2849,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                         <input type="hidden" name="descuento_total" id="modal-descuentoTotal" value="<?php echo $descuento_carrito; ?>">
                         <input type="hidden" name="descripcion" id="modal-descripcionHidden" value="">
                         <input type="hidden" name="iva_porcentaje" id="modal-ivaPorcentajeHidden" value="<?php echo number_format($iva_porcentaje, 2, '.', ''); ?>">
+                        <input type="hidden" name="monto_anticipo" id="modal-anticipoHidden" value="0">
                         <button type="submit" name="procesar_pago" class="btn btn-pagar w-100" id="modal-btnPagar">
                             <i class="fas fa-check-circle me-2"></i>
                             CONFIRMAR PAGO - $<?php echo number_format($total_carrito, 2); ?>

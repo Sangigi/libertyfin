@@ -3856,3 +3856,256 @@
 [03-Sep-2026 17:14:29 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
 [03-Sep-2026 17:14:29 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
 [03-Sep-2026 17:14:29 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 6
+[04-Sep-2026 15:50:25 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[04-Sep-2026 15:50:25 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[04-Sep-2026 15:50:25 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 15:50:25 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[04-Sep-2026 15:50:25 America/Mexico_City] Buscando caja por usuario/sucursal...
+[04-Sep-2026 15:50:25 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 4
+[04-Sep-2026 15:54:00 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[04-Sep-2026 15:54:00 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[04-Sep-2026 15:54:00 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 15:54:00 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[04-Sep-2026 15:54:00 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 4
+[04-Sep-2026 15:54:07 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 15:54:07 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 15:54:08 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 15:54:08 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 15:54:08 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 15:54:08 America/Mexico_City] Buscando caja por usuario/sucursal...
+[04-Sep-2026 15:54:08 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 8
+[04-Sep-2026 15:54:10 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 15:54:10 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 15:54:10 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 15:54:10 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 15:54:10 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 15:54:10 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 15:54:16 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 15:54:16 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 15:54:17 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 15:54:17 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 15:54:17 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 15:54:17 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 15:58:33 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 15:58:33 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 15:58:33 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 15:58:33 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 15:58:33 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 15:58:33 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 15:58:53 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 15:58:53 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 15:58:54 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 15:58:54 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 15:58:54 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 15:58:54 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 15:58:54 America/Mexico_City] === INICIO PROCESAR PAGO ===
+[04-Sep-2026 15:58:54 America/Mexico_City] Plan de empresa: premium
+[04-Sep-2026 15:58:54 America/Mexico_City] Timbres disponibles: 497
+[04-Sep-2026 15:58:54 America/Mexico_City] ✅ Venta insertada - ID: 201, Código: 20260904155854
+[04-Sep-2026 15:58:54 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Bordados, Cantidad descontada: 1
+[04-Sep-2026 15:58:54 America/Mexico_City] ❌ Error en venta: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'juanc141_grupo_ideas_mx.venta_pagos' doesn't exist
+[04-Sep-2026 15:58:54 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 15:58:54 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 15:58:55 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 15:58:55 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 15:58:55 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 15:58:55 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 16:06:05 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 16:06:05 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 16:06:06 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 16:06:06 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 16:06:06 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:06:06 America/Mexico_City] Buscando caja por usuario/sucursal...
+[04-Sep-2026 16:06:06 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 8
+[04-Sep-2026 16:06:08 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 16:06:08 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 16:06:08 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 16:06:08 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 16:06:08 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:06:08 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 16:06:13 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 16:06:13 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 16:06:13 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 16:06:13 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 16:06:13 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:06:13 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 16:06:24 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 16:06:24 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 16:06:24 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 16:06:24 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 16:06:24 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:06:24 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 16:06:24 America/Mexico_City] === INICIO PROCESAR PAGO ===
+[04-Sep-2026 16:06:24 America/Mexico_City] Plan de empresa: premium
+[04-Sep-2026 16:06:24 America/Mexico_City] Timbres disponibles: 497
+[04-Sep-2026 16:06:24 America/Mexico_City] ✅ Venta insertada - ID: 202, Código: 20260904160624
+[04-Sep-2026 16:06:24 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Bordados, Cantidad descontada: 1
+[04-Sep-2026 16:06:24 America/Mexico_City] ❌ Error en venta: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'juanc141_grupo_ideas_mx.venta_pagos' doesn't exist
+[04-Sep-2026 16:06:25 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 16:06:25 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 16:06:25 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 16:06:25 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 16:06:25 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:06:25 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 16:06:32 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 16:06:32 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 16:06:33 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 16:06:33 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 16:06:33 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:06:33 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 16:06:33 America/Mexico_City] === INICIO PROCESAR PAGO ===
+[04-Sep-2026 16:06:33 America/Mexico_City] Plan de empresa: premium
+[04-Sep-2026 16:06:33 America/Mexico_City] Timbres disponibles: 497
+[04-Sep-2026 16:06:33 America/Mexico_City] ✅ Venta insertada - ID: 203, Código: 20260904160633
+[04-Sep-2026 16:06:33 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Bordados, Cantidad descontada: 1
+[04-Sep-2026 16:06:33 America/Mexico_City] ❌ Error en venta: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'juanc141_grupo_ideas_mx.venta_pagos' doesn't exist
+[04-Sep-2026 16:06:33 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 16:06:33 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 16:06:33 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 16:06:33 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 16:06:33 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:06:33 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 16:08:48 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 16:08:48 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 16:08:49 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 16:08:49 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 16:08:49 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:08:49 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 16:08:49 America/Mexico_City] === INICIO PROCESAR PAGO ===
+[04-Sep-2026 16:08:49 America/Mexico_City] Plan de empresa: premium
+[04-Sep-2026 16:08:49 America/Mexico_City] Timbres disponibles: 497
+[04-Sep-2026 16:08:49 America/Mexico_City] ✅ Venta insertada - ID: 204, Código: 20260904160849
+[04-Sep-2026 16:08:49 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Bordados, Cantidad descontada: 1
+[04-Sep-2026 16:08:49 America/Mexico_City] ✅ Pago registrado: 300 de 1200 (anticipo)
+[04-Sep-2026 16:08:49 America/Mexico_City] ✅ Caja actualizada correctamente
+[04-Sep-2026 16:08:49 America/Mexico_City] ✅ Gasto automático registrado para la venta 204 - Monto: 950
+[04-Sep-2026 16:08:49 America/Mexico_City] 🎯 Plan Premium detectado - Generando recibo Facturapi
+[04-Sep-2026 16:08:49 America/Mexico_City] 🔑 Usando API Key: sk_test_J6...
+[04-Sep-2026 16:08:49 America/Mexico_City] ⚠️ Producto ID 7 no tiene facturapi_producto_id
+[04-Sep-2026 16:08:49 America/Mexico_City] ❌ Error al crear recibo Facturapi: No se encontraron productos válidos para Facturapi.
+[04-Sep-2026 16:08:49 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[04-Sep-2026 16:08:49 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[04-Sep-2026 16:08:49 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[04-Sep-2026 16:08:49 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[04-Sep-2026 16:08:49 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:08:49 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[04-Sep-2026 16:51:34 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[04-Sep-2026 16:51:34 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[04-Sep-2026 16:51:34 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:51:34 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[04-Sep-2026 16:51:34 America/Mexico_City] Buscando caja por usuario/sucursal...
+[04-Sep-2026 16:51:34 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 5
+[04-Sep-2026 16:51:44 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[04-Sep-2026 16:51:44 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[04-Sep-2026 16:51:44 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:51:44 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[04-Sep-2026 16:51:44 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 5
+[04-Sep-2026 16:51:47 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[04-Sep-2026 16:51:47 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[04-Sep-2026 16:51:47 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 16:51:47 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[04-Sep-2026 16:51:47 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 5
+[04-Sep-2026 17:02:11 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[04-Sep-2026 17:02:11 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[04-Sep-2026 17:02:11 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 17:02:11 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[04-Sep-2026 17:02:11 America/Mexico_City] Buscando caja por usuario/sucursal...
+[04-Sep-2026 17:02:11 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 4
+[04-Sep-2026 17:02:44 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[04-Sep-2026 17:02:44 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[04-Sep-2026 17:02:44 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 17:02:44 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[04-Sep-2026 17:02:44 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 4
+[04-Sep-2026 17:02:48 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[04-Sep-2026 17:02:48 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[04-Sep-2026 17:02:48 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 17:02:48 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[04-Sep-2026 17:02:48 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 4
+[04-Sep-2026 17:02:56 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[04-Sep-2026 17:02:56 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[04-Sep-2026 17:02:56 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 17:02:56 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[04-Sep-2026 17:02:56 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 4
+[04-Sep-2026 17:02:57 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[04-Sep-2026 17:02:57 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[04-Sep-2026 17:02:57 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[04-Sep-2026 17:02:57 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[04-Sep-2026 17:02:57 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 4
+[07-Sep-2026 10:10:47 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[07-Sep-2026 10:10:47 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[07-Sep-2026 10:10:47 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[07-Sep-2026 10:10:47 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[07-Sep-2026 10:10:47 America/Mexico_City] Buscando caja por usuario/sucursal...
+[07-Sep-2026 10:10:47 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 6
+[07-Sep-2026 10:10:55 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[07-Sep-2026 10:10:55 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[07-Sep-2026 10:10:55 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[07-Sep-2026 10:10:55 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[07-Sep-2026 10:10:55 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 6
+[07-Sep-2026 10:14:34 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[07-Sep-2026 10:14:34 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[07-Sep-2026 10:14:34 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[07-Sep-2026 10:14:34 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[07-Sep-2026 10:14:34 America/Mexico_City] Buscando caja por usuario/sucursal...
+[07-Sep-2026 10:14:34 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 6
+[07-Sep-2026 10:14:39 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: , Timbres: 500
+[07-Sep-2026 10:14:39 America/Mexico_City] ⚠️ No se puede obtener API Key - Org ID: 
+[07-Sep-2026 10:14:39 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[07-Sep-2026 10:14:39 America/Mexico_City] Error al obtener configuración: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'paypal_client_id' in 'field list'
+[07-Sep-2026 10:14:39 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 6
+[07-Sep-2026 10:15:29 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[07-Sep-2026 10:15:29 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[07-Sep-2026 10:15:30 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[07-Sep-2026 10:15:30 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[07-Sep-2026 10:15:30 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[07-Sep-2026 10:15:30 America/Mexico_City] Buscando caja por usuario/sucursal...
+[07-Sep-2026 10:15:30 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 8
+[07-Sep-2026 10:15:32 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[07-Sep-2026 10:15:32 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[07-Sep-2026 10:15:33 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[07-Sep-2026 10:15:33 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[07-Sep-2026 10:15:33 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[07-Sep-2026 10:15:33 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[07-Sep-2026 10:24:22 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[07-Sep-2026 10:24:22 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[07-Sep-2026 10:24:23 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[07-Sep-2026 10:24:23 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[07-Sep-2026 10:24:23 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[07-Sep-2026 10:24:23 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[07-Sep-2026 10:25:07 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[07-Sep-2026 10:25:07 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[07-Sep-2026 10:25:07 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[07-Sep-2026 10:25:07 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[07-Sep-2026 10:25:07 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[07-Sep-2026 10:25:07 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[07-Sep-2026 10:25:07 America/Mexico_City] === INICIO PROCESAR PAGO ===
+[07-Sep-2026 10:25:07 America/Mexico_City] Plan de empresa: premium
+[07-Sep-2026 10:25:07 America/Mexico_City] Timbres disponibles: 497
+[07-Sep-2026 10:25:07 America/Mexico_City] ✅ Venta insertada - ID: 205, Código: 20260907102507
+[07-Sep-2026 10:25:07 America/Mexico_City] ✅ STOCK ACTUALIZADO - Producto: Bordados, Cantidad descontada: 1
+[07-Sep-2026 10:25:07 America/Mexico_City] ✅ Pago registrado: 120 de 1200 (anticipo)
+[07-Sep-2026 10:25:07 America/Mexico_City] ✅ Caja actualizada correctamente
+[07-Sep-2026 10:25:07 America/Mexico_City] ✅ Gasto automático registrado para la venta 205 - Monto: 950
+[07-Sep-2026 10:25:07 America/Mexico_City] 🎯 Plan Premium detectado - Generando recibo Facturapi
+[07-Sep-2026 10:25:07 America/Mexico_City] 🔑 Usando API Key: sk_test_J6...
+[07-Sep-2026 10:25:07 America/Mexico_City] ⚠️ Producto ID 7 no tiene facturapi_producto_id
+[07-Sep-2026 10:25:07 America/Mexico_City] ❌ Error al crear recibo Facturapi: No se encontraron productos válidos para Facturapi.
+[07-Sep-2026 10:25:07 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[07-Sep-2026 10:25:07 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[07-Sep-2026 10:25:08 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[07-Sep-2026 10:25:08 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[07-Sep-2026 10:25:08 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[07-Sep-2026 10:25:08 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[07-Sep-2026 10:25:17 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[07-Sep-2026 10:25:17 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[07-Sep-2026 10:25:17 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[07-Sep-2026 10:25:17 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[07-Sep-2026 10:25:17 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[07-Sep-2026 10:25:17 America/Mexico_City] ✅ Caja encontrada por ID de sesión - ID: 8
+[07-Sep-2026 11:18:27 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[07-Sep-2026 11:18:27 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[07-Sep-2026 11:18:27 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[07-Sep-2026 11:18:27 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[07-Sep-2026 11:18:27 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[07-Sep-2026 11:18:27 America/Mexico_City] Buscando caja por usuario/sucursal...
+[07-Sep-2026 11:18:27 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 8
