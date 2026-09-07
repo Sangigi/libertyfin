@@ -21,6 +21,14 @@
 // Los COSTOS no se escalan: el costo del producto fue el que fue. Si
 // también quedó mal capturado, corrígelo en el producto y vuelve a
 // asignar la comisión.
+//
+// Lo cobrado (monto_cobrado) puede ser MAYOR al total real que capturas
+// aquí (p.ej. total real $2,500 pero se habían registrado pagos por
+// $2,900). Eso es válido y NO se bloquea: el IVA y las comisiones se
+// calculan SIEMPRE sobre el total real (nunca sobre lo cobrado), y el
+// excedente queda registrado como diferencia a favor del cliente sin
+// generar comisión extra (ver $diferencia_a_favor y el tope de
+// proporción acumulada al regenerar pago_comisiones).
 
 session_start();
 header('Content-Type: application/json');
@@ -113,9 +121,16 @@ try {
             echo json_encode(['success' => false, 'message' => 'La venta tiene total 0, no se puede escalar']);
             exit();
         }
+
+        // Lo cobrado SÍ puede ser mayor al total real: pasa cuando el cliente
+        // pagó de más o cuando la venta se capturó mal desde el origen (p.ej.
+        // total real $2,500 pero se registraron pagos por $2,900). Ya no se
+        // bloquea aquí — el IVA y las comisiones siempre se calculan sobre
+        // $nuevo_total (nunca sobre lo cobrado), y el excedente se prorratea
+        // como diferencia a favor del cliente, no como comisión extra.
+        $diferencia_a_favor = 0.0;
         if ($monto_cobrado !== null && $monto_cobrado > $nuevo_total + 0.005) {
-            echo json_encode(['success' => false, 'message' => 'Lo cobrado no puede ser mayor al total']);
-            exit();
+            $diferencia_a_favor = round($monto_cobrado - $nuevo_total, 2);
         }
 
         // Factor de escala. Todo lo que sea "precio" se multiplica por él;
@@ -247,8 +262,16 @@ try {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $regeneradas = 0;
+            // Tope acumulado a 100%: si la SUMA de pagos rebasa el total real
+            // (diferencia a favor del cliente), ese excedente no genera
+            // comisión extra en ningún pago, ni siquiera repartido entre
+            // varios. La comisión máxima por vender es la asignada en
+            // venta_comisiones, ni un peso más aunque hayan cobrado de más.
+            $prop_acumulada = 0.0;
             foreach ($pagos as $pg) {
-                $prop = (float)$pg['monto'] / $nuevo_total;
+                $prop_pago = (float)$pg['monto'] / $nuevo_total;
+                $prop = max(0.0, min($prop_pago, 1.0 - $prop_acumulada));
+                $prop_acumulada += $prop;
                 foreach ($asig as $a) {
                     $m = round((float)$a['monto_comision'] * $prop, 2);
                     if ($m <= 0) continue;
@@ -261,14 +284,19 @@ try {
             }
 
             // --- 6 · Dejar rastro ---
+            $nota_diferencia = $diferencia_a_favor > 0
+                ? (' · Diferencia a favor del cliente: $' . number_format($diferencia_a_favor, 2)
+                   . ' (no genera comisión extra)')
+                : '';
+
             $conn->prepare("
                 UPDATE ventas
                 SET descripcion = TRIM(CONCAT(COALESCE(descripcion, ''), ' [Total normalizado de ',
-                                    ?, ' a ', ?, ': ', ?, ']'))
+                                    ?, ' a ', ?, ': ', ?, ?, ']'))
                 WHERE id = ?
             ")->execute([
                 number_format($total_viejo, 2), number_format($nuevo_total, 2),
-                mb_substr($motivo, 0, 150), $venta_id
+                mb_substr($motivo, 0, 150), $nota_diferencia, $venta_id
             ]);
 
             $conn->commit();
@@ -291,7 +319,12 @@ try {
             'success' => true,
             'message' => 'Venta normalizada: total de $' . number_format($total_viejo, 2)
                        . ' a $' . number_format($nuevo_total, 2) . '. '
-                       . $regeneradas . ' comisión(es) por pago regenerada(s).',
+                       . $regeneradas . ' comisión(es) por pago regenerada(s).'
+                       . ($diferencia_a_favor > 0
+                            ? ' Ojo: lo cobrado ($' . number_format($monto_cobrado, 2) . ') es $'
+                              . number_format($diferencia_a_favor, 2)
+                              . ' mayor al total real; esa diferencia no generó comisión.'
+                            : ''),
             'total'   => $nuevo_total,
             'cobrado' => $cobrado_final,
             'saldo'   => round($nuevo_total - $cobrado_final, 2)

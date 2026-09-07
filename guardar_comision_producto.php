@@ -144,23 +144,17 @@ try {
             exit();
         }
 
-        // Los precios de venta_detalles traen el IVA incluido. Se deriva el
-        // factor desde la venta para comisionar sobre la base y no sobre el
-        // impuesto:   factor = total / (subtotal - descuento)
-        $stmt_iva = $conn->prepare("SELECT subtotal, descuento, total FROM ventas WHERE id = ?");
-        $stmt_iva->execute([$venta_id]);
-        $vta_tot    = $stmt_iva->fetch(PDO::FETCH_ASSOC);
-        $base_venta = (float)($vta_tot['subtotal'] ?? 0) - (float)($vta_tot['descuento'] ?? 0);
-        $factor_iva = ($base_venta > 0) ? ((float)$vta_tot['total'] / $base_venta) : 1.0;
-        if ($factor_iva <= 0) $factor_iva = 1.0;
-
+        // Los precios de venta_detalles son la BASE, SIN IVA (el IVA se
+        // añade encima al cobrar, no va incluido en el precio del producto).
+        // No hay que dividir nada aquí: precio_unitario y descuento ya son
+        // el monto sin impuesto.
         $cantidad        = floatval($detalle['cantidad']);
-        $precio_unitario = floatval($detalle['precio_unitario']) / $factor_iva;
+        $precio_unitario = floatval($detalle['precio_unitario']);
         $costo_unitario  = floatval($detalle['costo'] ?? 0);
 
         // El descuento otorgado al cliente SÍ reduce la base: se comisiona
         // sobre lo realmente cobrado, no sobre el precio de lista.
-        $descuento_linea = floatval($detalle['descuento'] ?? 0) / $factor_iva;
+        $descuento_linea = floatval($detalle['descuento'] ?? 0);
 
         $venta_linea    = $precio_unitario * $cantidad;
         $utilidad_linea = ($venta_linea - $descuento_linea) - ($costo_unitario * $cantidad);
@@ -196,13 +190,13 @@ try {
         if ($gasto_total_venta > 0) {
             $stmt_util = $conn->prepare("
                 SELECT COALESCE(SUM(GREATEST(0,
-                           ((vd.precio_unitario * vd.cantidad) - COALESCE(vd.descuento, 0)) / ?
+                           ((vd.precio_unitario * vd.cantidad) - COALESCE(vd.descuento, 0))
                            - (p.costo * vd.cantidad))), 0)
                 FROM venta_detalles vd
                 INNER JOIN productos p ON vd.producto_id = p.id
                 WHERE vd.venta_id = ?
             ");
-            $stmt_util->execute([$factor_iva, $venta_id]);
+            $stmt_util->execute([$venta_id]);
             $utilidad_total_venta = floatval($stmt_util->fetchColumn());
 
             if ($utilidad_total_venta > 0) {

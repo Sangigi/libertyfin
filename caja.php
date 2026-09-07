@@ -53,15 +53,15 @@ function guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, 
     $costo_unitario = (float)($item['costo'] ?? 0);
     $cantidad       = (float)($item['cantidad'] ?? 0);
 
-    // Los precios del carrito TRAEN EL IVA INCLUIDO. Se dividen entre el
-    // factor para comisionar sobre la base, no sobre el impuesto.
-    // El costo no se toca: se captura sin IVA.
-    if ($factor_iva <= 0) $factor_iva = 1.0;
-    $precio_unitario = (float)($item['precio'] ?? 0) / $factor_iva;
+    // Los precios del carrito son la BASE, SIN IVA (el IVA se añade encima
+    // al momento de cobrar, no se descuenta de aquí). El costo tampoco
+    // lleva IVA. $factor_iva ya no se usa para dividir precios; se deja
+    // como parámetro por compatibilidad con las llamadas existentes.
+    $precio_unitario = (float)($item['precio'] ?? 0);
 
     // El descuento otorgado al cliente SÍ reduce la base de comisión: se
     // comisiona sobre lo realmente cobrado, no sobre el precio de lista.
-    $descuento_linea = (float)($item['descuento'] ?? 0) / $factor_iva;
+    $descuento_linea = (float)($item['descuento'] ?? 0);
 
     // Utilidad de la línea = (precio x cantidad) - descuento - (costo x cantidad)
     $venta_linea    = $precio_unitario * $cantidad;
@@ -101,9 +101,9 @@ function guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, 
         $utilidad_total_venta = 0.0;
         if (is_array($carrito)) {
             foreach ($carrito as $it) {
-                $v_it = ((float)($it['precio'] ?? 0) / $factor_iva) * (float)($it['cantidad'] ?? 0);
+                $v_it = (float)($it['precio'] ?? 0) * (float)($it['cantidad'] ?? 0);
                 $utilidad_total_venta += max(0,
-                    ($v_it - ((float)($it['descuento'] ?? 0) / $factor_iva))
+                    ($v_it - (float)($it['descuento'] ?? 0))
                     - ((float)($it['costo'] ?? 0) * (float)($it['cantidad'] ?? 0)));
             }
         }
@@ -600,6 +600,19 @@ try {
     $_SESSION['error_message'] = "Error de conexión a la base de datos de la empresa. Contacte al administrador.";
     header("Location: dashboard.php");
     exit();
+}
+
+// ========== VENTAS CON SALDO PENDIENTE (para el acceso directo en el navbar) ==========
+$ventas_pendientes_count = 0;
+$ventas_pendientes_saldo = 0.0;
+try {
+    $stmt_pend = $conn->query("SELECT COUNT(*) AS n, COALESCE(SUM(saldo), 0) AS s FROM v_cuentas_por_cobrar");
+    $pend = $stmt_pend->fetch(PDO::FETCH_ASSOC);
+    $ventas_pendientes_count = (int)($pend['n'] ?? 0);
+    $ventas_pendientes_saldo = (float)($pend['s'] ?? 0);
+} catch (Exception $e) {
+    // Si la vista no existe todavía en esta empresa, no truena caja: solo no se muestra el badge.
+    error_log("No se pudo leer v_cuentas_por_cobrar: " . $e->getMessage());
 }
 
 // ========== OBTENER CONFIGURACIÓN DEL SISTEMA ==========
@@ -1712,18 +1725,19 @@ if (isset($_POST['procesar_pago'])) {
     }
 
     // -----------------------------------------------------------------
-    // IVA · el precio capturado YA LO TRAE INCLUIDO
+    // IVA · el precio capturado es la BASE, SIN IVA
     //
-    // Si capturas 8,000 con IVA al 16%, el cliente paga 8,000. Ese monto se
-    // desglosa hacia atras:
-    //     base = 8000 / 1.16 = 6,896.55
-    //     IVA  = 8000 - 6896.55 = 1,103.45
+    // Si capturas 2,500 con IVA al 16%, esos 2,500 son el precio del
+    // producto. El impuesto se AÑADE encima:
+    //     IVA   = 2,500 x 0.16   = 400.00
+    //     total = 2,500 + 400.00 = 2,900.00
     //
-    // El total NO cambia al mover el IVA: lo que cambia es cuanto de ese
-    // total es base y cuanto es impuesto.
+    // El total SÍ cambia al mover el porcentaje: la base (lo que vale el
+    // producto) se queda fija, y lo que aumenta o disminuye es el
+    // impuesto que se suma encima.
     //
-    // La comision se calcula sobre la BASE (6,896.55), nunca sobre el
-    // total con IVA: el impuesto no es ingreso de la empresa.
+    // La comisión se calcula sobre la BASE (2,500), nunca sobre el total
+    // con IVA: el impuesto no es ingreso de la empresa.
     // -----------------------------------------------------------------
     $iva_porcentaje_venta = floatval($_POST['iva_porcentaje'] ?? 0);
     if ($iva_porcentaje_venta < 0)   $iva_porcentaje_venta = 0;
@@ -1731,15 +1745,17 @@ if (isset($_POST['procesar_pago'])) {
 
     $factor_iva = 1 + ($iva_porcentaje_venta / 100);
 
-    // Lo que paga el cliente es el carrito tal cual (IVA ya incluido)
-    $total = round($subtotal_sin_iva, 2);
+    // La base es el carrito tal cual lo capturó el cajero (sin IVA)
+    $base_sin_iva = round($subtotal_sin_iva, 2);
 
-    // Desglose sin IVA, que es lo que se guarda en la venta
-    $subtotal_sin_descuento = round($subtotal_sin_descuento / $factor_iva, 2);
-    $descuento_total        = round($descuento_total / $factor_iva, 2);
-    $base_sin_iva           = round($subtotal_sin_descuento - $descuento_total, 2);
-    if ($base_sin_iva < 0) $base_sin_iva = 0;
-    $iva_total              = round($total - $base_sin_iva, 2);
+    // El IVA se añade encima de la base para llegar al total a cobrar
+    $iva_total = round($base_sin_iva * ($iva_porcentaje_venta / 100), 2);
+    $total     = round($base_sin_iva + $iva_total, 2);
+
+    // subtotal/descuento se guardan tal cual (ya son sin IVA, no hay
+    // nada que desglosar hacia atrás)
+    $subtotal_sin_descuento = round($subtotal_sin_descuento, 2);
+    $descuento_total        = round($descuento_total, 2);
 
     // El anticipo nunca puede pasar del total ni ser negativo. Vacío = todo.
     if ($monto_anticipo <= 0 || $monto_anticipo > $total) {
@@ -2215,6 +2231,14 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                 <span class="status-badge me-3">
                     <i class="fas fa-circle me-1"></i>Caja Abierta
                 </span>
+                <?php if ($ventas_pendientes_count > 0): ?>
+                <a href="cuentas_por_cobrar.php" class="btn btn-outline-warning btn-sm me-2"
+                   title="Ventas con saldo pendiente por cobrar">
+                    <i class="fas fa-hand-holding-dollar me-1"></i>
+                    Pendientes de cobro
+                    <span class="badge bg-warning text-dark ms-1"><?php echo $ventas_pendientes_count; ?></span>
+                </a>
+                <?php endif; ?>
                 <a href="dashboard.php" class="btn btn-light btn-sm">
                     <i class="fas fa-arrow-left me-1"></i>Dashboard
                 </a>
@@ -2250,6 +2274,13 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
             <span class="status-badge me-2">
                 <i class="fas fa-circle me-1"></i>Caja Abierta
             </span>
+            <?php if ($ventas_pendientes_count > 0): ?>
+            <a href="cuentas_por_cobrar.php" class="btn btn-outline-warning btn-sm me-2"
+               title="Ventas con saldo pendiente por cobrar">
+                <i class="fas fa-hand-holding-dollar"></i>
+                <span class="badge bg-warning text-dark"><?php echo $ventas_pendientes_count; ?></span>
+            </a>
+            <?php endif; ?>
             <a href="dashboard.php" class="btn btn-light btn-sm">
                 <i class="fas fa-arrow-left"></i>
             </a>
@@ -2613,10 +2644,10 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                                id="modal-iva-porcentaje"
                                                value="<?php echo number_format($iva_porcentaje, 2, '.', ''); ?>"
                                                data-form-field="true"
-                                               title="El precio capturado ya trae el IVA incluido. Déjalo en 0 si la venta no lleva IVA.">
+                                               title="El precio capturado NO lleva IVA; el impuesto se añade encima. Déjalo en 0 si la venta no lleva IVA.">
                                         <span class="input-group-text">%</span>
                                     </span>
-                                    <small class="d-block text-muted" style="font-size:11px;">incluido en el precio</small>
+                                    <small class="d-block text-muted" style="font-size:11px;">se añade al total</small>
                                 </td>
                                 <td class="value text-muted" id="modal-iva">$0.00</td>
                             </tr>

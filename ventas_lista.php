@@ -1820,14 +1820,20 @@ $usos_cfdi = [
                     if (nuevo <= 0 || normEstado.total <= 0) { prev.style.display = 'none'; return; }
 
                     const f = nuevo / normEstado.total;
+                    const saldo = nuevo - cob;
                     prev.style.display = '';
                     prev.innerHTML = `
                         <strong>Vista previa</strong><br>
                         Total: $${parseFloat(normEstado.total).toFixed(2)} → <strong>$${nuevo.toFixed(2)}</strong>
                         (los precios se multiplican por ${f.toFixed(4)})<br>
                         Cobrado: <strong>$${cob.toFixed(2)}</strong> ·
-                        Saldo: <strong class="text-danger">$${(nuevo - cob).toFixed(2)}</strong> ·
-                        ${normEstado.n_comisiones} comisión(es) se recalculan`;
+                        Saldo: <strong class="${saldo < 0 ? 'text-warning' : 'text-danger'}">$${saldo.toFixed(2)}</strong> ·
+                        ${normEstado.n_comisiones} comisión(es) se recalculan`
+                        + (cob > nuevo
+                            ? `<br><span class="text-warning">⚠️ Se cobró $${(cob - nuevo).toFixed(2)} de más sobre el total real. `
+                              + `El IVA y las comisiones se calculan sobre el total real ($${nuevo.toFixed(2)}), no sobre lo cobrado; `
+                              + `esa diferencia no genera comisión.</span>`
+                            : '');
                 }
 
                 document.getElementById('normNuevoTotal')?.addEventListener('input', normVistaPrevia);
@@ -1840,8 +1846,15 @@ $usos_cfdi = [
 
                     if (!nuevo || nuevo <= 0) { alert('Captura el total real de la venta'); return; }
                     if (!motivo) { alert('Escribe el motivo del ajuste'); return; }
-                    if (parseFloat(cob) > nuevo) { alert('Lo cobrado no puede ser mayor al total'); return; }
-                    if (!confirm(`¿Ajustar el total a $${nuevo.toFixed(2)}?\n\nSe recalculan precios, IVA y comisiones de esta venta.`)) return;
+
+                    let confirmMsg = `¿Ajustar el total a $${nuevo.toFixed(2)}?\n\nSe recalculan precios, IVA y comisiones de esta venta.`;
+                    if (parseFloat(cob) > nuevo) {
+                        const diferencia = (parseFloat(cob) - nuevo).toFixed(2);
+                        confirmMsg += `\n\n⚠️ Lo cobrado ($${parseFloat(cob).toFixed(2)}) es $${diferencia} mayor al total real. `
+                                    + `El IVA y las comisiones se calculan sobre el total real, no sobre lo cobrado; `
+                                    + `esa diferencia quedará registrada como diferencia a favor del cliente, sin generar comisión extra.`;
+                    }
+                    if (!confirm(confirmMsg)) return;
 
                     const btn = this;
                     btn.disabled = true;
