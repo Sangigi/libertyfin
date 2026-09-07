@@ -1082,9 +1082,10 @@ function addNumberModal(num) {
 }
 
 // ========== IVA OPCIONAL DE LA VENTA ==========
-// El IVA se captura en el modal de cobro y se aplica sobre el subtotal ya
-// con descuento. Se guarda aparte del subtotal porque NO entra en la base
-// de comisión: las comisiones se calculan sobre montos sin IVA.
+// El IVA se captura en el modal de cobro y se AÑADE encima del subtotal ya
+// con descuento (que es la base, sin IVA). Se guarda aparte del subtotal
+// porque NO entra en la base de comisión: las comisiones se calculan sobre
+// montos sin IVA.
 window._subtotalConDescuento = 0;
 
 function leerIvaPorcentaje() {
@@ -1096,16 +1097,14 @@ function leerIvaPorcentaje() {
 }
 
 function aplicarIvaModal() {
-    // El precio capturado YA TRAE EL IVA INCLUIDO. El total no cambia al
-    // mover el porcentaje: lo que cambia es cuanto de ese total es base y
-    // cuanto es impuesto.
+    // El precio capturado es la BASE, SIN IVA. El IVA se suma encima para
+    // llegar al total que se le cobra al cliente.
     //
-    //   8,000 al 16%  ->  base 6,896.55  +  IVA 1,103.45  =  8,000
-    const total = Math.round((parseFloat(window._subtotalConDescuento) || 0) * 100) / 100;
+    //   2,500 al 16%  ->  base 2,500.00  +  IVA 400.00  =  total 2,900.00
+    const base = Math.round((parseFloat(window._subtotalConDescuento) || 0) * 100) / 100;
     const pct = leerIvaPorcentaje();
-    const factor = 1 + (pct / 100);
-    const base = Math.round((total / factor) * 100) / 100;
-    const iva = Math.round((total - base) * 100) / 100;
+    const iva = Math.round((base * (pct / 100)) * 100) / 100;
+    const total = Math.round((base + iva) * 100) / 100;
 
     const elBase = document.getElementById('modal-base-sin-iva');
     if (elBase) elBase.textContent = '$' + base.toFixed(2);
