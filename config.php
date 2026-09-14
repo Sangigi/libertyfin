@@ -22,6 +22,7 @@ class Config {
             // Facturapi Configuration
             'facturapi' => [
                 'api_key' => getenv('FACTURAPI_API_KEY') ?: ''
+                
             ],
             
             // cPanel API Configuration
@@ -75,6 +76,14 @@ class Config {
 		        'url_pago_dom' => getenv('DOMI_PAGAR') ?: 'https://pagadetodo.mx/Pagadetodo/Service/PagarDomiciliacionIndi',
                 'url_cancelar_dom' => getenv('DOMI_CANCELAR') ?: '',
                 'dias_vigencia_dom' => (int) (getenv('DOMICILIACION_DIAS_VIGENCIA') ?: 2)
+            ],
+
+            // ==========================================
+            // FACTURAPI - Facturación de suscripciones LibertyFin (emisor = LibertyFin)
+            // ==========================================
+            'facturapi_suscripciones' => [
+                'api_key' => getenv('FACTURAPI_SUSCRIPCIONES_API_KEY') ?: 'sk_user_LV9Sw1JcA15AUyxSfD53ntQH6sCMiYmRRMP6tpJCi2',
+                'organization_id' => getenv('FACTURAPI_SUSCRIPCIONES_ORG_ID') ?: '696ffda4c95bb2e1eee22e4c',
             ]
         ];
         
@@ -134,6 +143,9 @@ class Config {
         return $this->config['domicilacion'];
     }
 
+    public function getFacturapiSuscripcionesConfig(){
+        return $this->config['facturapi_suscripciones'];
+    }
 
 }
 
@@ -153,6 +165,14 @@ function speiConfig($key = null, $default = null) {
 
 function domiciliacionConfig($key = null, $default = null) {
     $config = Config::getInstance()->getDomiciliacionDonfig();
+    if ($key === null) {
+        return $config;
+    }
+    return $config[$key] ?? $default;
+}
+
+function facturapiSuscripcionesConfig($key = null, $default = null) {
+    $config = Config::getInstance()->getFacturapiSuscripcionesConfig();
     if ($key === null) {
         return $config;
     }

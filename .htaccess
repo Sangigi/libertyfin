@@ -1,0 +1,115 @@
+DirectoryIndex index.html index.php
+# php -- BEGIN cPanel-generated handler, do not edit
+# This domain inherits the “PHP” package.
+# php -- END cPanel-generated handler, do not edit
+RewriteEngine On
+RewriteRule ^avisos-privacidad/?$ aviso-privacidad.php [L]
+RewriteRule ^terminos-y-condiciones/?$ terminos-y-condiciones.php [L]
+RewriteRule ^software-administrativo/?$ software-administrativo.php [L]
+RewriteRule ^Login/?$ login.php [L]
+RewriteRule ^Inicio/?$ dashboard.php [L]
+RewriteRule ^Usuarios/?$ usuarios.php [L]
+RewriteRule ^Caja/?$ caja.php [L]
+RewriteRule ^Productos/?$ productos.php [L]
+RewriteRule ^Clientes/?$ clientes.php [L]
+RewriteRule ^Ventas/?$ ventas_lista.php [L]
+RewriteRule ^CortesCaja/?$ caja_historial.php [L]
+RewriteRule ^Proveedores/?$ proveedores.php [L]
+RewriteRule ^Sucursales/?$ sucursales.php [L]
+RewriteRule ^Facturacion/?$ Facturacion/inicio.php [L,NC]
+RewriteRule ^Reportes/?$ reportes.php [L,NC]
+RewriteRule ^EmidaServicios/?$ EmidaServicios/inicio.php [L,NC]
+RewriteRule ^Configuracion/?$ configuracion.php [L,NC]
+RewriteRule ^Suscripciones/?$ suscripciones.php [L,NC]
+RewriteRule ^checkout/?$ checkout.php [L,NC]
+RewriteRule ^Gastos/?$ gastos.php [L,NC]
+
+RewriteRule ^pages/clientes-casos/?$ pages/clientes-casos.html [L,NC]
+RewriteRule ^pages/clientes/?$ pages/clientes.html [L,NC]
+RewriteRule ^pages/clientes-casos/?$ pages/clientes-casos.html [L,NC]
+RewriteRule ^pages/cotizaciones/?$ pages/cotizaciones.html [L,NC]
+RewriteRule ^pages/distribuidores/?$ pages/distribuidores.html [L,NC]
+RewriteRule ^pages/facturacion/?$ pages/facturacion.html [L,NC]
+RewriteRule ^pages/industria-ecommerce/?$ pages/industria-ecommerce.html [L,NC]
+RewriteRule ^pages/industria-farmacias/?$ pages/industria-farmacias [L,NC]
+RewriteRule ^pages/industria-restaurantes/?$ pages/industria-restaurantes.html [L,NC]
+RewriteRule ^pages/industria-retail/?$ pages/industria-retail.html [L,NC]
+RewriteRule ^pages/industria-servicios/?$ pages/industria-servicios.html [L,NC]
+RewriteRule ^pages/inventario/?$ pages/inventario.html [L,NC]
+RewriteRule ^pages/precios/?$ pages/precios.html [L,NC]
+RewriteRule ^pages/punto-de-venta/?$ pages/punto-de-venta.html [L,NC]
+RewriteRule ^pages/registro/?$ pages/registro.php [L,NC]
+RewriteRule ^pages/reportes/?$ pages/reportes.html [L,NC]
+RewriteRule ^pages/inventario/?$ pages/inventario.html [L,NC]
+RewriteRule ^pages/punto-de-venta/?$ pages/punto-de-venta.html [L,NC]
+RewriteRule ^pages/preciosprueba/?$ pages/preciosprueba.html [L,NC]
+RewriteRule ^pages/carrito/?$ pages/mi-carrito.php [L,NC]
+RewriteRule ^pages/aviso-privacidad/?$ pages/aviso-privacidad.html [L,NC]
+RewriteRule ^pages/terminos-y-condiciones/?$ pages/terminos-y-condiciones.html [L,NC]
+
+RewriteRule ^Administracion/Inicio/?$ Administracion/dashboard.php [L,NC]
+RewriteRule ^Administracion/Login/?$ Administracion/login.php [L,NC]
+
+RewriteRule ^cerrar_sesion/?$ logout.php [L,NC]
+RewriteRule ^SolicitudEmpresa/?$ solicitudEmpresa.php [L]
+RewriteRule ^Distribuidor/RegistroDistribuidor/?$ Distribuidor/registro-distribuidor.php [L,NC]
+RewriteRule ^Distribuidor/Login/?$ Distribuidor/login-distribuidor.php [L,NC]
+RewriteRule ^mi-carrito/?$ mi-carrito.php [L]
+RewriteRule ^indexprueba/?$ indexprueba.html [L]
+
+RewriteRule ^Service/GenerarClabe/?$ Service/generar_clabe.php [L,NC]
+RewriteRule ^Service/ConsultaClabe/?$ Service/consultar_clabe.php [L,NC]
+RewriteRule ^Service/PagoClabe/?$ Service/pago_clabe.php [L,NC]
+RewriteRule ^Service/CancelaPago/?$ Service/cancelar_pago.php [L,NC]
+RewriteRule ^Service/PagoLinea/?$ Service/pagar_liga.php [L,NC]
+RewriteRule ^Service/EntregarPagoLineaToken/?$ Service/EntregarPagoLineaToken.php [L,NC]
+
+RewriteRule ^InicioPruebas/?$ pruebaindex.html [L,NC]
+
+
+php_value session.gc_maxlifetime 14400
+php_value session.cookie_lifetime 14400
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_file_uploads 10
+php_value memory_limit 128M
+
+# BEGIN cPanel-generated php ini directives, do not edit
+# Manual editing of this file may result in unexpected behavior.
+# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
+# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
+<IfModule php8_module>
+   php_flag display_errors Off
+   php_value max_execution_time 60
+   php_value max_input_time 60
+   php_value max_input_vars 1000
+   php_value memory_limit 512M
+   php_value post_max_size 516M
+   php_value session.gc_maxlifetime 28800
+   php_value session.cookie_lifetime 28800
+   php_value session.save_path "/home2/juanc141/sessions"
+   php_value upload_max_filesize 512M
+   php_flag zlib.output_compression Off
+   php_value session.cookie_secure "1"
+   php_value session.gc_divisor 100
+   php_value session.gc_probability 1
+   php_flag session.use_strict_mode On
+</IfModule>
+<IfModule lsapi_module>
+   php_flag display_errors Off
+   php_value max_execution_time 60
+   php_value max_input_time 60
+   php_value max_input_vars 1000
+   php_value memory_limit 512M
+   php_value post_max_size 516M
+   php_value session.gc_maxlifetime 28800
+   php_value session.cookie_lifetime 28800
+   php_value session.save_path "/home2/juanc141/sessions"
+   php_value upload_max_filesize 512M
+   php_flag zlib.output_compression Off
+   php_value session.cookie_secure "1"
+   php_value session.gc_divisor 100
+   php_value session.gc_probability 1
+   php_flag session.use_strict_mode On
+</IfModule>
+# END cPanel-generated php ini directives, do not edit

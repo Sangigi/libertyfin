@@ -493,3 +493,13 @@ Stack trace:
 [14-Sep-2026 10:33:39 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.234.29
 [14-Sep-2026 11:22:25 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.234.29
 [14-Sep-2026 11:27:02 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[14-Sep-2026 12:37:46 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.189.102.73
+[14-Sep-2026 12:51:29 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.189.102.73
+[14-Sep-2026 13:04:26 America/Mexico_City] Posible secuestro de sesión - IP cambio de 153.54.200.234 a 201.124.44.61
+[14-Sep-2026 13:04:37 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 69
+[14-Sep-2026 13:04:37 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:69
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(69): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 69
+[14-Sep-2026 13:04:42 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.124.44.61
