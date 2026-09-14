@@ -15,8 +15,8 @@ $periodo = isset($_GET['periodo']) ? $_GET['periodo'] : 'mensual';
 $planes = [
     'basico' => [
         'nombre' => 'Básico',
-        'precio_mensual' => 299,
-        'precio_anual' => 239,
+        'precio_mensual' => 10,
+        'precio_anual' => 10,
         'usuarios' => 1,
         'cajas' => 1,
         'productos' => 100
@@ -104,14 +104,45 @@ $usos_cfdi = [
     'P01' => 'Por definir'
 ];
 
-// Recuperar datos fiscales de la sesión si ya se habían guardado (opcional)
+// Datos fiscales guardados en "Mi cuenta" (sistema_config / datos_pago_comercio)
+// de la propia empresa: se usan como valor por defecto para no tener que
+// volver a capturarlos cada vez que se paga la suscripción. Si el usuario ya
+// los había llenado en este checkout durante la sesión actual, esos tienen
+// prioridad (por si los está corrigiendo solo para esta compra).
+$fiscal_empresa = [];
+$pago_empresa = [];
+if (!empty($_SESSION['empresa_db'])) {
+    try {
+        $conn_fiscal = getEmpresaDBConnection($_SESSION['empresa_db']);
+        if ($conn_fiscal) {
+            $res = $conn_fiscal->query("SELECT * FROM sistema_config LIMIT 1");
+            $fiscal_empresa = $res->fetch(PDO::FETCH_ASSOC) ?: [];
+
+            // datos_pago_comercio (dirección) puede no existir todavía si el
+            // admin nunca ha entrado a "Mi cuenta" -> se ignora en silencio.
+            try {
+                $res = $conn_fiscal->query("SELECT * FROM datos_pago_comercio LIMIT 1");
+                $pago_empresa = $res->fetch(PDO::FETCH_ASSOC) ?: [];
+            } catch (Exception $e) {
+                $pago_empresa = [];
+            }
+            $conn_fiscal = null;
+        }
+    } catch (Exception $e) {
+        error_log('checkout.php: no se pudieron cargar datos fiscales de la empresa: ' . $e->getMessage());
+    }
+}
+
+// Recuperar datos fiscales: primero lo ya capturado en esta sesión (si el
+// usuario los está editando ahora mismo), si no lo que tenga guardado en
+// "Mi cuenta", y si tampoco hay, vacío.
 $facturar_default = $_SESSION['facturar_default'] ?? 'no';
-$rfc_default = $_SESSION['rfc_default'] ?? '';
-$razon_social_default = $_SESSION['razon_social_default'] ?? '';
-$regimen_default = $_SESSION['regimen_default'] ?? '';
-$cp_default = $_SESSION['cp_default'] ?? '';
-$estado_default = $_SESSION['estado_default'] ?? '';
-$ciudad_default = $_SESSION['ciudad_default'] ?? '';
+$rfc_default = $_SESSION['rfc_default'] ?? ($fiscal_empresa['rfc'] ?? '');
+$razon_social_default = $_SESSION['razon_social_default'] ?? ($fiscal_empresa['razon_social'] ?? '');
+$regimen_default = $_SESSION['regimen_default'] ?? ($fiscal_empresa['regimen_fiscal'] ?? '');
+$cp_default = $_SESSION['cp_default'] ?? ($fiscal_empresa['cp_fiscal'] ?? '');
+$estado_default = $_SESSION['estado_default'] ?? ($pago_empresa['estado_direccion'] ?? '');
+$ciudad_default = $_SESSION['ciudad_default'] ?? ($pago_empresa['ciudad'] ?? '');
 $uso_cfdi_default = $_SESSION['uso_cfdi_default'] ?? '';
 
 $conn_main = getDBConnection();
@@ -226,10 +257,7 @@ $plan_badge_class = match($empresa_plan) {
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <button class="sidebar-toggle" type="button" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            <a class="navbar-brand d-flex align-items-center" href="#">
+            <a class="navbar-brand d-flex align-items-center" href="dashboard.php">
                 <?php if ($logo_src_base64): ?>
                     <img src="<?php echo $logo_src_base64; ?>" alt="<?php echo htmlspecialchars($nombre_empresa); ?>" class="me-2" style="height:32px; width:auto; border-radius:8px; object-fit:contain;">
                     <span><?php echo htmlspecialchars($nombre_empresa); ?>
@@ -251,6 +279,9 @@ $plan_badge_class = match($empresa_plan) {
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><span class="dropdown-item-text"><small>Empresa: <?php echo htmlspecialchars($nombre_empresa); ?></small></span></li>
                         <li><span class="dropdown-item-text"><small>Rol: <?php echo htmlspecialchars($_SESSION['usuario_rol']); ?></small></span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="cuenta.php"><i class="fas fa-id-card me-2"></i>Mi Cuenta</a></li>
+                        <li><a class="dropdown-item" href="planes.php"><i class="fas fa-rocket me-2"></i>Planes</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
                     </ul>

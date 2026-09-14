@@ -326,12 +326,7 @@ if ($conn_main) {
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <!-- Botón hamburguesa para móvil -->
-            <button class="sidebar-toggle" type="button" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <a class="navbar-brand d-flex align-items-center" href="#">
+            <a class="navbar-brand d-flex align-items-center" href="dashboard.php">
                 <?php if ($logo_src_base64): ?>
                     <!-- Mostrar logo en base64 -->
                     <img src="<?php echo $logo_src_base64; ?>"
@@ -413,6 +408,9 @@ if ($conn_main) {
                                 </a></li>
                             <hr class="dropdown-divider">
                         </li>
+                        <li><a class="dropdown-item" href="cuenta.php"><i class="fas fa-id-card me-2"></i>Mi Cuenta</a></li>
+                        <li><a class="dropdown-item" href="planes.php"><i class="fas fa-rocket me-2"></i>Planes</a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
                     </ul>
                 </li>

@@ -5306,3 +5306,10 @@
 [11-Sep-2026 12:14:47 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: , API Key disponible: NO
 [11-Sep-2026 12:14:47 America/Mexico_City] Buscando caja por usuario/sucursal...
 [11-Sep-2026 12:14:47 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 8
+[14-Sep-2026 10:21:19 America/Mexico_City] 📋 Datos empresa - Plan: premium, Org ID: 6986242e7c56a2008bcd3869, Timbres: 497
+[14-Sep-2026 10:21:19 America/Mexico_City] 🔑 Obteniendo API Key de prueba para organización: 6986242e7c56a2008bcd3869
+[14-Sep-2026 10:21:20 America/Mexico_City] ✅ API Key de prueba obtenida correctamente
+[14-Sep-2026 10:21:20 America/Mexico_City] 💾 API Key de prueba guardada en sistema_config
+[14-Sep-2026 10:21:20 America/Mexico_City] ✅ Configuración de Facturapi cargada - Plan: premium, API Key disponible: SÍ
+[14-Sep-2026 10:21:20 America/Mexico_City] Buscando caja por usuario/sucursal...
+[14-Sep-2026 10:21:20 America/Mexico_City] ✅ Caja encontrada por usuario/sucursal - ID: 8

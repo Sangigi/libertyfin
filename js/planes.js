@@ -9,8 +9,8 @@
 const PLANES_DATA = {
     basico: {
         nombre: 'Básico',
-        precio_mensual: 299,
-        precio_anual: 239,
+        precio_mensual: 10,
+        precio_anual: 10,
         usuarios: 1,
         cajas: 1,
         productos: 100
@@ -32,7 +32,7 @@ const PLANES_DATA = {
         productos: 500,
         sucursales: 1
     },
-    plus: {
+    premium: {
         nombre: 'Empresarial Plus',
         precio_mensual: 1499,
         precio_anual: 1199,

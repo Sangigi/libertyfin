@@ -100,6 +100,31 @@ try {
     }
     $_SESSION['empresa_plan'] = $empresa_plan;
 
+    // Alias: valores legados del enum `plan` en la BD -> claves del catálogo
+    // de planes actual (mismo mapeo que ya usa cuenta.php), para que el
+    // badge muestre el nombre de plan vigente y no un nombre viejo como
+    // "Premium" que ya no existe en la tabla de precios.
+    $plan_alias_dashboard = [
+        'prueba'      => null,
+        'basico'      => 'basico',
+        'starter'     => 'basico',
+        'emprendedor' => 'profesional',
+        'premium'     => 'empresarial',
+        'profesional' => 'profesional',
+        'empresarial' => 'empresarial',
+        'plus'        => 'plus',
+    ];
+    $plan_nombres_dashboard = [
+        'basico'      => 'Básico',
+        'profesional' => 'Profesional',
+        'empresarial' => 'Empresarial',
+        'plus'        => 'Empresarial Plus',
+    ];
+    $plan_key_dashboard = $plan_alias_dashboard[$empresa_plan] ?? null;
+    $empresa_plan_nombre = $empresa_plan === 'prueba'
+        ? 'Prueba'
+        : ($plan_nombres_dashboard[$plan_key_dashboard] ?? ucfirst($empresa_plan));
+
     // Estado de caja
     $sql_caja_actual = "SELECT * FROM caja WHERE usuario_id = ? AND sucursal_id = ? AND estado = 'abierta'";
     $stmt_caja = $conn->prepare($sql_caja_actual);
@@ -179,15 +204,14 @@ try {
                                         <h4 class="card-title mb-2">
                                             <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?>
                                             <span class="badge bg-<?php
-                                                    echo match ($empresa_plan) {
-                                                        'premium' => 'primary',
-                                                        'emprendedor' => 'success',
+                                                    echo match ($plan_key_dashboard) {
+                                                        'plus', 'empresarial' => 'primary',
+                                                        'profesional' => 'success',
                                                         'basico' => 'warning',
-                                                        'prueba' => 'info',
-                                                        default => 'secondary'
+                                                        default => ($empresa_plan === 'prueba' ? 'info' : 'secondary')
                                                     };
                                                     ?> ms-2" style="font-size: 0.7rem;">
-                                                Plan <?php echo ucfirst($empresa_plan); ?>
+                                                Plan <?php echo htmlspecialchars($empresa_plan_nombre); ?>
                                             </span>
                                         </h4>
                                         <p class="card-text mb-0 opacity-75">
@@ -418,15 +442,14 @@ try {
                                     <small class="text-muted">Plan Actual:</small>
                                     <p class="mb-1">
                                         <span class="badge bg-<?php
-                                                echo match ($empresa_plan) {
-                                                    'premium' => 'primary',
-                                                    'emprendedor' => 'success',
+                                                echo match ($plan_key_dashboard) {
+                                                    'plus', 'empresarial' => 'primary',
+                                                    'profesional' => 'success',
                                                     'basico' => 'warning',
-                                                    'prueba' => 'info',
-                                                    default => 'secondary'
+                                                    default => ($empresa_plan === 'prueba' ? 'info' : 'secondary')
                                                 };
                                                 ?>">
-                                            <?php echo ucfirst($empresa_plan); ?>
+                                            <?php echo htmlspecialchars($empresa_plan_nombre); ?>
                                         </span>
                                         <?php if ($empresa_plan === 'basico'): ?>
                                             <small class="text-warning d-block mt-1">

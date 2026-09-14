@@ -75,8 +75,8 @@ if (!empty($config['logo'])) {
 $planes = [
     'basico' => [
         'nombre' => 'Básico',
-        'precio_mensual' => 299,
-        'precio_anual' => 239,
+        'precio_mensual' => 10,
+        'precio_anual' => 10,
         'usuarios' => 1,
         'cajas' => 1,
         'productos' => 100,
@@ -162,7 +162,7 @@ $plan_badge_class = match($empresa_plan) {
             <button class="sidebar-toggle" type="button" id="sidebarToggle">
                 <i class="fas fa-bars"></i>
             </button>
-            <a class="navbar-brand d-flex align-items-center" href="#">
+            <a class="navbar-brand d-flex align-items-center" href="dashboard.php">
                 <?php if ($logo_src_base64): ?>
                     <img src="<?php echo $logo_src_base64; ?>" alt="<?php echo htmlspecialchars($nombre_empresa); ?>" class="me-2" style="height:32px; width:auto; border-radius:8px; object-fit:contain;">
                     <span><?php echo htmlspecialchars($nombre_empresa); ?>
@@ -185,6 +185,9 @@ $plan_badge_class = match($empresa_plan) {
                         <li><span class="dropdown-item-text"><small>Empresa: <?php echo htmlspecialchars($nombre_empresa); ?></small></span></li>
                         <li><span class="dropdown-item-text"><small>Rol: <?php echo htmlspecialchars($_SESSION['usuario_rol']); ?></small></span></li>
                         <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="cuenta.php"><i class="fas fa-id-card me-2"></i>Mi Cuenta</a></li>
+                        <li><a class="dropdown-item" href="planes.php"><i class="fas fa-rocket me-2"></i>Planes</a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="cerrar_sesion"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
                     </ul>
                 </li>
@@ -195,6 +198,10 @@ $plan_badge_class = match($empresa_plan) {
     <main>
         <div class="plans-section">
             <div class="plans-inner">
+                <a href="cuenta.php" class="btn btn-outline-secondary btn-sm mb-3">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a Mi Cuenta
+                </a>
+
                 <h2 class="mb-2 text-center" style="color: var(--lf-ink); font-weight: 700;">
                     <i class="fas fa-rocket me-2" style="color: var(--primary-color);"></i>
                     Elige tu plan
