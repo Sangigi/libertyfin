@@ -89,6 +89,22 @@ try {
         @media print {
             .no-print { display: none !important; }
         }
+        /* La columna de acción se quedaba fuera de pantalla al hacer scroll
+           horizontal: la anclamos a la derecha para que el botón de abonar
+           siempre se vea, en cualquier tamaño de pantalla. */
+        .col-accion {
+            position: sticky;
+            right: 0;
+            z-index: 2;
+            background: #fff;
+            box-shadow: -6px 0 6px -6px rgba(0,0,0,.25);
+            white-space: nowrap;
+        }
+        thead .col-accion, tfoot .col-accion { background: #f8f9fa; }
+        .table-hover tbody tr:hover .col-accion { background: #f2f2f2; }
+        @media print {
+            .col-accion { position: static; box-shadow: none; }
+        }
     </style>
     <link rel="stylesheet" href="css/crm-theme.css">
 </head>
@@ -206,7 +222,7 @@ try {
                                     <th class="text-end">Total</th><th class="text-end">Cobrado</th>
                                     <th class="text-end">Saldo</th><th class="text-center">% cobrado</th>
                                     <th class="text-center">Días</th><th>Último pago</th>
-                                    <th class="no-print"></th>
+                                    <th class="no-print col-accion text-center">Acción</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -239,10 +255,10 @@ try {
                                     <td class="text-nowrap">
                                         <?php echo $c['ultimo_pago'] ? date('d/m/Y', strtotime($c['ultimo_pago'])) : '<span class="text-muted">—</span>'; ?>
                                     </td>
-                                    <td class="no-print">
+                                    <td class="no-print col-accion text-center">
                                         <a href="ventas_lista.php?ver_venta=<?php echo (int)$c['venta_id']; ?>"
-                                           class="btn btn-sm btn-outline-primary" title="Abrir la venta y registrar un abono">
-                                            <i class="fas fa-hand-holding-dollar"></i>
+                                           class="btn btn-sm btn-primary" title="Abrir la venta y registrar un abono">
+                                            <i class="fas fa-hand-holding-dollar me-1"></i>Abonar
                                         </a>
                                     </td>
                                 </tr>
@@ -255,7 +271,7 @@ try {
                                     <td class="text-end fw-bold"><?php echo money($total_vendido); ?></td>
                                     <td class="text-end fw-bold text-success"><?php echo money($total_cobrado); ?></td>
                                     <td class="text-end fw-bold text-danger"><?php echo money($total_saldo); ?></td>
-                                    <td colspan="4"></td>
+                                    <td colspan="3"></td><td class="no-print col-accion"></td>
                                 </tr>
                             </tfoot>
                             <?php endif; ?>

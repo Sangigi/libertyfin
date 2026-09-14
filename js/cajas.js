@@ -974,6 +974,17 @@ function procesarPagoPaypal(monto) {
     });
 }
 
+// ========== COBRO PARCIAL / ANTICIPO ==========
+// No hay campos extra: se deduce del monto recibido. Si el cliente deja
+// menos del total, esa cantidad es el anticipo y el resto queda como saldo
+// por cobrar. Si deja de más, la venta se liquida y lo demás es cambio.
+function leerTotalModal() {
+    const el = document.getElementById('modal-total-pagar');
+    return parseFloat((el ? el.value : '0').replace(/[^\d.]/g, '')) || 0;
+}
+
+function setupAnticipo() { /* ya no hay campos aparte que preparar */ }
+
 // ========== FUNCIONES PARA EFECTIVO ==========
 function setupEfectivoInput() {
     const efectivoInput = document.getElementById('modal-efectivo-recibido');
@@ -1015,9 +1026,7 @@ function updatePaymentValues(inputValue) {
     const cambioInput = document.getElementById('modal-cambio');
     const efectivoHidden = document.getElementById('modal-efectivoRecibidoHidden');
     const cambioHidden = document.getElementById('modal-cambioHidden');
-    const totalPagarInput = document.getElementById('modal-total-pagar');
-    const totalText = totalPagarInput ? totalPagarInput.value.replace('$', '') : '0.00';
-    const total = parseFloat(totalText) || 0;
+    const total = leerTotalModal();
 
     let numericValue = 0;
     if (inputValue === '' || inputValue === null || inputValue === undefined) {
@@ -1037,12 +1046,42 @@ function updatePaymentValues(inputValue) {
     }
 
     if (efectivoHidden) efectivoHidden.value = numericValue.toFixed(2);
-    const cambio = numericValue - total;
-    if (cambioInput) {
-        cambioInput.value = cambio >= 0 ? '$' + cambio.toFixed(2) : '$0.00';
+
+    // Con lo recibido se decide todo: pagó de más -> cambio;
+    // pagó de menos -> anticipo y saldo pendiente.
+    const cobrado = Math.min(numericValue, total);
+    const cambio  = Math.max(0, numericValue - total);
+    const saldo   = Math.round((total - cobrado) * 100) / 100;
+
+    if (cambioInput) cambioInput.value = '$' + cambio.toFixed(2);
+    if (cambioHidden) cambioHidden.value = cambio.toFixed(2);
+
+    const elSaldo = document.getElementById('modal-saldoPendiente');
+    if (elSaldo) elSaldo.value = '$' + saldo.toFixed(2);
+
+    // El servidor toma 0 como "venta liquidada"; si hay saldo se manda el anticipo.
+    const anticipoHidden = document.getElementById('modal-anticipoHidden');
+    if (anticipoHidden) anticipoHidden.value = saldo > 0.005 ? cobrado.toFixed(2) : '0.00';
+
+    const btnPagar = document.getElementById('modal-btnPagar');
+    if (btnPagar) {
+        btnPagar.innerHTML = '<i class="fas fa-check-circle me-2"></i>' +
+            (saldo > 0.005
+                ? 'COBRAR ANTICIPO - $' + cobrado.toFixed(2) + ' (saldo $' + saldo.toFixed(2) + ')'
+                : 'CONFIRMAR PAGO - $' + total.toFixed(2));
     }
-    if (cambioHidden) {
-        cambioHidden.value = cambio >= 0 ? cambio.toFixed(2) : '0.00';
+
+    const aviso = document.getElementById('modal-aviso-anticipo');
+    if (aviso) {
+        if (saldo > 0.005) {
+            aviso.style.display = '';
+            aviso.innerHTML = '<i class="fas fa-info-circle me-1"></i>Venta por $' + total.toFixed(2) +
+                '. Se cobra $' + cobrado.toFixed(2) + ' y quedan <strong>$' + saldo.toFixed(2) +
+                '</strong> por cobrar.';
+        } else {
+            aviso.style.display = 'none';
+            aviso.innerHTML = '';
+        }
     }
 }
 
@@ -1132,7 +1171,7 @@ function aplicarIvaModal() {
         `;
     }
 
-    // El cambio depende del total, hay que recalcularlo
+    // El cambio y el saldo dependen del total, hay que recalcularlos
     const efectivoInput = document.getElementById('modal-efectivo-recibido');
     if (efectivoInput) updatePaymentValues(efectivoInput.value);
 
@@ -1140,6 +1179,7 @@ function aplicarIvaModal() {
 }
 
 function setupIvaVenta() {
+    setupAnticipo();
     const input = document.getElementById('modal-iva-porcentaje');
     if (!input) return;
     input.addEventListener('input', aplicarIvaModal);

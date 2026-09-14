@@ -550,7 +550,7 @@ function strftime_es($fecha) {
         // COMISIONES Y COBRANZA · una fila por PAGO recibido
         //   cobrado - costo de venta - gastos de venta - comisiones
         //   = utilidad
-        // Costo y gastos se prorratean por la proporcion cobrada.
+        // Costo y gastos van completos en el primer pago de la venta.
         // =============================================================
         $sql_comisiones = "
             SELECT
@@ -649,6 +649,23 @@ function strftime_es($fecha) {
             }
         }
 
+        // Primer pago (el más antiguo) de cada venta: absorbe el costo y el
+        // gasto de operación completos, que no se prorratean por abono.
+        $primer_pago = [];
+        if (!empty($ventas_vist)) {
+            $ids_pp = implode(',', array_map('intval', array_keys($ventas_vist)));
+            $res_pp = $conn->query("
+                SELECT venta_id, MIN(id) AS pago_id
+                FROM venta_pagos
+                WHERE venta_id IN ($ids_pp) AND cancelado = 0
+                GROUP BY venta_id");
+            if ($res_pp) {
+                while ($pp = $res_pp->fetch_assoc()) {
+                    $primer_pago[(int)$pp['venta_id']] = (int)$pp['pago_id'];
+                }
+            }
+        }
+
         if (!empty($areas_com)) {
             $mesTitulo = strtoupper(strftime_es($fecha_inicio));
 
@@ -724,8 +741,11 @@ function strftime_es($fecha) {
 
                 foreach ($datos['pagos'] as $pid => $pg) {
                     $cv    = $costos_venta[$pg['venta_id']] ?? ['costo' => 0, 'gasto' => 0];
-                    $costo = round($cv['costo'] * $pg['proporcion'], 2);
-                    $gasto = round($cv['gasto'] * $pg['proporcion'], 2);
+                    // Costo y gasto de operación van completos en el primer
+                    // pago de la venta, no prorrateados por abono.
+                    $es_primer_pago = (int)($primer_pago[$pg['venta_id']] ?? 0) === (int)$pid;
+                    $costo = $es_primer_pago ? round($cv['costo'], 2) : 0.0;
+                    $gasto = $es_primer_pago ? round($cv['gasto'], 2) : 0.0;
 
                     $comision_pago = 0;
                     foreach ($colabs as $c) { $comision_pago += ($pg['colab'][$c] ?? 0); }

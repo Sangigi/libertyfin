@@ -99,14 +99,28 @@ try {
             exit();
         }
 
-        // El precio se cobró con IVA incluido, así que EL TOTAL NO CAMBIA:
-        // lo que cambia es cuánto de ese total es base y cuánto impuesto.
-        //   base = total / (1 + pct/100)      iva = total - base
-        // Cambiar esto no altera lo que el cliente pagó.
-        $total  = round((float)$v['total'], 2);
+        $modo = $_POST['modo'] ?? 'por_dentro';
         $factor = 1 + ($pct / 100);
-        $base   = round($total / $factor, 2);
-        $iva    = round($total - $base, 2);
+
+        if ($modo === 'por_fuera') {
+            // IVA POR FUERA: la base que escribió el usuario se respeta tal cual
+            // y el IVA se SUMA encima. Aquí sí cambia el total de la venta:
+            //   base = lo capturado      iva = base * pct/100      total = base + iva
+            $base = round(floatval($_POST['base'] ?? 0), 2);
+            if ($base < 0) {
+                echo json_encode(['success' => false, 'message' => 'La base no puede ser negativa']);
+                exit();
+            }
+            $iva   = round($base * ($pct / 100), 2);
+            $total = round($base + $iva, 2);
+        } else {
+            // IVA POR DENTRO (comportamiento anterior): el total no se mueve,
+            // sólo se reparte entre base e impuesto.
+            //   base = total / (1 + pct/100)      iva = total - base
+            $total = round((float)$v['total'], 2);
+            $base  = round($total / $factor, 2);
+            $iva   = round($total - $base, 2);
+        }
 
         // El descuento se reexpresa sin IVA para que la resta cierre:
         //   subtotal - descuento = base
@@ -122,8 +136,11 @@ try {
 
         echo json_encode([
             'success'    => true,
-            'message'    => 'IVA actualizado a ' . number_format($pct, 2) . '% ($' . number_format($iva, 2) . ' incluidos en el total). '
-                          . 'El total de la venta no cambia: $' . number_format($total, 2),
+            'message'    => ($modo === 'por_fuera')
+                          ? 'IVA del ' . number_format($pct, 2) . '% sumado sobre la base de $' . number_format($base, 2)
+                            . ' (+$' . number_format($iva, 2) . '). Nuevo total: $' . number_format($total, 2)
+                          : 'IVA actualizado a ' . number_format($pct, 2) . '% ($' . number_format($iva, 2) . ' incluidos en el total). '
+                            . 'El total de la venta no cambia: $' . number_format($total, 2),
             'base'       => round($base, 2),
             'iva'        => $iva,
             'porcentaje' => round($pct, 2),

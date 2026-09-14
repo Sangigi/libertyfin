@@ -44,6 +44,7 @@ if (($_SESSION['usuario_rol'] ?? '') !== 'admin') {
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/env_loader.php';
+require_once __DIR__ . '/includes/comisiones_devengadas.php';
 
 try {
     $conn = getEmpresaDBConnection($_SESSION['empresa_db']);
@@ -117,9 +118,19 @@ try {
         }
 
         $total_viejo = round((float)$v['total'], 2);
-        if ($total_viejo <= 0) {
-            echo json_encode(['success' => false, 'message' => 'La venta tiene total 0, no se puede escalar']);
-            exit();
+        // Con total 0 no hay factor de escala posible (multiplicar por cero
+        // nunca sale de cero). En ese caso no se escala: se reparte el nuevo
+        // total entre las líneas, en proporción a la cantidad.
+        $puede_escalar = ($total_viejo > 0);
+        $cant_total = 0.0;
+        if (!$puede_escalar) {
+            $stc = $conn->prepare("SELECT COALESCE(SUM(cantidad),0) FROM venta_detalles WHERE venta_id = ?");
+            $stc->execute([$venta_id]);
+            $cant_total = (float)$stc->fetchColumn();
+            if ($cant_total <= 0) {
+                echo json_encode(['success' => false, 'message' => 'La venta está en 0 y no tiene productos con cantidad: no hay entre qué repartir el nuevo total. Agrega o corrige los productos de la venta.']);
+                exit();
+            }
         }
 
         // Lo cobrado SÍ puede ser mayor al total real: pasa cuando el cliente
@@ -134,8 +145,10 @@ try {
         }
 
         // Factor de escala. Todo lo que sea "precio" se multiplica por él;
-        // los costos NO.
-        $f = $nuevo_total / $total_viejo;
+        // los costos NO. (Sólo aplica cuando la venta tenía un total > 0.)
+        $f = $puede_escalar ? ($nuevo_total / $total_viejo) : 0.0;
+        // Precio unitario plano cuando se reparte desde cero.
+        $precio_plano = $puede_escalar ? 0.0 : round($nuevo_total / $cant_total, 2);
 
         // Porcentaje de IVA vigente en la venta (el precio lo trae incluido)
         $base_vieja = (float)$v['subtotal'] - (float)$v['descuento'];
@@ -145,14 +158,37 @@ try {
         $conn->beginTransaction();
         try {
             // --- 1 · Detalles de la venta ---
-            $conn->prepare("
-                UPDATE venta_detalles
-                SET precio_unitario = ROUND(precio_unitario * ?, 2),
-                    subtotal        = ROUND(subtotal * ?, 2),
-                    descuento       = ROUND(COALESCE(descuento, 0) * ?, 2),
-                    total           = ROUND(total * ?, 2)
-                WHERE venta_id = ?
-            ")->execute([$f, $f, $f, $f, $venta_id]);
+            if ($puede_escalar) {
+                $conn->prepare("
+                    UPDATE venta_detalles
+                    SET precio_unitario = ROUND(precio_unitario * ?, 2),
+                        subtotal        = ROUND(subtotal * ?, 2),
+                        descuento       = ROUND(COALESCE(descuento, 0) * ?, 2),
+                        total           = ROUND(total * ?, 2)
+                    WHERE venta_id = ?
+                ")->execute([$f, $f, $f, $f, $venta_id]);
+
+                // Ventas viejas donde el precio unitario quedó en 0 aunque la
+                // línea sí tenía importe: se reconstruye desde el total de la
+                // línea para que los reportes y las comisiones cuadren.
+                $conn->prepare("
+                    UPDATE venta_detalles
+                    SET precio_unitario = ROUND((total + COALESCE(descuento,0)) / cantidad, 2)
+                    WHERE venta_id = ? AND cantidad > 0
+                      AND precio_unitario = 0 AND total > 0
+                ")->execute([$venta_id]);
+            } else {
+                // Venía en 0: se asigna precio directo por unidad y se limpia
+                // el descuento, que también estaba en 0.
+                $conn->prepare("
+                    UPDATE venta_detalles
+                    SET precio_unitario = ?,
+                        subtotal        = ROUND(cantidad * ?, 2),
+                        descuento       = 0,
+                        total           = ROUND(cantidad * ?, 2)
+                    WHERE venta_id = ?
+                ")->execute([$precio_plano, $precio_plano, $precio_plano, $venta_id]);
+            }
 
             // --- 2 · Cabecera de la venta ---
             $nueva_base      = round($nuevo_total / $factor_iva, 2);
@@ -169,12 +205,30 @@ try {
             // --- 3 · Recalcular las comisiones asignadas ---
             // Los precios escalan; costo y gasto de operación se quedan.
             //   base = (precio x cant - descuento) - costo x cant - gasto
-            $conn->prepare("
-                UPDATE venta_comisiones
-                SET precio_unitario = ROUND(precio_unitario * ?, 2),
-                    descuento_linea = ROUND(descuento_linea * ?, 2)
-                WHERE venta_id = ? AND cancelada = 0
-            ")->execute([$f, $f, $venta_id]);
+            if ($puede_escalar) {
+                $conn->prepare("
+                    UPDATE venta_comisiones
+                    SET precio_unitario = ROUND(precio_unitario * ?, 2),
+                        descuento_linea = ROUND(descuento_linea * ?, 2)
+                    WHERE venta_id = ? AND cancelada = 0
+                ")->execute([$f, $f, $venta_id]);
+
+                // Igual que en los detalles: si el precio venía en 0, se toma
+                // el del detalle ya escalado.
+                $conn->prepare("
+                    UPDATE venta_comisiones vc
+                    INNER JOIN venta_detalles vd ON vd.id = vc.venta_detalle_id
+                    SET vc.precio_unitario = vd.precio_unitario
+                    WHERE vc.venta_id = ? AND vc.cancelada = 0
+                      AND vc.precio_unitario = 0 AND vd.precio_unitario > 0
+                ")->execute([$venta_id]);
+            } else {
+                $conn->prepare("
+                    UPDATE venta_comisiones
+                    SET precio_unitario = ?, descuento_linea = 0
+                    WHERE venta_id = ? AND cancelada = 0
+                ")->execute([$precio_plano, $venta_id]);
+            }
 
             $conn->prepare("
                 UPDATE venta_comisiones
@@ -237,51 +291,11 @@ try {
             }
 
             // --- 5 · Regenerar las comisiones por pago ---
-            // La proporción cobrada cambió, así que las que había ya no valen.
+            // Cambió la proporción cobrada, así que lo generado ya no vale.
+            // Se borra y se vuelve a calcular con la regla única del sistema
+            // (gasto de operación completo, comisión sobre lo cobrado).
             $conn->prepare("DELETE FROM pago_comisiones WHERE venta_id = ?")->execute([$venta_id]);
-
-            $st = $conn->prepare("
-                SELECT id, monto, fecha_pago FROM venta_pagos
-                WHERE venta_id = ? AND cancelado = 0
-            ");
-            $st->execute([$venta_id]);
-            $pagos = $st->fetchAll(PDO::FETCH_ASSOC);
-
-            $st_c = $conn->prepare("
-                SELECT id, colaborador_id, colaborador_nombre, area_nombre,
-                       porcentaje_regla, monto_comision
-                FROM venta_comisiones WHERE venta_id = ? AND cancelada = 0
-            ");
-            $st_c->execute([$venta_id]);
-            $asig = $st_c->fetchAll(PDO::FETCH_ASSOC);
-
-            $st_i = $conn->prepare("
-                INSERT INTO pago_comisiones
-                    (pago_id, venta_comision_id, venta_id, colaborador_id, colaborador_nombre,
-                     area_nombre, porcentaje, proporcion_cobrada, monto, fecha_pago)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-            $regeneradas = 0;
-            // Tope acumulado a 100%: si la SUMA de pagos rebasa el total real
-            // (diferencia a favor del cliente), ese excedente no genera
-            // comisión extra en ningún pago, ni siquiera repartido entre
-            // varios. La comisión máxima por vender es la asignada en
-            // venta_comisiones, ni un peso más aunque hayan cobrado de más.
-            $prop_acumulada = 0.0;
-            foreach ($pagos as $pg) {
-                $prop_pago = (float)$pg['monto'] / $nuevo_total;
-                $prop = max(0.0, min($prop_pago, 1.0 - $prop_acumulada));
-                $prop_acumulada += $prop;
-                foreach ($asig as $a) {
-                    $m = round((float)$a['monto_comision'] * $prop, 2);
-                    if ($m <= 0) continue;
-                    $st_i->execute([
-                        $pg['id'], $a['id'], $venta_id, $a['colaborador_id'], $a['colaborador_nombre'],
-                        $a['area_nombre'], $a['porcentaje_regla'], round($prop, 6), $m, $pg['fecha_pago']
-                    ]);
-                    $regeneradas++;
-                }
-            }
+            $regeneradas = sincronizarComisionesDeVenta($conn, $venta_id);
 
             // --- 6 · Dejar rastro ---
             $nota_diferencia = $diferencia_a_favor > 0

@@ -193,3 +193,266 @@ Stack trace:
 [07-Sep-2026 10:13:36 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 153.54.200.234
 [07-Sep-2026 10:15:11 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
 [07-Sep-2026 11:40:09 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 201.103.24.36
+[07-Sep-2026 13:33:57 America/Mexico_City] Login exitoso - Usuario: facturacion, Empresa: Ideas Mx, IP: 201.103.24.36
+[07-Sep-2026 13:48:15 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.24.36
+[07-Sep-2026 13:49:14 America/Mexico_City] Login exitoso - Usuario: facturacion, Empresa: Ideas Mx, IP: 201.103.24.36
+[07-Sep-2026 14:21:46 America/Mexico_City] Login exitoso - Usuario: facturacion, Empresa: Ideas Mx, IP: 201.103.24.36
+[07-Sep-2026 14:23:41 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 201.103.24.36
+[07-Sep-2026 14:24:13 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 201.103.24.36
+[07-Sep-2026 14:28:08 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 14:28:08 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 14:28:08 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 14:28:08 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 14:28:08 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 14:28:08 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 14:32:19 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 14:32:19 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 14:32:19 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 14:32:19 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 14:32:19 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 14:32:19 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 14:43:42 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 14:43:42 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 14:43:42 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 14:43:42 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 14:43:42 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 14:43:42 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 14:44:45 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 14:44:45 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 14:44:45 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 14:44:45 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 14:44:45 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 14:44:45 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 14:47:09 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 14:47:09 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 14:47:09 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 14:47:09 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 14:47:09 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 14:47:09 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 15:13:34 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 15:13:34 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 15:13:34 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 15:13:34 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 15:13:34 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 15:13:34 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 15:21:10 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 15:21:10 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 15:21:10 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 15:21:10 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 15:21:10 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 15:21:10 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 15:35:04 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 15:35:04 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 15:35:04 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 15:35:04 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 15:35:04 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 15:35:04 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 15:37:15 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 15:37:15 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 15:37:15 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 15:37:15 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 15:37:15 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 15:37:15 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 15:38:52 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 15:38:52 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 15:38:52 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 15:38:52 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 15:38:52 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 15:38:52 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 15:39:49 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 15:39:49 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 15:39:49 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 15:39:49 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 15:39:49 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 15:39:49 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 15:46:11 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 15:46:11 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 15:46:11 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 15:46:11 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 15:46:11 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 15:46:11 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 15:49:21 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 15:49:21 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 15:49:21 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 15:49:21 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 15:49:21 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 15:49:21 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 15:50:44 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 15:50:44 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 15:50:44 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 15:50:44 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 15:50:44 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 15:50:44 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 15:57:35 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 15:57:35 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 16:02:45 America/Mexico_City] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'descuento_linea' in 'field list' in /home2/juanc141/public_html/includes/comisiones_devengadas.php:89
+Stack trace:
+#0 /home2/juanc141/public_html/includes/comisiones_devengadas.php(89): PDO->prepare('\n            SE...')
+#1 /home2/juanc141/public_html/recalcular_comisiones.php(50): sincronizarComisionesDeVenta(Object(PDO), 145)
+#2 {main}
+  thrown in /home2/juanc141/public_html/includes/comisiones_devengadas.php on line 89
+[07-Sep-2026 16:03:48 America/Mexico_City] PHP Fatal error:  Uncaught Error: Call to undefined method mysqli_result::fetch() in /home2/juanc141/public_html/exportar_excel.php:663
+Stack trace:
+#0 {main}
+  thrown in /home2/juanc141/public_html/exportar_excel.php on line 663
+[07-Sep-2026 16:03:51 America/Mexico_City] PHP Fatal error:  Uncaught Error: Call to undefined method mysqli_result::fetch() in /home2/juanc141/public_html/exportar_pdf.php:575
+Stack trace:
+#0 {main}
+  thrown in /home2/juanc141/public_html/exportar_pdf.php on line 575
+[07-Sep-2026 16:04:27 America/Mexico_City] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'descuento_linea' in 'field list' in /home2/juanc141/public_html/includes/comisiones_devengadas.php:89
+Stack trace:
+#0 /home2/juanc141/public_html/includes/comisiones_devengadas.php(89): PDO->prepare('\n            SE...')
+#1 /home2/juanc141/public_html/recalcular_comisiones.php(50): sincronizarComisionesDeVenta(Object(PDO), 145)
+#2 {main}
+  thrown in /home2/juanc141/public_html/includes/comisiones_devengadas.php on line 89
+[07-Sep-2026 16:05:06 America/Mexico_City] Posible secuestro de sesión - IP cambio de 201.103.24.36 a 153.54.200.234
+[07-Sep-2026 16:05:32 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 69
+[07-Sep-2026 16:05:32 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:69
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(69): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 69
+[07-Sep-2026 16:06:09 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 153.54.200.234
+[07-Sep-2026 16:19:03 America/Mexico_City] PHP Fatal error:  Uncaught Error: Call to undefined method mysqli_result::fetch() in /home2/juanc141/public_html/exportar_excel.php:663
+Stack trace:
+#0 {main}
+  thrown in /home2/juanc141/public_html/exportar_excel.php on line 663
+[07-Sep-2026 16:25:50 America/Mexico_City] PHP Fatal error:  Uncaught Error: Call to undefined method mysqli_result::fetch() in /home2/juanc141/public_html/exportar_pdf.php:575
+Stack trace:
+#0 {main}
+  thrown in /home2/juanc141/public_html/exportar_pdf.php on line 575
+[07-Sep-2026 16:42:57 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 16:42:57 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 16:42:57 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 16:42:57 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 16:42:57 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 16:42:57 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 16:43:51 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 16:43:51 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 16:43:51 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 16:43:51 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 16:43:51 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 16:43:51 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 16:45:07 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 16:45:07 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 16:45:07 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 16:45:07 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 16:45:07 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 16:45:07 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 16:48:14 America/Mexico_City] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'descuento_linea' in 'field list' in /home2/juanc141/public_html/includes/comisiones_devengadas.php:89
+Stack trace:
+#0 /home2/juanc141/public_html/includes/comisiones_devengadas.php(89): PDO->prepare('\n            SE...')
+#1 /home2/juanc141/public_html/recalcular_comisiones.php(50): sincronizarComisionesDeVenta(Object(PDO), 145)
+#2 {main}
+  thrown in /home2/juanc141/public_html/includes/comisiones_devengadas.php on line 89
+[07-Sep-2026 16:48:17 America/Mexico_City] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'descuento_linea' in 'field list' in /home2/juanc141/public_html/includes/comisiones_devengadas.php:89
+Stack trace:
+#0 /home2/juanc141/public_html/includes/comisiones_devengadas.php(89): PDO->prepare('\n            SE...')
+#1 /home2/juanc141/public_html/recalcular_comisiones.php(50): sincronizarComisionesDeVenta(Object(PDO), 145)
+#2 {main}
+  thrown in /home2/juanc141/public_html/includes/comisiones_devengadas.php on line 89
+[07-Sep-2026 16:48:19 America/Mexico_City] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'descuento_linea' in 'field list' in /home2/juanc141/public_html/includes/comisiones_devengadas.php:89
+Stack trace:
+#0 /home2/juanc141/public_html/includes/comisiones_devengadas.php(89): PDO->prepare('\n            SE...')
+#1 /home2/juanc141/public_html/recalcular_comisiones.php(50): sincronizarComisionesDeVenta(Object(PDO), 145)
+#2 {main}
+  thrown in /home2/juanc141/public_html/includes/comisiones_devengadas.php on line 89
+[07-Sep-2026 16:48:38 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 16:48:38 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 16:48:38 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 16:48:38 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 16:48:38 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 16:48:38 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 16:48:52 America/Mexico_City] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'descuento_linea' in 'field list' in /home2/juanc141/public_html/includes/comisiones_devengadas.php:89
+Stack trace:
+#0 /home2/juanc141/public_html/includes/comisiones_devengadas.php(89): PDO->prepare('\n            SE...')
+#1 /home2/juanc141/public_html/recalcular_comisiones.php(50): sincronizarComisionesDeVenta(Object(PDO), 145)
+#2 {main}
+  thrown in /home2/juanc141/public_html/includes/comisiones_devengadas.php on line 89
+[07-Sep-2026 16:54:44 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 16:54:44 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 16:54:44 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 16:54:44 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 16:54:44 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 16:54:44 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 16:57:53 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 16:57:53 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 16:57:53 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 16:57:53 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 16:57:53 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 16:57:53 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[07-Sep-2026 17:35:05 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 201.103.24.36
+[07-Sep-2026 17:50:44 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 17:50:44 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 17:54:54 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 17:54:54 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 18:10:27 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[07-Sep-2026 18:10:27 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[07-Sep-2026 18:10:27 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 55
+[07-Sep-2026 18:10:27 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/navbar.php on line 63
+[07-Sep-2026 18:10:27 America/Mexico_City] PHP Warning:  Undefined variable $empresa_plan in /home2/juanc141/public_html/includes/sidebar.php on line 144
+[07-Sep-2026 18:10:27 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[09-Sep-2026 16:52:06 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 201.103.181.74
+[09-Sep-2026 17:04:11 America/Mexico_City] Login exitoso - Usuario: michelle_p_admin, Empresa: Michelle Pruebas, IP: 187.184.123.88
+[09-Sep-2026 17:05:20 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[10-Sep-2026 05:03:49 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.190.255.222
+[10-Sep-2026 09:35:17 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.181.74
+[10-Sep-2026 10:02:23 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.181.74
+[10-Sep-2026 10:54:19 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 201.103.181.74
+[10-Sep-2026 10:58:46 America/Mexico_City] Creando base de datos: juanc141_grupoideasmx
+[10-Sep-2026 10:58:47 America/Mexico_City] Creando usuario MySQL: juanc141_grupoideas
+[10-Sep-2026 10:58:47 America/Mexico_City] Asignando privilegios para usuario: juanc141_grupoideas en BD: juanc141_grupoideasmx
+[10-Sep-2026 10:58:47 America/Mexico_City] Asignando privilegios para usuario principal: juanc141_alexis en BD: juanc141_grupoideasmx
+[10-Sep-2026 10:58:51 America/Mexico_City] ✅ Correo enviado exitosamente a: sanguineape2189@gmail.com
+[10-Sep-2026 10:59:41 America/Mexico_City] Login exitoso - Usuario: grupoideas_admin, Empresa: GrupoIdeasMX, IP: 202.5.102.183
+[10-Sep-2026 10:59:50 America/Mexico_City] Creando base de datos: juanc141_gamers_sa_de_cv
+[10-Sep-2026 10:59:50 America/Mexico_City] Creando usuario MySQL: juanc141_gamers_sa_
+[10-Sep-2026 10:59:51 America/Mexico_City] Asignando privilegios para usuario: juanc141_gamers_sa_ en BD: juanc141_gamers_sa_de_cv
+[10-Sep-2026 10:59:51 America/Mexico_City] Asignando privilegios para usuario principal: juanc141_alexis en BD: juanc141_gamers_sa_de_cv
+[10-Sep-2026 10:59:54 America/Mexico_City] ✅ Correo enviado exitosamente a: loresroy327@gmail.com
+[10-Sep-2026 11:01:02 America/Mexico_City] Error de login: Usuario/Email o contraseña incorrectos. - IP: 201.103.181.74
+[10-Sep-2026 11:01:37 America/Mexico_City] PHP Warning:  Undefined variable $test_api_key_working in /home2/juanc141/public_html/productos.php on line 1102
+[10-Sep-2026 11:01:37 America/Mexico_City] ✅ Imagen subida exitosamente: /uploads/productos/producto_1_1789059697_6aa2e2715b500.jpg
+[10-Sep-2026 11:01:37 America/Mexico_City]    Ruta física: /home2/juanc141/public_html/uploads/productos/producto_1_1789059697_6aa2e2715b500.jpg
+[10-Sep-2026 11:01:37 America/Mexico_City] Total imágenes subidas: 1
+[10-Sep-2026 11:01:37 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[10-Sep-2026 11:01:37 America/Mexico_City] Producto ID: 1
+[10-Sep-2026 11:01:37 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_1_1789059697_6aa2e2715b500.jpg
+)
+
+[10-Sep-2026 11:01:37 America/Mexico_City] Índice principal: 0
+[10-Sep-2026 11:01:37 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[10-Sep-2026 11:01:37 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_1_1789059697_6aa2e2715b500.jpg
+[10-Sep-2026 11:01:37 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[10-Sep-2026 11:01:37 America/Mexico_City] Se subieron 1 imágenes para el producto ID: 1
+[10-Sep-2026 11:02:29 America/Mexico_City] Error de login: Usuario/Email o contraseña incorrectos. - IP: 201.103.181.74
+[10-Sep-2026 11:03:07 America/Mexico_City] Login exitoso - Usuario: gamers_sa__admin, Empresa: gamers sa de cv, IP: 201.103.181.74
+[10-Sep-2026 11:07:15 America/Mexico_City] Login exitoso - Usuario: Xathz, Empresa: Kchito ideas Prueba, IP: 187.189.102.73
+[10-Sep-2026 11:17:23 America/Mexico_City] Login exitoso - Usuario: grupoideas_admin, Empresa: GrupoIdeasMX, IP: 202.5.102.183
+[10-Sep-2026 12:37:03 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.189.102.73
+[10-Sep-2026 13:51:08 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 12
+[10-Sep-2026 13:51:08 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 30
+[10-Sep-2026 17:02:28 America/Mexico_City] Posible secuestro de sesión - IP cambio de 201.103.181.74 a 153.54.200.234
+[10-Sep-2026 17:02:30 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 69
+[10-Sep-2026 17:02:30 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:69
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(69): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 69
+[10-Sep-2026 17:02:35 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[10-Sep-2026 17:33:59 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[11-Sep-2026 08:59:11 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.181.74
+[11-Sep-2026 09:30:50 America/Mexico_City] Posible secuestro de sesión - IP cambio de 201.103.181.74 a 153.54.200.234
+[11-Sep-2026 09:30:52 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 69
+[11-Sep-2026 09:30:52 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:69
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(69): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 69
+[11-Sep-2026 09:30:57 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 153.54.200.234
+[11-Sep-2026 16:16:34 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.189.102.73
+[11-Sep-2026 16:25:50 America/Mexico_City] PHP Warning:  Undefined variable $planes in /home2/juanc141/public_html/cuenta.php on line 150
+[11-Sep-2026 16:25:50 America/Mexico_City] PHP Warning:  foreach() argument must be of type array|object, null given in /home2/juanc141/public_html/cuenta.php on line 150
+[14-Sep-2026 04:16:28 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.190.255.222

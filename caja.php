@@ -2738,6 +2738,40 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                         <small class="text-muted">Máximo 500 caracteres</small>
                     </div>
 
+                    <!-- Cobro parcial: el cliente puede dejar sólo una parte hoy.
+                         La venta se registra por su total real y el resto queda
+                         como saldo pendiente en Cuentas por Cobrar. -->
+                    <div class="mb-4">
+                        <h6 class="section-title">
+                            <i class="fas fa-hand-holding-dollar me-2"></i>¿Cuánto se cobra ahora?
+                        </h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="modal-cobroParcial">
+                            <label class="form-check-label" for="modal-cobroParcial">
+                                Cobro parcial / anticipo (el cliente deja menos del total)
+                            </label>
+                        </div>
+                        <div id="modal-anticipoWrap" style="display:none;">
+                            <div class="efectivo-fields">
+                                <div class="efectivo-field">
+                                    <span class="efectivo-label">Se cobra ahora</span>
+                                    <input type="text" class="efectivo-input fw-bold" id="modal-anticipo"
+                                           value="" placeholder="0.00" onfocus="this.select()"
+                                           style="font-size: 13px; font-weight: bold;">
+                                </div>
+                                <div class="efectivo-field">
+                                    <span class="efectivo-label">Queda pendiente</span>
+                                    <input type="text" class="efectivo-input fw-bold text-danger" id="modal-saldoPendiente"
+                                           value="$0.00" readonly style="font-size: 13px; font-weight: bold;">
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                La venta se guarda por su total. El saldo aparece en Cuentas por Cobrar
+                                y las comisiones se van generando conforme el cliente pague.
+                            </small>
+                        </div>
+                    </div>
+
                     <div class="efectivo-section">
                         <h6 class="section-title">
                             <i class="fas fa-money-bill-wave me-2"></i>Pago en Efectivo
@@ -2793,7 +2827,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                         </div>
                     </div>
 
-                    <!-- <div class="qr-section" id="qrLinkSection" style="display: none;">
+                    <div class="qr-section" id="qrLinkSection" style="display: none;">
                         <h6 class="section-title">
                             <i class="fas fa-link me-2"></i>Link de Pago
                         </h6>
@@ -2869,7 +2903,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                 La CLABE se actualiza automáticamente. El pago será verificado en línea.
                             </div>
                         </div>
-                    </div> -->
+                    </div>
 
                 </div>
                 <div class="modal-footer">

@@ -18,6 +18,7 @@ $pagina_actual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
 if ($pagina_actual < 1) $pagina_actual = 1;
 $offset = ($pagina_actual - 1) * $registros_por_pagina;
 
+
 // Conectar a la base de datos de la empresa
 try {
     $conn = getEmpresaDBConnection($_SESSION['empresa_db']);
@@ -1177,17 +1178,28 @@ $usos_cfdi = [
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label small mb-1">Base (sin IVA)</label>
-                                    <input type="text" class="form-control form-control-sm" id="ivaVentaBase" readonly>
+                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="ivaVentaBase">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label small mb-1">IVA</label>
                                     <input type="text" class="form-control form-control-sm" id="ivaVentaMonto" readonly>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">Total</label>
+                                    <input type="text" class="form-control form-control-sm" id="ivaVentaTotal" readonly>
+                                </div>
+                                <div class="col-md-2">
                                     <button type="button" class="btn btn-primary btn-sm w-100" id="btnGuardarIvaVenta">
                                         <i class="fas fa-save me-1"></i>Guardar IVA
                                     </button>
                                 </div>
+                            </div>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="ivaVentaPorFuera" checked>
+                                <label class="form-check-label small" for="ivaVentaPorFuera">
+                                    IVA por fuera: respetar la base que escribo y <strong>sumarle</strong> el IVA
+                                    (si lo apagas, el total se queda fijo y el IVA se calcula por dentro).
+                                </label>
                             </div>
                             <small class="text-muted d-block mt-2">
                                 <span class="badge bg-secondary me-1">2</span>
@@ -1203,16 +1215,19 @@ $usos_cfdi = [
                                 <thead class="table-light">
                                     <tr>
                                         <th>Producto</th><th>Área</th><th>Colaborador</th>
-                                        <th class="text-end">%</th><th class="text-end">Monto</th>
+                                        <th class="text-end">%</th>
+                                        <th class="text-end">Asignada<br><small class="text-muted fw-normal">si liquida</small></th>
+                                        <th class="text-end">Devengada<br><small class="text-muted fw-normal">por lo cobrado</small></th>
+                                        <th class="text-end">Pendiente</th>
                                         <th style="width:44px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="comisionesVentaTbody">
-                                    <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+                                    <tr><td colspan="8" class="text-center text-muted">Cargando...</td></tr>
                                 </tbody>
                                 <tfoot id="comisionesVentaTfoot"></tfoot>
                             </table>
-                            <small class="text-muted d-block">
+                            <small class="text-muted d-block" id="comisionesVentaNota">
                                 <span class="badge bg-secondary me-1">3</span>
                                 Para agregar una comisión, usa el botón <em>Comisión</em> del producto en la tabla de arriba.
                             </small>
@@ -1280,10 +1295,14 @@ $usos_cfdi = [
                         </div>
                     </div>
                     <table class="table table-sm">
-                        <thead><tr><th>Área</th><th>Colaborador</th><th class="text-end">%</th><th class="text-end">Monto</th><th style="width:44px;"></th></tr></thead>
+                        <thead><tr><th>Área</th><th>Colaborador</th><th class="text-end">%</th>
+                            <th class="text-end">Devengada<br><small class="text-muted fw-normal">por lo cobrado</small></th>
+                            <th class="text-end">Asignada<br><small class="text-muted fw-normal">si liquida</small></th>
+                            <th style="width:44px;"></th></tr></thead>
                         <tbody id="pvComisionesListaTbody"></tbody>
                         <tfoot id="pvComisionesListaTfoot"></tfoot>
                     </table>
+                    <small class="text-muted d-block" id="pvComisionNotaCobrado"></small>
                     <small class="text-muted">El porcentaje se aplica sobre la utilidad del producto menos los gastos de operación de la venta.</small>
                 </div>
                 <div class="modal-footer">
@@ -2048,12 +2067,31 @@ $usos_cfdi = [
             if (ivaCont) {
                 const ivaVentaId = ivaCont.dataset.ventaId;
                 let ivaBase = 0;
+                let ivaTotalActual = 0;
                 let ivaEsAdmin = false;
 
-                function pintarIva(pct) {
-                    const iva = Math.round(ivaBase * (pct / 100) * 100) / 100;
-                    document.getElementById('ivaVentaBase').value = '$' + ivaBase.toFixed(2);
+                const inpBase  = document.getElementById('ivaVentaBase');
+                const inpPct   = document.getElementById('ivaVentaPorcentaje');
+                const chkFuera = document.getElementById('ivaVentaPorFuera');
+
+                // Recalcula sin tocar lo que el usuario está escribiendo.
+                // Por fuera: base fija -> total = base + IVA (lo que pide el usuario).
+                // Por dentro: total fijo -> base = total / (1 + pct).
+                function pintarIva(pct, recalcularBase) {
+                    let base, iva, total;
+                    if (chkFuera.checked) {
+                        base  = parseFloat(inpBase.value);
+                        if (isNaN(base) || base < 0) base = 0;
+                        iva   = Math.round(base * (pct / 100) * 100) / 100;
+                        total = Math.round((base + iva) * 100) / 100;
+                    } else {
+                        total = ivaTotalActual;
+                        base  = Math.round((total / (1 + pct / 100)) * 100) / 100;
+                        iva   = Math.round((total - base) * 100) / 100;
+                        if (recalcularBase !== false) inpBase.value = base.toFixed(2);
+                    }
                     document.getElementById('ivaVentaMonto').value = '$' + iva.toFixed(2);
+                    document.getElementById('ivaVentaTotal').value = '$' + total.toFixed(2);
                 }
 
                 function cargarIvaVenta() {
@@ -2062,12 +2100,16 @@ $usos_cfdi = [
                         .then(data => {
                             if (!data.success) return;
                             ivaBase = parseFloat(data.base) || 0;
+                            ivaTotalActual = parseFloat(data.total) || 0;
                             ivaEsAdmin = data.es_admin === true;
-                            document.getElementById('ivaVentaPorcentaje').value = parseFloat(data.porcentaje).toFixed(2);
+                            inpPct.value  = parseFloat(data.porcentaje).toFixed(2);
+                            inpBase.value = ivaBase.toFixed(2);
                             pintarIva(parseFloat(data.porcentaje) || 0);
 
                             // Sin permisos: se muestra, pero no se edita.
                             if (!ivaEsAdmin) {
+                                inpBase.disabled = true;
+                                chkFuera.disabled = true;
                                 document.getElementById('ivaVentaPorcentaje').disabled = true;
                                 const btn = document.getElementById('btnGuardarIvaVenta');
                                 btn.disabled = true;
@@ -2079,17 +2121,27 @@ $usos_cfdi = [
 
                 cargarIvaVenta();
 
-                document.getElementById('ivaVentaPorcentaje')?.addEventListener('input', function () {
-                    let pct = parseFloat(this.value);
+                function pctActual() {
+                    let pct = parseFloat(inpPct.value);
                     if (isNaN(pct) || pct < 0) pct = 0;
                     if (pct > 100) pct = 100;
-                    pintarIva(pct);
-                });
+                    return pct;
+                }
+
+                inpPct?.addEventListener('input', function () { pintarIva(pctActual()); });
+                // Al escribir la base NO se la reescribimos encima: se respeta tal cual.
+                inpBase?.addEventListener('input', function () { pintarIva(pctActual(), false); });
+                chkFuera?.addEventListener('change', function () { pintarIva(pctActual()); });
 
                 document.getElementById('btnGuardarIvaVenta')?.addEventListener('click', function () {
                     let pct = parseFloat(document.getElementById('ivaVentaPorcentaje').value);
                     if (isNaN(pct) || pct < 0 || pct > 100) {
                         alert('El IVA debe estar entre 0 y 100');
+                        return;
+                    }
+                    const baseManual = parseFloat(inpBase.value);
+                    if (chkFuera.checked && (isNaN(baseManual) || baseManual < 0)) {
+                        alert('Escribe una base válida (sin IVA)');
                         return;
                     }
 
@@ -2101,6 +2153,8 @@ $usos_cfdi = [
                     formData.append('accion', 'actualizar_iva_venta');
                     formData.append('venta_id', ivaVentaId);
                     formData.append('porcentaje', pct);
+                    formData.append('modo', chkFuera.checked ? 'por_fuera' : 'por_dentro');
+                    if (chkFuera.checked) formData.append('base', baseManual);
 
                     fetch('iva_venta.php', { method: 'POST', body: formData })
                         .then(r => r.json())
@@ -2132,7 +2186,7 @@ $usos_cfdi = [
                         const tbody = document.getElementById('comisionesVentaTbody');
                         const tfoot = document.getElementById('comisionesVentaTfoot');
                         if (!data.success || data.comisiones.length === 0) {
-                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Sin comisiones asignadas en esta venta</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Sin comisiones asignadas en esta venta</td></tr>';
                             if (tfoot) tfoot.innerHTML = '';
                             return;
                         }
@@ -2143,7 +2197,9 @@ $usos_cfdi = [
                                 <td>${c.area_nombre}</td>
                                 <td>${c.colaborador_nombre}</td>
                                 <td class="text-end">${parseFloat(c.porcentaje_regla).toFixed(2)}%</td>
-                                <td class="text-end">$${parseFloat(c.monto_comision).toFixed(2)}</td>
+                                <td class="text-end text-muted">$${parseFloat(c.monto_comision).toFixed(2)}</td>
+                                <td class="text-end fw-bold text-success">$${parseFloat(c.monto_devengado || 0).toFixed(2)}</td>
+                                <td class="text-end text-danger">$${parseFloat(c.monto_pendiente || 0).toFixed(2)}</td>
                                 <td class="text-end">
                                     ${puedeCancelar ? `<button type="button"
                                         class="btn btn-sm btn-outline-danger btn-cancelar-comision"
@@ -2158,17 +2214,30 @@ $usos_cfdi = [
 
                         if (tfoot) {
                             const suma = data.comisiones.reduce((a, c) => a + parseFloat(c.monto_comision || 0), 0);
+                            const sumaDev = data.comisiones.reduce((a, c) => a + parseFloat(c.monto_devengado || 0), 0);
+                            const sumaPen = data.comisiones.reduce((a, c) => a + parseFloat(c.monto_pendiente || 0), 0);
                             tfoot.innerHTML = `
                                 <tr class="table-light">
                                     <td colspan="4" class="text-end fw-bold">TOTAL DE COMISIONES DE LA VENTA</td>
-                                    <td class="text-end fw-bold">$${suma.toFixed(2)}</td>
+                                    <td class="text-end fw-bold text-muted">$${suma.toFixed(2)}</td>
+                                    <td class="text-end fw-bold text-success">$${sumaDev.toFixed(2)}</td>
+                                    <td class="text-end fw-bold text-danger">$${sumaPen.toFixed(2)}</td>
                                     <td></td>
                                 </tr>`;
+                        }
+
+                        const nota = document.getElementById('comisionesVentaNota');
+                        if (nota) {
+                            nota.innerHTML = '<span class="badge bg-secondary me-1">3</span>' +
+                                'Se ha cobrado el <strong>' + parseFloat(data.pct_cobrado || 0).toFixed(2) + '%</strong> ' +
+                                '($' + parseFloat(data.cobrado || 0).toFixed(2) + ' de $' + parseFloat(data.total_venta || 0).toFixed(2) + '), ' +
+                                'así que sólo se devenga esa parte de la comisión. Lo pendiente se libera conforme el cliente pague. ' +
+                                'Para agregar una comisión, usa el botón <em>Comisión</em> del producto en la tabla de arriba.';
                         }
                     })
                     .catch(() => {
                         document.getElementById('comisionesVentaTbody').innerHTML =
-                            '<tr><td colspan="6" class="text-center text-danger">Error de conexión</td></tr>';
+                            '<tr><td colspan="8" class="text-center text-danger">Error de conexión</td></tr>';
                     });
             }
             cargarComisionesVenta();
@@ -2206,6 +2275,22 @@ $usos_cfdi = [
                     pvCatalogosComision.colaboradores.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
             }
 
+            // Deja claro, dentro del modal, que el dinero que de verdad se
+            // gana sale de lo cobrado y no del total de la venta.
+            function pvPintarNotaCobrado(data) {
+                const nota = document.getElementById('pvComisionNotaCobrado');
+                if (!nota) return;
+                const pct = parseFloat(data.pct_cobrado || 0);
+                nota.innerHTML = '<i class="fas fa-hand-holding-dollar me-1"></i>' +
+                    'Cobrado: <strong>$' + parseFloat(data.cobrado || 0).toFixed(2) + '</strong> de $' +
+                    parseFloat(data.total_venta || 0).toFixed(2) + ' (<strong>' + pct.toFixed(2) + '%</strong>). ' +
+                    'La columna <strong>Devengada</strong> es lo que se gana hoy con ese cobro; ' +
+                    'la <strong>Asignada</strong> sólo se alcanza si el cliente liquida.';
+                pvProporcionCobrado = (isNaN(pct) ? 0 : pct) / 100;
+            }
+
+            let pvProporcionCobrado = 0;
+
             function pvCargarComisionesDetalle() {
                 fetch('guardar_comision_producto.php?accion=listar_comisiones_detalle&venta_detalle_id=' + pvVentaDetalleIdActual)
                     .then(r => r.json())
@@ -2213,8 +2298,9 @@ $usos_cfdi = [
                         const tbody = document.getElementById('pvComisionesListaTbody');
                         const tfoot = document.getElementById('pvComisionesListaTfoot');
                         if (!data.success || data.comisiones.length === 0) {
-                            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Sin comisiones asignadas</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Sin comisiones asignadas</td></tr>';
                             if (tfoot) tfoot.innerHTML = '';
+                            pvPintarNotaCobrado(data);
                             return;
                         }
                         // El botón de cancelar solo se dibuja para admin. El
@@ -2225,7 +2311,8 @@ $usos_cfdi = [
                                 <td>${c.area_nombre}</td>
                                 <td>${c.colaborador_nombre}</td>
                                 <td class="text-end">${parseFloat(c.porcentaje_regla).toFixed(2)}%</td>
-                                <td class="text-end">$${parseFloat(c.monto_comision).toFixed(2)}</td>
+                                <td class="text-end fw-bold text-success">$${parseFloat(c.monto_devengado || 0).toFixed(2)}</td>
+                                <td class="text-end text-muted">$${parseFloat(c.monto_comision).toFixed(2)}</td>
                                 <td class="text-end">
                                     ${puedeCancelar ? `<button type="button"
                                         class="btn btn-sm btn-outline-danger btn-cancelar-comision"
@@ -2241,17 +2328,20 @@ $usos_cfdi = [
                         if (tfoot) {
                             const sumaPct = data.comisiones.reduce((a, c) => a + parseFloat(c.porcentaje_regla || 0), 0);
                             const sumaMonto = data.comisiones.reduce((a, c) => a + parseFloat(c.monto_comision || 0), 0);
+                            const sumaDev = data.comisiones.reduce((a, c) => a + parseFloat(c.monto_devengado || 0), 0);
                             const excede = sumaPct > 100.01;
                             tfoot.innerHTML = `
                                 <tr class="${excede ? 'table-danger' : 'table-light'}">
                                     <td colspan="2" class="text-end fw-bold">Total asignado</td>
                                     <td class="text-end fw-bold">${sumaPct.toFixed(2)}%</td>
-                                    <td class="text-end fw-bold">$${sumaMonto.toFixed(2)}</td>
+                                    <td class="text-end fw-bold text-success">$${sumaDev.toFixed(2)}</td>
+                                    <td class="text-end fw-bold text-muted">$${sumaMonto.toFixed(2)}</td>
                                     <td></td>
                                 </tr>
-                                ${excede ? '<tr><td colspan="5" class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Pasa del 100%: se reparte más que la utilidad del producto.</td></tr>' : ''}
+                                ${excede ? '<tr><td colspan="6" class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i>Pasa del 100%: se reparte más que la utilidad del producto.</td></tr>' : ''}
                             `;
                         }
+                        pvPintarNotaCobrado(data);
                     });
             }
 

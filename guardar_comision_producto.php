@@ -16,6 +16,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/env_loader.php';
+require_once __DIR__ . '/includes/comisiones_devengadas.php';
+
 
 try {
     $conn = getEmpresaDBConnection($_SESSION['empresa_db']);
@@ -68,11 +70,38 @@ try {
         $stmt->execute([$venta_detalle_id]);
         $comisiones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        // Mismo criterio que en la vista de la venta: lo que de verdad se
+        // gana va en proporción a lo cobrado, no al total facturado.
+        $stp = $conn->prepare("
+            SELECT v.id, v.total,
+                   COALESCE((SELECT SUM(vp.monto) FROM venta_pagos vp
+                             WHERE vp.venta_id = v.id AND vp.cancelado = 0), 0) AS cobrado
+            FROM ventas v
+            INNER JOIN venta_detalles vd ON vd.venta_id = v.id
+            WHERE vd.id = ?
+        ");
+        $stp->execute([$venta_detalle_id]);
+        $vp = $stp->fetch(PDO::FETCH_ASSOC) ?: ['total' => 0, 'cobrado' => 0];
+
+        $total_venta  = (float)$vp['total'];
+        $cobrado      = (float)$vp['cobrado'];
+        $prop_cobrado = $total_venta > 0 ? min(1.0, $cobrado / $total_venta) : 0.0;
+
+        foreach ($comisiones as &$c) {
+            $dev = comision_devengada_linea($c, $prop_cobrado);
+            $c['monto_devengado'] = $dev;
+            $c['monto_pendiente'] = round(max(0, (float)$c['monto_comision'] - $dev), 2);
+        }
+        unset($c);
+
         echo json_encode([
-            'success'    => true,
-            'comisiones' => $comisiones,
+            'success'     => true,
+            'comisiones'  => $comisiones,
+            'total_venta' => round($total_venta, 2),
+            'cobrado'     => round($cobrado, 2),
+            'pct_cobrado' => round($prop_cobrado * 100, 2),
             // El front usa esto para mostrar u ocultar el botón de cancelar.
-            'es_admin'   => (($_SESSION['usuario_rol'] ?? '') === 'admin')
+            'es_admin'    => (($_SESSION['usuario_rol'] ?? '') === 'admin')
         ]);
         exit();
     }
@@ -99,10 +128,38 @@ try {
         $stmt->execute([$venta_id]);
         $comisiones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        // La comisión asignada es el máximo que se puede llegar a ganar si la
+        // venta se liquida completa. Lo que realmente se devenga va en
+        // proporción a lo cobrado: si el cliente pagó el 10%, se devenga el
+        // 10% de la comisión. Lo demás queda pendiente hasta que pague.
+        $stp = $conn->prepare("
+            SELECT v.total,
+                   COALESCE((SELECT SUM(vp.monto) FROM venta_pagos vp
+                             WHERE vp.venta_id = v.id AND vp.cancelado = 0), 0) AS cobrado
+            FROM ventas v WHERE v.id = ?
+        ");
+        $stp->execute([$venta_id]);
+        $vp = $stp->fetch(PDO::FETCH_ASSOC) ?: ['total' => 0, 'cobrado' => 0];
+
+        $total_venta = (float)$vp['total'];
+        $cobrado     = (float)$vp['cobrado'];
+        // Nunca pasa de 1: si pagaron de más, se devenga el 100%, no más.
+        $prop_cobrado = $total_venta > 0 ? min(1.0, $cobrado / $total_venta) : 0.0;
+
+        foreach ($comisiones as &$c) {
+            $dev = comision_devengada_linea($c, $prop_cobrado);
+            $c['monto_devengado'] = $dev;
+            $c['monto_pendiente'] = round(max(0, (float)$c['monto_comision'] - $dev), 2);
+        }
+        unset($c);
+
         echo json_encode([
-            'success'    => true,
-            'comisiones' => $comisiones,
-            'es_admin'   => (($_SESSION['usuario_rol'] ?? '') === 'admin')
+            'success'      => true,
+            'comisiones'   => $comisiones,
+            'total_venta'  => round($total_venta, 2),
+            'cobrado'      => round($cobrado, 2),
+            'pct_cobrado'  => round($prop_cobrado * 100, 2),
+            'es_admin'     => (($_SESSION['usuario_rol'] ?? '') === 'admin')
         ]);
         exit();
     }
@@ -283,6 +340,11 @@ try {
                    . number_format($monto_base, 2) . ".";
         }
 
+        // La comisión casi siempre se asigna DESPUÉS de haber cobrado, así
+        // que hay que generar aquí mismo la parte ya devengada; si no, esta
+        // comisión no aparecería en los reportes.
+        sincronizarComisionesDeVenta($conn, $venta_id);
+
         echo json_encode([
             'success' => true,
             'message' => "Comisión asignada: {$colaborador_nombre} ({$area_nombre}) - $" . number_format($monto_comision, 2),
@@ -357,6 +419,11 @@ try {
             WHERE id = ? AND cancelada = 0
         ");
         $stmt->execute([$_SESSION['usuario_id'] ?? null, mb_substr($motivo, 0, 255), $id]);
+
+        // Sacar de los reportes lo que ya se había generado de esta comisión.
+        $stmt_v = $conn->prepare("SELECT venta_id FROM venta_comisiones WHERE id = ?");
+        $stmt_v->execute([$id]);
+        sincronizarComisionesDeVenta($conn, (int)$stmt_v->fetchColumn());
 
         echo json_encode([
             'success' => true,

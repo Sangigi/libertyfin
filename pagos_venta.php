@@ -25,6 +25,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/env_loader.php';
+require_once __DIR__ . '/includes/comisiones_devengadas.php';
 
 function esAdmin() {
     return ($_SESSION['usuario_rol'] ?? '') === 'admin';
@@ -59,42 +60,9 @@ function resumenVenta($conn, $venta_id) {
  * Se llama justo después de insertar el pago.
  */
 function generarComisionesDelPago($conn, $pago_id, $venta_id, $monto_pago, $fecha_pago) {
-    $stmt_v = $conn->prepare("SELECT total FROM ventas WHERE id = ?");
-    $stmt_v->execute([$venta_id]);
-    $total = (float)$stmt_v->fetchColumn();
-    if ($total <= 0) return 0;
-
-    $proporcion = $monto_pago / $total;
-
-    $stmt_c = $conn->prepare("
-        SELECT id, colaborador_id, colaborador_nombre, area_nombre,
-               porcentaje_regla, monto_comision
-        FROM venta_comisiones
-        WHERE venta_id = ? AND cancelada = 0
-    ");
-    $stmt_c->execute([$venta_id]);
-    $asignaciones = $stmt_c->fetchAll(PDO::FETCH_ASSOC);
-
-    if (empty($asignaciones)) return 0;
-
-    $stmt_i = $conn->prepare("
-        INSERT INTO pago_comisiones
-            (pago_id, venta_comision_id, venta_id, colaborador_id, colaborador_nombre,
-             area_nombre, porcentaje, proporcion_cobrada, monto, fecha_pago)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ");
-
-    $generadas = 0;
-    foreach ($asignaciones as $a) {
-        $monto = round((float)$a['monto_comision'] * $proporcion, 2);
-        if ($monto <= 0) continue;
-        $stmt_i->execute([
-            $pago_id, $a['id'], $venta_id, $a['colaborador_id'], $a['colaborador_nombre'],
-            $a['area_nombre'], $a['porcentaje_regla'], round($proporcion, 6), $monto, $fecha_pago
-        ]);
-        $generadas++;
-    }
-    return $generadas;
+    // Toda la aritmética vive en includes/comisiones_devengadas.php para que
+    // la venta, los reportes y este alta usen exactamente la misma regla.
+    return sincronizarComisionesDeVenta($conn, $venta_id);
 }
 
 try {
@@ -251,6 +219,8 @@ try {
                     motivo_cancelacion = ?
                 WHERE id = ? AND cancelado = 0
             ")->execute([$_SESSION['usuario_id'] ?? null, mb_substr($motivo, 0, 255), $id]);
+            // Con menos dinero cobrado, se devenga menos: se recalcula.
+            sincronizarComisionesDeVenta($conn, (int)$pago['venta_id']);
             $conn->commit();
         } catch (Exception $e) {
             $conn->rollBack();

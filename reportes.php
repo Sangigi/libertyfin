@@ -473,8 +473,8 @@ try {
             //   cobrado - costo de venta - gastos de venta - comisiones
             //   = utilidad
             //
-            // Costo y gastos se prorratean por la proporción cobrada de la
-            // venta. Las comisiones ya vienen generadas por pago.
+            // Costo y gastos NO se prorratean: van completos en el primer
+            // pago de la venta. Las comisiones ya vienen generadas por pago.
             // =========================================================
             $sql_comisiones = "
                 SELECT
@@ -564,6 +564,23 @@ try {
                     }
                 }
 
+                // Primer pago (el más antiguo) de cada venta: es el que
+                // absorbe el costo y el gasto de operación completos.
+                $primer_pago = [];
+                if (!empty($ventas_vist)) {
+                    $ids_pp = implode(',', array_map('intval', array_keys($ventas_vist)));
+                    $res_pp = $conn->query("
+                        SELECT venta_id, MIN(id) AS pago_id
+                        FROM venta_pagos
+                        WHERE venta_id IN ($ids_pp) AND cancelado = 0
+                        GROUP BY venta_id");
+                    if ($res_pp) {
+                        while ($pp = $res_pp->fetch(PDO::FETCH_ASSOC)) {
+                            $primer_pago[(int)$pp['venta_id']] = (int)$pp['pago_id'];
+                        }
+                    }
+                }
+
                 $comisiones_areas = [];
                 $gran = ['cobrado' => 0, 'costo' => 0, 'gasto' => 0, 'comision' => 0];
                 $gran_colab   = [];
@@ -581,8 +598,13 @@ try {
 
                     foreach ($datos['pagos'] as $pid => $pg) {
                         $cv    = $costos_venta[$pg['venta_id']] ?? ['costo' => 0, 'gasto' => 0];
-                        $costo = round($cv['costo'] * $pg['proporcion'], 2);
-                        $gasto = round($cv['gasto'] * $pg['proporcion'], 2);
+                        // El costo y el gasto de operación se cargan COMPLETOS
+                        // en el primer pago de la venta: se desembolsaron una
+                        // sola vez, no se van pagando en abonos. Los pagos
+                        // siguientes ya sólo traen cobro y comisión.
+                        $es_primer_pago = (int)($primer_pago[$pg['venta_id']] ?? 0) === (int)$pid;
+                        $costo = $es_primer_pago ? round($cv['costo'], 2) : 0.0;
+                        $gasto = $es_primer_pago ? round($cv['gasto'], 2) : 0.0;
 
                         $comision_pago = 0;
                         $montos = [];
@@ -1405,6 +1427,8 @@ try {
                                     <i class="fas fa-info-circle me-1"></i>
                                     Sobre lo <strong>realmente cobrado</strong> en el periodo, no sobre lo vendido.
                                     Un abono de una venta de otro mes cuenta aquí, en el mes en que entró el dinero.
+                                    El costo y el gasto de operación se cargan completos en el primer pago de cada venta,
+                                    y la comisión se genera sobre lo que queda de ese dinero.
                                 </small>
                             </div>
                         </div>`;
