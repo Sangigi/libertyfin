@@ -12,3 +12,9 @@
   "time": "14:30:00"
 }
 --------------------------------------------------
+2026-09-10 06:19:16
+{"reference":"0000600000000425384631","response":"approved","foliocpagos":"699901320524","auth":"660580","cd_response":"0C","cd_error":"","nb_error":"","time":"06:19:07","date":"10/09/2026","nb_company":"ESCUELA PRUEBA","nb_merchant":"7628597 23870","cc_type":"DEBITO/BANCOPPEL/Visa","tp_operation":"VENTA","cc_name":"Alexis Sanchez Vanegas","cc_number":"5361","cc_expmonth":"03","cc_expyear":"27","amount":"80.39","emv_key_date":"","id_url":"FTYOG6VJ","email":"sanchez.vanegas.alexiscbtis44@gmail.com","payment_type":"401","promocion":"C","number_tkn":"416916P4Z4U55361","cc_mask":"416916XXXXXX5361"}
+--------------------------------------------------
+2026-09-11 12:44:00
+{"reference":"0000600000000880000011","response":"approved","foliocpagos":"699901321866","auth":"744470","cd_response":"0C","cd_error":"","nb_error":"","time":"12:43:52","date":"11/09/2026","nb_company":"ESCUELA PRUEBA","nb_merchant":"7628597 23870","cc_type":"DEBITO/COMPROPAGO/Visa","tp_operation":"VENTA","cc_name":"Alexis Sanchez Vanegas","cc_number":"8685","cc_expmonth":"08","cc_expyear":"30","amount":"50.00","emv_key_date":"","id_url":"ADZPNP7Y","email":"sanchez.vanegas.alexiscbtis44@gmail.com","payment_type":"401","promocion":"C","number_tkn":"421747M9DSZU8685","cc_mask":"421747XXXXXX8685"}
+--------------------------------------------------

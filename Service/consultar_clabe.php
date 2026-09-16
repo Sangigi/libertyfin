@@ -99,19 +99,24 @@ try {
         exit;
     }
     
-    $montoPendienteCentavos = $registro['monto_pendiente'] ?? $registro['monto_total'] ?? 0;
+    // 🔥 Cast explícito a int para evitar TypeError con strings vacíos o no numéricos
+    $montoPendienteCentavos = (int) ($registro['monto_pendiente'] ?? 0);
+    if ($montoPendienteCentavos === 0) {
+        $montoPendienteCentavos = (int) ($registro['monto_total'] ?? 0);
+    }
     
-    if ($montoPendienteCentavos == 0) {
+    // Si sigue en 0, calcular desde el JSON de productos
+    if ($montoPendienteCentavos === 0) {
         $stmt = $pdo->prepare("SELECT productos_json FROM clabes_spei WHERE id = ?");
         $stmt->execute([$registro['id']]);
         $productosData = $stmt->fetch();
         
-        if ($productosData && $productosData['productos_json']) {
+        if ($productosData && !empty($productosData['productos_json'])) {
             $productos = json_decode($productosData['productos_json'], true);
-            if ($productos) {
+            if (is_array($productos)) {
                 foreach ($productos as $producto) {
-                    $precio = ($producto['precio'] ?? 0);
-                    $cantidad = ($producto['cantidad'] ?? 1);
+                    $precio   = (float) ($producto['precio'] ?? 0);
+                    $cantidad = (int)   ($producto['cantidad'] ?? 1);
                     $montoPendienteCentavos += (int) round($precio * $cantidad * 100);
                 }
             }
@@ -120,7 +125,7 @@ try {
     
     $stmt = $pdo->query("SELECT MAX(transaccion) as max_trans FROM pagos_spei_recibidos");
     $row = $stmt->fetch();
-    $transaccion = ($row['max_trans'] ?? 0) + 1;
+    $transaccion = ((int) ($row['max_trans'] ?? 0)) + 1;
     
     // 🔥 MONTO COMO ENTERO SIN DECIMALES
     $response = [

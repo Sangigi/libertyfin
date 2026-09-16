@@ -1,20 +1,51 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+/**
+ * pagar_liga.php
+ *
+ * Pagadetodo -> EMISOR
+ * Webhook que Pagadetodo invoca cuando un cliente paga la liga generada en
+ * GenerarLigaPagoSuscripcion.php (pago con tarjeta en el iframe de checkout).
+ *
+ * ANTES: este archivo solo guardaba el JSON crudo en `pagos_liga` y
+ * respondía "aprobado" al gateway, sin actualizar nada más (así lo decía
+ * su propio comentario: "SOLO RESPUESTA, SIN ACTUALIZAR OTRAS TABLAS").
+ * Por eso el cliente pagaba y no pasaba nada: ni se activaba el plan, ni se
+ * mandaba correo, ni se generaba la factura aunque hubiera llenado los
+ * datos fiscales en el checkout.
+ *
+ * AHORA: además de seguir guardando el log crudo en pagos_liga (por
+ * compatibilidad con lo que ya hubiera dependiendo de esa tabla), cuando
+ * response == "approved":
+ *   1. Busca la liga original en domiciliacion_ligas por reference.
+ *   2. Activa/renueva el plan de la empresa.
+ *   3. Marca la liga como pagada.
+ *   4. Envía el correo de confirmación de pago.
+ *   5. Si el cliente pidió factura, la timbra.
+ *
+ * IMPORTANTE: revisa en tu panel de Pagadetodo cuál es la URL de
+ * notificación (webhook) realmente configurada para esta liga. En el repo
+ * también existe Service/EntregarPagoLineaToken.php, que ya traía la
+ * lógica de activación de plan (se reutiliza aquí vía el helper) pero
+ * tampoco enviaba correo ni facturaba. Si tu URL registrada en Pagadetodo
+ * es esa en vez de esta, dime y te paso el mismo parche ahí.
+ */
 
-// Configuración de la base de datos - CAMBIA ESTOS VALORES
+// Config de conexión propia de este endpoint (igual que antes, sin tocar
+// las credenciales según se pidió).
 $host = 'libertyfin.com.mx';
-$dbname = 'juanc141_ventas'; // Cambia por el nombre de tu BD
-$username = 'juanc141_alexis';   // Cambia por tu usuario
-$password = 'Alexis1997';  // Cambia por tu contraseña
+$dbname = 'juanc141_ventas';
+$username = 'juanc141_alexis';
+$password = 'Alexis1997';
+
+require_once __DIR__ . '/helpers_pagos_suscripcion.php';
 
 // Recibir JSON
 $input = file_get_contents("php://input");
 $data = json_decode($input, true);
 
-// Guardar log completo
+// Guardar log completo (igual que antes)
 $log_entry = date("Y-m-d H:i:s") . "\n" . $input . "\n" . str_repeat("-", 50) . "\n";
-file_put_contents("log_pagar_liga.txt", $log_entry, FILE_APPEND);
+file_put_contents(__DIR__ . "/log_pagar_liga.txt", $log_entry, FILE_APPEND);
 
 // Validar JSON
 if (!$data) {
@@ -33,10 +64,9 @@ try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
-    // Si hay error de conexión, solo logueamos y respondemos
-    file_put_contents("log_error_bd.txt", date("Y-m-d H:i:s") . " Error conexión: " . $e->getMessage() . "\n", FILE_APPEND);
-    
-    // Aún así respondemos al webhook
+    file_put_contents(__DIR__ . "/log_error_bd.txt", date("Y-m-d H:i:s") . " Error conexión: " . $e->getMessage() . "\n", FILE_APPEND);
+
+    // Aún así respondemos al webhook (igual que antes)
     if (isset($data['response']) && $data['response'] == "approved") {
         echo json_encode([
             "autorizacion" => $data['auth'] ?? "",
@@ -55,7 +85,7 @@ try {
     exit;
 }
 
-// Extraer todos los campos del JSON
+// Extraer todos los campos del JSON (igual que antes)
 $reference = $data['reference'] ?? null;
 $response = $data['response'] ?? null;
 $foliocpagos = $data['foliocpagos'] ?? null;
@@ -82,11 +112,10 @@ $promocion = $data['promocion'] ?? null;
 $number_tkn = $data['number_tkn'] ?? null;
 $cc_mask = $data['cc_mask'] ?? null;
 
-// Guardar el JSON completo como respaldo
 $raw_response = json_encode($data, JSON_UNESCAPED_UNICODE);
 
+// Guardar el log crudo en pagos_liga (igual que antes)
 try {
-    // Insertar todos los datos en la tabla pagos_liga
     $sql = "INSERT INTO pagos_liga (
         reference, response, foliocpagos, auth, cd_response, cd_error, nb_error,
         time, date, nb_company, nb_merchant, cc_type, tp_operation, cc_name,
@@ -98,9 +127,8 @@ try {
         :cc_number, :cc_expmonth, :cc_expyear, :amount, :emv_key_date, :id_url,
         :email, :payment_type, :promocion, :number_tkn, :cc_mask, :raw_response
     )";
-    
+
     $stmt = $pdo->prepare($sql);
-    
     $stmt->execute([
         ':reference' => $reference,
         ':response' => $response,
@@ -129,25 +157,98 @@ try {
         ':cc_mask' => $cc_mask,
         ':raw_response' => $raw_response
     ]);
-    
+
     $pago_id = $pdo->lastInsertId();
-    
-    // Log de éxito
-    file_put_contents("log_pagos_exitosos.txt", 
-        date("Y-m-d H:i:s") . " Pago guardado ID: $pago_id - Folio: $foliocpagos - Response: $response\n", 
+
+    file_put_contents(__DIR__ . "/log_pagos_exitosos.txt",
+        date("Y-m-d H:i:s") . " Pago guardado ID: $pago_id - Folio: $foliocpagos - Response: $response\n",
         FILE_APPEND
     );
-    
 } catch (PDOException $e) {
-    file_put_contents("log_error_bd.txt", 
-        date("Y-m-d H:i:s") . " Error al guardar: " . $e->getMessage() . "\n", 
+    file_put_contents(__DIR__ . "/log_error_bd.txt",
+        date("Y-m-d H:i:s") . " Error al guardar: " . $e->getMessage() . "\n",
         FILE_APPEND
     );
 }
 
-// Validar estatus y responder (SOLO RESPUESTA, SIN ACTUALIZAR OTRAS TABLAS)
-if (isset($data['response']) && $data['response'] == "approved") {
+// ============================================================
+// NUEVO: si el pago fue aprobado, completar el flujo real
+// ============================================================
+if (isset($data['response']) && $data['response'] == "approved" && !empty($reference)) {
+    try {
+        pagosuscripcion_asegurar_columnas_fiscales($pdo, 'domiciliacion_ligas');
 
+        $stmtLiga = $pdo->prepare("SELECT * FROM domiciliacion_ligas WHERE reference = :ref OR reference_emisor = :ref LIMIT 1");
+        $stmtLiga->execute([':ref' => $reference]);
+        $liga = $stmtLiga->fetch(PDO::FETCH_ASSOC);
+
+        if (!$liga) {
+            file_put_contents(__DIR__ . "/log_error_bd.txt",
+                date("Y-m-d H:i:s") . " No se encontró domiciliacion_ligas para reference=$reference\n",
+                FILE_APPEND
+            );
+        } elseif ($liga['status'] === 'pagado') {
+            // Idempotencia: Pagadetodo puede reintentar la notificación.
+            file_put_contents(__DIR__ . "/log_pagos_exitosos.txt",
+                date("Y-m-d H:i:s") . " Reference $reference ya estaba marcada como pagada, se ignora duplicado.\n",
+                FILE_APPEND
+            );
+        } else {
+            $empresa_id = $liga['empresa_id'];
+            $plan = $liga['plan'];
+            $periodo = $liga['periodo'];
+            $monto = $amount ?: $liga['monto'];
+
+            $stmtEmp = $pdo->prepare("SELECT nombre_empresa, nombre_contacto, email_admin FROM empresas WHERE id = ?");
+            $stmtEmp->execute([$empresa_id]);
+            $empresa = $stmtEmp->fetch(PDO::FETCH_ASSOC) ?: [];
+
+            $pdo->beginTransaction();
+
+            pagosuscripcion_activar_plan($pdo, $empresa_id, $plan, $periodo);
+
+            $stmtUpd = $pdo->prepare("UPDATE domiciliacion_ligas SET status = 'pagado', updated_at = NOW() WHERE reference = :ref OR reference_emisor = :ref");
+            $stmtUpd->execute([':ref' => $reference]);
+
+            $pdo->commit();
+
+            $emailDestino = $email ?: ($empresa['email_admin'] ?? null);
+            pagosuscripcion_enviar_correo_confirmacion(
+                $emailDestino,
+                $empresa['nombre_contacto'] ?? null,
+                $empresa['nombre_empresa'] ?? null,
+                $plan,
+                $periodo,
+                $monto,
+                $reference,
+                'Tarjeta'
+            );
+
+            $fiscal = [
+                'facturar' => $liga['facturar'] ?? 'no',
+                'razon_social' => $liga['razon_social'] ?? null,
+                'rfc' => $liga['rfc'] ?? null,
+                'email_factura' => $liga['email_factura'] ?? null,
+                'regimen_fiscal' => $liga['regimen_fiscal'] ?? null,
+                'cp' => $liga['cp_fiscal'] ?? null,
+                'metodo_pago' => $liga['metodo_pago_cfdi'] ?? null,
+                'uso_cfdi' => $liga['uso_cfdi'] ?? null,
+            ];
+            pagosuscripcion_facturar($pdo, $fiscal, $monto, "Suscripcion {$plan} - {$periodo}", $reference, 'domiciliacion_ligas');
+        }
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        file_put_contents(__DIR__ . "/log_error_bd.txt",
+            date("Y-m-d H:i:s") . " Error completando flujo de pago aprobado ($reference): " . $e->getMessage() . "\n",
+            FILE_APPEND
+        );
+    }
+}
+
+// Responder al webhook (igual formato que antes)
+if (isset($data['response']) && $data['response'] == "approved") {
     echo json_encode([
         "autorizacion" => $auth,
         "mensaje" => "Pago aprobado",
@@ -155,10 +256,7 @@ if (isset($data['response']) && $data['response'] == "approved") {
         "fecha" => date("Y-m-d H:i:s"),
         "id_registro" => $pago_id ?? null
     ]);
-
 } else {
-
-    // Pago rechazado
     echo json_encode([
         "autorizacion" => "",
         "mensaje" => "Pago no aprobado",
@@ -167,4 +265,3 @@ if (isset($data['response']) && $data['response'] == "approved") {
         "id_registro" => $pago_id ?? null
     ]);
 }
-?>

@@ -52,6 +52,9 @@ try {
     $clienteNombre = $data['CustomerName'] ?? 'Cliente Libertyfin';
     $descripcion = $data['Description'] ?? 'Pago Libertyfin';
     $montoTotal = isset($data['MontoTotal']) ? (float) $data['MontoTotal'] : 0;
+    $plan = $data['plan'] ?? null;
+$plazo = $data['plazo'] ?? null;
+$tipoServicio = $data['tipo_servicio'] ?? 'Suscripcion';
     
     // ========== OBTENER EMPRESA_ID ==========
     // Opción 1: Desde la sesión (si la API es llamada desde el sistema)
@@ -174,6 +177,39 @@ try {
             $col_exists = false;
         }
     }
+
+    // Asegurar columnas de facturación (auto-creación, mismo patrón que empresa_id arriba)
+    $columnasFacturacion = [
+        'requiere_factura' => "ALTER TABLE clabes_spei ADD COLUMN requiere_factura TINYINT(1) DEFAULT 0",
+        'razon_social'     => "ALTER TABLE clabes_spei ADD COLUMN razon_social VARCHAR(255) DEFAULT NULL",
+        'rfc'              => "ALTER TABLE clabes_spei ADD COLUMN rfc VARCHAR(20) DEFAULT NULL",
+        'email_factura'    => "ALTER TABLE clabes_spei ADD COLUMN email_factura VARCHAR(150) DEFAULT NULL",
+        'regimen_fiscal'   => "ALTER TABLE clabes_spei ADD COLUMN regimen_fiscal VARCHAR(10) DEFAULT NULL",
+        'cp_factura'       => "ALTER TABLE clabes_spei ADD COLUMN cp_factura VARCHAR(10) DEFAULT NULL",
+        'metodo_pago_sat'  => "ALTER TABLE clabes_spei ADD COLUMN metodo_pago_sat VARCHAR(10) DEFAULT NULL",
+        'uso_cfdi'         => "ALTER TABLE clabes_spei ADD COLUMN uso_cfdi VARCHAR(10) DEFAULT NULL",
+    ];
+    foreach ($columnasFacturacion as $col => $sqlAlter) {
+        try {
+            $chk = $pdo->query("SHOW COLUMNS FROM clabes_spei LIKE " . $pdo->quote($col));
+            if ($chk->rowCount() === 0) {
+                $pdo->exec($sqlAlter);
+            }
+        } catch (PDOException $e) {
+            error_log("No se pudo verificar/crear columna $col en clabes_spei: " . $e->getMessage());
+        }
+    }
+
+    $requiereFactura = !empty($data['requiere_factura']) ? 1 : 0;
+    $facturacion = [
+        'razon_social'    => $data['razon_social'] ?? null,
+        'rfc'             => $data['rfc'] ?? null,
+        'email_factura'   => $data['email_factura'] ?? null,
+        'regimen_fiscal'  => $data['regimen_fiscal'] ?? null,
+        'cp_factura'      => $data['cp'] ?? null,
+        'metodo_pago_sat' => $data['metodo_pago_sat'] ?? null,
+        'uso_cfdi'        => $data['uso_cfdi'] ?? null,
+    ];
     
     // Expirar CLABEs anteriores del mismo cliente
     $stmt = $pdo->prepare("
@@ -184,34 +220,56 @@ try {
     $stmt->execute([$clienteEmail]);
     
     // Construir la consulta INSERT con o sin empresa_id
-    if ($col_exists) {
-        $sql = "
-            INSERT INTO clabes_spei (
-                empresa_id, account, clabe, cliente_email, cliente_nombre, descripcion,
-                monto_total, monto_pendiente, fecha_expiracion, estado, 
-                folio, productos_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'vigente', ?, ?)
-        ";
-        $params = [
-            $empresaId,
-            $account,
-            $apiResponse['Clabe'],
-            $clienteEmail,
-            $clienteNombre,
-            $descripcionFinal,
-            $montoTotalCentavos,
-            $montoTotalCentavos,
-            date('Y-m-d H:i:s', strtotime('+1 day')),
-            $apiResponse['Folio'] ?? null,
-            $productos ? json_encode($productos, JSON_UNESCAPED_UNICODE) : null
-        ];
-    } else {
+// Construir la consulta INSERT con o sin empresa_id
+if ($col_exists) {
+    $sql = "
+        INSERT INTO clabes_spei (
+            empresa_id, account, clabe, cliente_email, cliente_nombre, descripcion,
+            monto_total, monto_pendiente, fecha_expiracion, estado, 
+            folio, productos_json,
+            requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp_factura, metodo_pago_sat, uso_cfdi,
+            facturar, factura_razon_social, factura_rfc, factura_email, factura_regimen_fiscal, factura_cp, factura_metodo_pago, factura_uso_cfdi
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'vigente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ";
+    $params = [
+        $empresaId,
+        $account,
+        $apiResponse['Clabe'],
+        $clienteEmail,
+        $clienteNombre,
+        $descripcionFinal,
+        $montoTotalCentavos,
+        $montoTotalCentavos,
+        date('Y-m-d H:i:s', strtotime('+1 day')),
+        $apiResponse['Folio'] ?? null,
+        $productos ? json_encode($productos, JSON_UNESCAPED_UNICODE) : null,
+        $requiereFactura,
+        $facturacion['razon_social'],
+        $facturacion['rfc'],
+        $facturacion['email_factura'],
+        $facturacion['regimen_fiscal'],
+        $facturacion['cp_factura'],
+        $facturacion['metodo_pago_sat'],
+        $facturacion['uso_cfdi'],
+        // Duplicado en las columnas "factura_*" legacy para que quien las lea
+        // también vea el dato correcto
+        $requiereFactura ? 'si' : 'no',
+        $facturacion['razon_social'],
+        $facturacion['rfc'],
+        $facturacion['email_factura'],
+        $facturacion['regimen_fiscal'],
+        $facturacion['cp_factura'],
+        $facturacion['metodo_pago_sat'],
+        $facturacion['uso_cfdi'],
+    ];
+} else {
         $sql = "
             INSERT INTO clabes_spei (
                 account, clabe, cliente_email, cliente_nombre, descripcion,
                 monto_total, monto_pendiente, fecha_expiracion, estado, 
-                folio, productos_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'vigente', ?, ?)
+                folio, productos_json,
+                requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp_factura, metodo_pago_sat, uso_cfdi
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'vigente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ";
         $params = [
             $account,
@@ -223,7 +281,15 @@ try {
             $montoTotalCentavos,
             date('Y-m-d H:i:s', strtotime('+1 day')),
             $apiResponse['Folio'] ?? null,
-            $productos ? json_encode($productos, JSON_UNESCAPED_UNICODE) : null
+            $productos ? json_encode($productos, JSON_UNESCAPED_UNICODE) : null,
+            $requiereFactura,
+            $facturacion['razon_social'],
+            $facturacion['rfc'],
+            $facturacion['email_factura'],
+            $facturacion['regimen_fiscal'],
+            $facturacion['cp_factura'],
+            $facturacion['metodo_pago_sat'],
+            $facturacion['uso_cfdi'],
         ];
     }
     

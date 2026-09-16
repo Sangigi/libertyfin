@@ -10,6 +10,8 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/email_helper.php';
+require_once __DIR__ . '/facturapi_suscripcion.php';
 
 function escribirLog($mensaje, $tipo = 'INFO') {
     $logDir = __DIR__ . '/../logs';
@@ -90,7 +92,7 @@ try {
     // ============================================================
     // BUSCAR POR LA REFERENCIA EXACTA
     // ============================================================
-    $stmt = $pdo->prepare("SELECT empresa_id, plan, periodo FROM domiciliacion_ligas WHERE reference = :reference LIMIT 1");
+    $stmt = $pdo->prepare("SELECT empresa_id, plan, periodo, requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp, metodo_pago_sat, uso_cfdi FROM domiciliacion_ligas WHERE reference = :reference LIMIT 1");
     $stmt->execute([':reference' => $reference]);
     $liga = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -129,7 +131,7 @@ if ($empresa_id <= 0) {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT id, nombre_empresa, fecha_vencimiento FROM empresas WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, nombre_empresa, fecha_vencimiento, email_admin FROM empresas WHERE id = ?");
     $stmt->execute([$empresa_id]);
     $empresa = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$empresa) {
@@ -320,7 +322,65 @@ try {
 
     $pdo->commit();
     escribirLog("Transacción OK", 'INFO');
-    
+
+    // Enviar correo de confirmación si el pago fue aprobado
+    if ($status === 'approved') {
+        $emailDestino = $empresa['email_admin'] ?? $email;
+        $stmtVig = $pdo->prepare("SELECT fecha_vencimiento FROM empresas WHERE id = ?");
+        $stmtVig->execute([$empresa_id]);
+        $vig = $stmtVig->fetch(PDO::FETCH_ASSOC);
+        $enviado = enviarCorreoConfirmacionPago(
+            $emailDestino,
+            $empresa['nombre_empresa'],
+            $plan_encontrado ?? 'N/A',
+            $periodo_encontrado ?? 'N/A',
+            ((float) $amount) / 100,
+            'Tarjeta',
+            $vig['fecha_vencimiento'] ?? null
+        );
+        escribirLog("Correo de confirmación " . ($enviado ? "enviado" : "NO enviado") . " a: $emailDestino", 'INFO');
+
+        // Timbrar factura si el cliente la solicitó al pagar
+        if (!empty($liga['requiere_factura'])) {
+            $descripcionFactura = "Suscripción LibertyFin - Plan " . ucfirst($plan_encontrado ?? '') . " (" . ($periodo_encontrado ?? '') . ")";
+            $resultadoFactura = timbrarFacturaSuscripcion(
+                [
+                    'razon_social'    => $liga['razon_social'] ?? null,
+                    'rfc'             => $liga['rfc'] ?? null,
+                    'email_factura'   => $liga['email_factura'] ?? null,
+                    'regimen_fiscal'  => $liga['regimen_fiscal'] ?? null,
+                    'cp'              => $liga['cp'] ?? null,
+                    'metodo_pago_sat' => $liga['metodo_pago_sat'] ?? null,
+                    'uso_cfdi'        => $liga['uso_cfdi'] ?? null,
+                ],
+                ((float) $amount) / 100,
+                $descripcionFactura
+            );
+            escribirLog("Timbrado de factura: " . json_encode($resultadoFactura), $resultadoFactura['success'] ? 'INFO' : 'ERROR');
+
+            try {
+                $chk = $pdo->query("SHOW COLUMNS FROM domiciliacion_ligas LIKE 'factura_uuid'");
+                if ($chk->rowCount() === 0) {
+                    $pdo->exec("ALTER TABLE domiciliacion_ligas ADD COLUMN factura_uuid VARCHAR(50) DEFAULT NULL, ADD COLUMN factura_folio VARCHAR(20) DEFAULT NULL, ADD COLUMN factura_error TEXT DEFAULT NULL");
+                }
+            } catch (PDOException $e) {
+                escribirLog("No se pudieron crear columnas de factura en domiciliacion_ligas: " . $e->getMessage(), 'ERROR');
+            }
+
+            try {
+                $stmtF = $pdo->prepare("UPDATE domiciliacion_ligas SET factura_uuid = :uuid, factura_folio = :folio, factura_error = :error WHERE reference = :reference");
+                $stmtF->execute([
+                    ':uuid' => $resultadoFactura['uuid'] ?? null,
+                    ':folio' => $resultadoFactura['folio'] ?? null,
+                    ':error' => $resultadoFactura['error'] ?? null,
+                    ':reference' => $reference,
+                ]);
+            } catch (PDOException $e) {
+                escribirLog("No se pudo guardar el resultado de la factura: " . $e->getMessage(), 'ERROR');
+            }
+        }
+    }
+
     // Respuesta exitosa
     http_response_code(200);
     echo json_encode(['code' => '00', 'message' => 'Recibido correctamente.']);

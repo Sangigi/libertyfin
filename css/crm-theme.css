@@ -667,7 +667,7 @@ main, #mainContent {
   border-radius: 999px;
   padding: 0.35em 0.7em;
   letter-spacing: 0.01em;
-  display: none;
+  display: inline-block;
 }
 .badge.bg-primary { background: var(--primary-color) !important; color: var(--lf-on-brand); }
 .badge.bg-success { background: var(--lf-success-bg) !important; color: var(--lf-success); }

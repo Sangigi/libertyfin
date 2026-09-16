@@ -9,6 +9,8 @@ ini_set('log_errors', 1);
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/email_helper.php';
+require_once __DIR__ . '/facturapi_suscripcion.php';
 
 // Inicializamos $fecha ANTES del try para evitar "undefined variable"
 // si la excepción ocurre antes de leer el input (ej. falla de conexión a BD).
@@ -49,7 +51,9 @@ try {
     $inputParaLog['monto'] = $montoRecibido;
 
     $stmt = $pdo->prepare("
-        SELECT id, account, estado, monto_pendiente, monto_total
+        SELECT id, account, estado, monto_pendiente, monto_total,
+               cliente_email, cliente_nombre, descripcion, empresa_id,
+               requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp_factura, metodo_pago_sat, uso_cfdi
         FROM clabes_spei 
         WHERE clabe = ?
     ");
@@ -171,6 +175,120 @@ try {
     ]);
 
     $pdo->commit();
+
+    // Activar la suscripción: actualizar plan y fecha de vencimiento de la
+    // empresa cuando la CLABE queda completamente saldada (igual que ya se
+    // hace en EntregarPagoLineaToken.php para el flujo de tarjeta).
+    $emp = null;
+    if ($nuevoEstado === 'pagada' && !empty($registro['empresa_id'])) {
+        try {
+            // Extraer plan y periodo de la descripción guardada al generar la CLABE
+            $descripcionClabe = $registro['descripcion'] ?? '';
+            $plan_a_usar = 'empresarial';
+            if (stripos($descripcionClabe, 'Básico') !== false || stripos($descripcionClabe, 'Basico') !== false) $plan_a_usar = 'basico';
+            elseif (stripos($descripcionClabe, 'Profesional') !== false) $plan_a_usar = 'profesional';
+            elseif (stripos($descripcionClabe, 'Plus') !== false) $plan_a_usar = 'plus';
+
+            $esAnualClabe = (stripos($descripcionClabe, 'Anual') !== false);
+            $intervalo = $esAnualClabe ? "INTERVAL 1 YEAR" : "INTERVAL 1 MONTH";
+
+            $stmtFecha = $pdo->prepare("SELECT fecha_vencimiento FROM empresas WHERE id = :empresa_id");
+            $stmtFecha->execute([':empresa_id' => $registro['empresa_id']]);
+            $empresaActual = $stmtFecha->fetch(PDO::FETCH_ASSOC);
+
+            $fechaBase = 'NOW()';
+            if ($empresaActual && $empresaActual['fecha_vencimiento']) {
+                $fechaVencimiento = new DateTime($empresaActual['fecha_vencimiento']);
+                $hoy = new DateTime();
+                if ($fechaVencimiento > $hoy) {
+                    $fechaBase = $fechaVencimiento->format('Y-m-d H:i:s');
+                }
+            }
+
+            if ($fechaBase === 'NOW()') {
+                $sqlUpdate = "UPDATE empresas SET 
+                                plan = :plan, 
+                                fecha_actualizacion = NOW(),
+                                fecha_vencimiento = DATE_ADD(NOW(), $intervalo), 
+                                activo = 1
+                              WHERE id = :empresa_id";
+                $stmtUpd = $pdo->prepare($sqlUpdate);
+                $stmtUpd->execute([':plan' => $plan_a_usar, ':empresa_id' => $registro['empresa_id']]);
+            } else {
+                $sqlUpdate = "UPDATE empresas SET 
+                                plan = :plan, 
+                                fecha_actualizacion = NOW(),
+                                fecha_vencimiento = DATE_ADD(:fecha_base, $intervalo), 
+                                activo = 1
+                              WHERE id = :empresa_id";
+                $stmtUpd = $pdo->prepare($sqlUpdate);
+                $stmtUpd->execute([':plan' => $plan_a_usar, ':empresa_id' => $registro['empresa_id'], ':fecha_base' => $fechaBase]);
+            }
+
+            error_log("Empresa {$registro['empresa_id']} actualizada por SPEI con plan: $plan_a_usar");
+        } catch (PDOException $e) {
+            error_log("Error activando suscripción por SPEI: " . $e->getMessage());
+        }
+    }
+
+    // Enviar correo de confirmación si con este pago se saldó por completo
+    if ($nuevoEstado === 'pagada') {
+        $destino = $registro['cliente_email'] ?? null;
+        if (!empty($registro['empresa_id'])) {
+            try {
+                $stmtEmp = $pdo->prepare("SELECT nombre_empresa, email_admin, fecha_vencimiento FROM empresas WHERE id = ?");
+                $stmtEmp->execute([$registro['empresa_id']]);
+                $emp = $stmtEmp->fetch(PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                $emp = null;
+            }
+        }
+
+        $enviado = enviarCorreoConfirmacionPago(
+            $emp['email_admin'] ?? $destino,
+            $emp['nombre_empresa'] ?? ($registro['cliente_nombre'] ?? 'Cliente'),
+            $registro['descripcion'] ?? 'Suscripción',
+            '',
+            (float) $registro['monto_total'],
+            'SPEI',
+            $emp['fecha_vencimiento'] ?? null
+        );
+        error_log("Correo de confirmación SPEI " . ($enviado ? "enviado" : "NO enviado"));
+
+        // Timbrar factura si el cliente la solicitó al generar la CLABE
+        if (!empty($registro['requiere_factura'])) {
+            $resultadoFactura = timbrarFacturaSuscripcion(
+                [
+                    'razon_social'    => $registro['razon_social'] ?? null,
+                    'rfc'             => $registro['rfc'] ?? null,
+                    'email_factura'   => $registro['email_factura'] ?? null,
+                    'regimen_fiscal'  => $registro['regimen_fiscal'] ?? null,
+                    'cp'              => $registro['cp_factura'] ?? null,
+                    'metodo_pago_sat' => $registro['metodo_pago_sat'] ?? null,
+                    'uso_cfdi'        => $registro['uso_cfdi'] ?? null,
+                ],
+                (float) $registro['monto_total'],
+                'Suscripción LibertyFin - ' . ($registro['descripcion'] ?? '')
+            );
+            error_log("Timbrado de factura SPEI: " . json_encode($resultadoFactura));
+
+            try {
+                $chk = $pdo->query("SHOW COLUMNS FROM clabes_spei LIKE 'factura_uuid'");
+                if ($chk->rowCount() === 0) {
+                    $pdo->exec("ALTER TABLE clabes_spei ADD COLUMN factura_uuid VARCHAR(50) DEFAULT NULL, ADD COLUMN factura_folio VARCHAR(20) DEFAULT NULL, ADD COLUMN factura_error TEXT DEFAULT NULL");
+                }
+                $stmtF = $pdo->prepare("UPDATE clabes_spei SET factura_uuid = :uuid, factura_folio = :folio, factura_error = :error WHERE id = :id");
+                $stmtF->execute([
+                    ':uuid' => $resultadoFactura['uuid'] ?? null,
+                    ':folio' => $resultadoFactura['folio'] ?? null,
+                    ':error' => $resultadoFactura['error'] ?? null,
+                    ':id' => $registro['id'],
+                ]);
+            } catch (PDOException $e) {
+                error_log("No se pudo guardar el resultado de la factura SPEI: " . $e->getMessage());
+            }
+        }
+    }
 
     // La respuesta debe regresar la fecha en formato yyyy-MM-dd (sin hora),
     // tal como especifica la documentación, no el valor crudo recibido en

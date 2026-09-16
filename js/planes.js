@@ -233,6 +233,90 @@ function esPeriodoAnual() {
     return document.getElementById('togTrack')?.classList.contains('annual') || false;
 }
 
+/** Lee los datos de facturación del formulario, si el usuario los pidió */
+function obtenerDatosFacturacion() {
+    const facturarSi = document.getElementById('facturar_si');
+    const requiere = facturarSi ? facturarSi.checked : false;
+    if (!requiere) return { requiere_factura: false };
+    return {
+        requiere_factura: true,
+        razon_social: document.getElementById('razon_social')?.value || '',
+        rfc: document.getElementById('rfc')?.value || '',
+        email_factura: document.getElementById('email_factura')?.value || '',
+        regimen_fiscal: document.getElementById('regimen_fiscal')?.value || '',
+        cp: document.getElementById('cp')?.value || '',
+        metodo_pago_sat: document.getElementById('metodo_pago')?.value || '',
+        uso_cfdi: document.getElementById('uso_cfdi')?.value || ''
+    };
+}
+
+// ============================================
+// POLLING DE ESTADO DE PAGO (tarjeta y SPEI)
+// ============================================
+let _pollingIntervalId = null;
+
+function detenerPollingPago() {
+    if (_pollingIntervalId) {
+        clearInterval(_pollingIntervalId);
+        _pollingIntervalId = null;
+    }
+}
+
+/**
+ * Consulta Service/verificar_estado_pago.php cada `intervaloMs` hasta que
+ * el pago quede aprobado/rechazado o se agoten los intentos.
+ */
+function iniciarPollingPago({ tipo, identificador, intervaloMs = 6000, maxIntentos = 100 }) {
+    detenerPollingPago();
+    let intentos = 0;
+
+    _pollingIntervalId = setInterval(async () => {
+        intentos++;
+        if (intentos > maxIntentos) {
+            detenerPollingPago();
+            return;
+        }
+
+        try {
+            const body = tipo === 'spei'
+                ? { tipo: 'spei', clabe: identificador }
+                : { tipo: 'tarjeta', reference: identificador };
+
+            const resp = await fetch('Service/verificar_estado_pago.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await resp.json();
+
+            if (!data.success) return;
+
+            if (data.status === 'aprobado') {
+                detenerPollingPago();
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Pago confirmado!',
+                    text: 'Tu suscripción ya quedó activa. Te enviamos un correo de confirmación.',
+                    confirmButtonColor: '#27ae60'
+                }).then(() => {
+                    window.location.href = 'suscripciones.php';
+                });
+            } else if (data.status === 'rechazado') {
+                detenerPollingPago();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Pago no completado',
+                    text: 'El pago fue rechazado o la referencia venció. Intenta de nuevo.',
+                    confirmButtonColor: '#27ae60'
+                });
+            }
+            // 'pendiente' -> seguimos esperando, no hacemos nada
+        } catch (e) {
+            console.error('Error verificando estado de pago:', e);
+        }
+    }, intervaloMs);
+}
+
 // ============================================
 // TOGGLE FACTURACIÓN
 // ============================================
@@ -295,7 +379,8 @@ async function generarPago() {
             },
             body: JSON.stringify({
                 monto: monto,
-                descripcion: descripcion
+                descripcion: descripcion,
+                ...obtenerDatosFacturacion()
             })
         });
 
@@ -325,6 +410,12 @@ async function generarPago() {
             if (tabCard) {
                 const tab = new bootstrap.Tab(tabCard);
                 tab.show();
+            }
+
+            // Empezamos a preguntar si ya se acreditó el pago, usando la
+            // reference que acabamos de generar
+            if (data.reference) {
+                iniciarPollingPago({ tipo: 'tarjeta', identificador: data.reference });
             }
 
         } else {
@@ -405,6 +496,7 @@ function copiarLinkPago() {
 }
 
 function volverDeResultado() {
+    detenerPollingPago();
     const cardInfoView = document.getElementById('cardInfoView');
     const cardResultView = document.getElementById('cardResultView');
     const paymentIframe = document.getElementById('paymentIframe');
@@ -462,7 +554,8 @@ async function generarCLABE() {
             empresa_id: empresaId,
             plan: planActual,                     // 'basico', 'profesional', 'empresarial', 'plus'
             plazo: esAnual ? 'anual' : 'mensual', // 'anual' o 'mensual'
-            tipo_servicio: 'Suscripcion'          // Siempre 'Suscripcion'
+            tipo_servicio: 'Suscripcion',          // Siempre 'Suscripcion'
+            ...obtenerDatosFacturacion()
         };
 
         const response = await fetch('Service/generar_clabe.php', {
@@ -519,6 +612,9 @@ async function generarCLABE() {
             window._speiAccount = data.account;
             window._speiId = data.id;
 
+            // Empezamos a preguntar si ya llegó la transferencia SPEI
+            iniciarPollingPago({ tipo: 'spei', identificador: data.clabe });
+
         } else {
             Swal.fire({
                 icon: 'error',
@@ -543,6 +639,7 @@ async function generarCLABE() {
 
 /** Volver a la vista inicial de SPEI */
 function volverDeSPEI() {
+    detenerPollingPago();
     document.getElementById('speiInfoView').style.display = 'block';
     document.getElementById('speiResultView').style.display = 'none';
     window._speiClabe = null;
@@ -964,3 +1061,193 @@ async function toggleCargoAutomatico() {
         });
     }
 }
+
+// ============================================
+// REFERENCIA EN EFECTIVO (OXXO / Paga de Todo)
+// ============================================
+
+/**
+ * Genera una referencia de pago en efectivo vía Service/generar_referencia.php
+ * y muestra el resultado en la vista #refResultView.
+ *
+ * IMPORTANTE: NO valida PLANES_DATA[planActual] (a diferencia de la versión
+ * anterior) porque CCT no valida el nombre interno del plan y el nombre real
+ * se obtiene del DOM con obtenerNombrePlanActual(). Funciona igual que
+ * generarPago() y generarCLABE(), que sí funcionan con todos los planes.
+ */
+async function generarReferenciaEfectivo() {
+    const btn = document.getElementById('btnGenerarReferencia');
+    const overlay = document.getElementById('loadingOverlay');
+    const loadingTitle = document.getElementById('loadingTitle');
+    const loadingMessage = document.getElementById('loadingMessage');
+
+    // 1) Monto del resumen (igual que tarjeta/SPEI)
+    const monto = obtenerMontoActual();
+    if (monto <= 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Monto inválido',
+            text: 'No se pudo determinar el monto a pagar.',
+            confirmButtonColor: '#27ae60'
+        });
+        return;
+    }
+
+    // 2) Nombre del plan desde el DOM (igual que tarjeta/SPEI)
+    const nombrePlan = obtenerNombrePlanActual();
+    if (!nombrePlan) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Selecciona un plan',
+            text: 'Primero elige el plan que deseas contratar.',
+            confirmButtonColor: '#27ae60'
+        });
+        return;
+    }
+
+    // 3) Periodo
+    const esAnual = esPeriodoAnual();
+    const plazo = esAnual ? 'anual' : 'mensual';
+
+    // 4) Descripción (máx 50 chars, pág. 7 del doc CCT)
+    const descripcion = `Suscripcion ${nombrePlan} - ${esAnual ? 'Anual' : 'Mensual'}`.slice(0, 50);
+
+    // 5) Bloquear botón + overlay
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Generando referencia...';
+    }
+    if (overlay) overlay.classList.add('active');
+    if (loadingTitle) loadingTitle.textContent = 'Generando referencia';
+    if (loadingMessage) loadingMessage.textContent = 'Creando tu ficha de pago en efectivo...';
+
+    try {
+        // 6) Payload (mismo patrón que tarjeta/SPEI)
+        const payload = {
+            monto: monto,
+            descripcion: descripcion,
+            empresa_id: empresaId,
+            plan: planActual,                 // puede ser 'premium' o 'plus'; da igual
+            plazo: plazo,
+            tipo_servicio: 'Suscripcion',
+            CustomerEmail: document.getElementById('refCustomerEmail')?.value?.trim()
+                          || window._clienteEmail || '',
+            CustomerName:  document.getElementById('refCustomerName')?.value?.trim()
+                          || window._clienteNombre || '',
+            ...obtenerDatosFacturacion()
+        };
+
+        console.log('[generarReferenciaEfectivo] Payload:', payload);
+
+        const resp = await fetch('Service/generar_referencia.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await resp.json();
+        console.log('[generarReferenciaEfectivo] Respuesta:', data);
+
+        if (overlay) overlay.classList.remove('active');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-barcode me-2"></i> Generar referencia de pago';
+        }
+
+        // 7) Manejo de error del backend
+        if (!data.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al generar la referencia',
+                html: `
+                    <p>${data.error || 'Intenta de nuevo.'}</p>
+                    ${data.codigo_cct
+                        ? `<p class="text-muted" style="font-size:12px;">Código CCT: ${data.codigo_cct}</p>`
+                        : ''}
+                `,
+                confirmButtonColor: '#27ae60'
+            });
+            return;
+        }
+
+        // 8) Pintar resultado
+        document.getElementById('refReferenceValue').textContent = data.reference || '—';
+        document.getElementById('refFolio').textContent = data.folio || '—';
+        document.getElementById('refMonto').textContent =
+            `$${Number(data.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN`;
+        document.getElementById('refFechaExpiracion').textContent = data.fecha_expiracion || '—';
+
+        const payformatLink = document.getElementById('refPayformatLink');
+        if (payformatLink && data.payformat) {
+            payformatLink.href = data.payformat;
+            payformatLink.style.display = 'inline-flex';
+        } else if (payformatLink) {
+            payformatLink.style.display = 'none';
+        }
+
+        const barcodeContainer = document.getElementById('refBarcodeContainer');
+        const barcodeImg = document.getElementById('refBarcodeImg');
+        if (barcodeContainer && barcodeImg && data.barcode) {
+            barcodeImg.src = data.barcode;
+            barcodeContainer.style.display = 'block';
+        } else if (barcodeContainer) {
+            barcodeContainer.style.display = 'none';
+        }
+
+        // 9) Guardar para polling
+        window._refReference = data.reference || null;
+        window._refFolio = data.folio || null;
+
+        // 10) Cambiar de vista
+        document.getElementById('refInfoView').style.display = 'none';
+        document.getElementById('refResultView').style.display = 'block';
+
+        setTimeout(() => {
+            document.getElementById('refResultView')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+
+        // 11) Polling
+        if (data.reference) {
+            iniciarPollingPago({
+                tipo: 'tarjeta',
+                identificador: data.reference
+            });
+        }
+
+    } catch (err) {
+        if (overlay) overlay.classList.remove('active');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-barcode me-2"></i> Generar referencia de pago';
+        }
+        console.error('Error generarReferenciaEfectivo:', err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'No se pudo conectar con el servidor de referencias.',
+            confirmButtonColor: '#27ae60'
+        });
+    }
+}
+
+/**
+ * Regresa a la vista del formulario de referencia.
+ */
+function volverDeReferencia() {
+    document.getElementById('refInfoView').style.display = 'block';
+    document.getElementById('refResultView').style.display = 'none';
+    window._refReference = null;
+    window._refFolio = null;
+}
+
+// Detener polling al salir de la pestaña
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('hidden.bs.tab', (e) => {
+            if (e.target.id === 'tab-referencia' && typeof detenerPollingPago === 'function') {
+                detenerPollingPago();
+            }
+        });
+    });
+});

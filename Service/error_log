@@ -55,3 +55,482 @@ Stack trace:
 Stack trace:
 #0 {main}
   thrown in /home2/juanc141/public_html/Service/consultar_clabe.php on line 123
+[10-Sep-2026 05:58:12 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 05:58:12 America/Mexico_City] 📦 SPEI Payload - Account: 178904148443485 - Monto: 80.39 - EmpresaID: 1
+[10-Sep-2026 05:58:25 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 05:58:25 America/Mexico_City] 📦 SPEI Payload - Account: 178904149496796 - Monto: 80.39 - EmpresaID: 1
+[10-Sep-2026 05:58:29 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 05:58:29 America/Mexico_City] 📦 SPEI Payload - Account: 178904149497136 - Monto: 80.39 - EmpresaID: 1
+[10-Sep-2026 06:23:14 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 06:23:14 America/Mexico_City] 📦 SPEI Payload - Account: 178904299361456 - Monto: 51.04 - EmpresaID: 1
+[10-Sep-2026 06:23:18 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 06:23:18 America/Mexico_City] 📦 SPEI Payload - Account: 178904299362036 - Monto: 51.04 - EmpresaID: 1
+[10-Sep-2026 06:25:59 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string + int in /home2/juanc141/public_html/Service/consultar_clabe.php:123
+Stack trace:
+#0 {main}
+  thrown in /home2/juanc141/public_html/Service/consultar_clabe.php on line 123
+[10-Sep-2026 06:31:06 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 06:31:06 America/Mexico_City] 📦 SPEI Payload - Account: 178904346472822 - Monto: 63.8 - EmpresaID: 1
+[10-Sep-2026 06:31:10 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 06:31:10 America/Mexico_City] 📦 SPEI Payload - Account: 178904346471200 - Monto: 63.8 - EmpresaID: 1
+[10-Sep-2026 06:33:56 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string + int in /home2/juanc141/public_html/Service/consultar_clabe.php:123
+Stack trace:
+#0 {main}
+  thrown in /home2/juanc141/public_html/Service/consultar_clabe.php on line 123
+[10-Sep-2026 06:35:25 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 06:35:25 America/Mexico_City] 📦 SPEI Payload - Account: 178904372372742 - Monto: 63.8 - EmpresaID: 1
+[10-Sep-2026 06:43:24 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 06:43:24 America/Mexico_City] 📦 SPEI Payload - Account: 178904420257495 - Monto: 63.8 - EmpresaID: 1
+[10-Sep-2026 06:43:27 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 06:43:27 America/Mexico_City] 📦 SPEI Payload - Account: 178904420258034 - Monto: 63.8 - EmpresaID: 1
+[10-Sep-2026 09:51:08 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 09:51:08 America/Mexico_City] 📦 SPEI Payload - Account: 178905546864409 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 10:05:47 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 10:05:47 America/Mexico_City] 📦 SPEI Payload - Account: 178905634741331 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 10:17:16 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 10:17:16 America/Mexico_City] 📦 SPEI Payload - Account: 178905703545140 - Monto: 63.8 - EmpresaID: 1
+[10-Sep-2026 10:17:21 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 10:17:21 America/Mexico_City] 📦 SPEI Payload - Account: 178905703545637 - Monto: 63.8 - EmpresaID: 1
+[10-Sep-2026 10:24:56 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 10:24:56 America/Mexico_City] 📦 SPEI Payload - Account: 178905749630651 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 10:26:19 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 10:26:19 America/Mexico_City] 📦 SPEI Payload - Account: 178905757900465 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 11:17:19 America/Mexico_City] 📌 empresa_id desde payload: 107
+[10-Sep-2026 11:17:19 America/Mexico_City] 📦 SPEI Payload - Account: 178906063993460 - Monto: 99900 - EmpresaID: 107
+[10-Sep-2026 11:19:40 America/Mexico_City] 📌 empresa_id desde payload: 107
+[10-Sep-2026 11:19:40 America/Mexico_City] 📦 SPEI Payload - Account: 178906078062010 - Monto: 99900 - EmpresaID: 107
+[10-Sep-2026 16:22:57 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 16:22:57 America/Mexico_City] 📦 SPEI Payload - Account: 178907897758155 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 16:26:42 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 16:26:42 America/Mexico_City] 📦 SPEI Payload - Account: 178907920274876 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 17:03:23 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 17:03:23 America/Mexico_City] 📦 SPEI Payload - Account: 178908140167998 - Monto: 58 - EmpresaID: 1
+[10-Sep-2026 17:03:27 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 17:03:27 America/Mexico_City] 📦 SPEI Payload - Account: 178908140167460 - Monto: 58 - EmpresaID: 1
+[10-Sep-2026 17:04:58 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 17:04:58 America/Mexico_City] 📦 SPEI Payload - Account: 178908149712158 - Monto: 74.24 - EmpresaID: 1
+[10-Sep-2026 17:05:02 America/Mexico_City] 📌 empresa_id desde payload: 1
+[10-Sep-2026 17:05:02 America/Mexico_City] 📦 SPEI Payload - Account: 178908149712216 - Monto: 74.24 - EmpresaID: 1
+[10-Sep-2026 17:09:56 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 17:09:56 America/Mexico_City] 📦 SPEI Payload - Account: 178908179697440 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 17:28:04 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 17:28:04 America/Mexico_City] 📦 SPEI Payload - Account: 178908288422189 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 17:29:09 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 17:29:09 America/Mexico_City] 📦 SPEI Payload - Account: 178908294915488 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 17:34:11 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 17:34:11 America/Mexico_City] 📦 SPEI Payload - Account: 178908325114726 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 17:41:00 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 17:41:00 America/Mexico_City] 📦 SPEI Payload - Account: 178908366015162 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 17:43:40 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 17:43:40 America/Mexico_City] 📦 SPEI Payload - Account: 178908382016380 - Monto: 29900 - EmpresaID: 18
+[10-Sep-2026 17:46:02 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 17:46:02 America/Mexico_City] 📦 SPEI Payload - Account: 178908396268323 - Monto: 299 - EmpresaID: 18
+[10-Sep-2026 17:49:07 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 17:49:07 America/Mexico_City] 📦 SPEI Payload - Account: 178908414718021 - Monto: 299 - EmpresaID: 18
+[10-Sep-2026 17:54:02 America/Mexico_City] 📌 empresa_id desde payload: 18
+[10-Sep-2026 17:54:02 America/Mexico_City] 📦 SPEI Payload - Account: 178908444298942 - Monto: 299 - EmpresaID: 18
+[11-Sep-2026 16:16:52 America/Mexico_City] 📌 empresa_id desde payload: 18
+[11-Sep-2026 16:16:52 America/Mexico_City] 📦 SPEI Payload - Account: 178916501208122 - Monto: 299 - EmpresaID: 18
+[14-Sep-2026 04:16:51 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 04:16:51 America/Mexico_City] 📦 SPEI Payload - Account: 178938101126738 - Monto: 999 - EmpresaID: 18 - Plan: empresarial - Plazo: mensual
+[14-Sep-2026 04:19:54 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 04:19:54 America/Mexico_City] 📦 SPEI Payload - Account: 178938119428362 - Monto: 1499 - EmpresaID: 18 - Plan: plus - Plazo: mensual
+[14-Sep-2026 04:23:58 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 04:23:58 America/Mexico_City] 📦 SPEI Payload - Account: 178938143803827 - Monto: 299 - EmpresaID: 18 - Plan: basico - Plazo: mensual
+[14-Sep-2026 04:24:45 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 04:24:45 America/Mexico_City] 📦 SPEI Payload - Account: 178938148557936 - Monto: 1499 - EmpresaID: 18 - Plan: plus - Plazo: mensual
+[14-Sep-2026 04:26:29 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 04:26:29 America/Mexico_City] 📦 SPEI Payload - Account: 178938158962763 - Monto: 1499 - EmpresaID: 18 - Plan: plus - Plazo: mensual
+[14-Sep-2026 04:43:49 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 04:43:49 America/Mexico_City] 📦 SPEI Payload - Account: 178938262916143 - Monto: 299 - EmpresaID: 18 - Plan: basico - Plazo: mensual
+[14-Sep-2026 04:44:50 America/Mexico_City] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home2/juanc141/public_html/Service/pago_clabe.php:1) in /home2/juanc141/public_html/Service/pago_clabe.php on line 3
+[14-Sep-2026 04:44:50 America/Mexico_City] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home2/juanc141/public_html/Service/pago_clabe.php:1) in /home2/juanc141/public_html/Service/pago_clabe.php on line 4
+[14-Sep-2026 04:44:50 America/Mexico_City] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home2/juanc141/public_html/Service/pago_clabe.php:1) in /home2/juanc141/public_html/Service/pago_clabe.php on line 5
+[14-Sep-2026 04:44:50 America/Mexico_City] Error en autoriza_pago: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'periodo' in 'field list'
+[14-Sep-2026 04:45:44 America/Mexico_City] Error en autoriza_pago: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'periodo' in 'field list'
+[14-Sep-2026 04:46:04 America/Mexico_City] Error en autoriza_pago: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'periodo' in 'field list'
+[14-Sep-2026 04:59:29 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 04:59:29 America/Mexico_City] 📦 SPEI Payload - Account: 178938356982643 - Monto: 299 - EmpresaID: 18 - Plan: basico - Plazo: mensual
+[14-Sep-2026 05:27:19 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 05:27:19 America/Mexico_City] 📦 SPEI Payload - Account: 178938523909051 - Monto: 1499 - EmpresaID: 18 - Plan: plus - Plazo: mensual
+[14-Sep-2026 06:46:53 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 06:46:53 America/Mexico_City] 📦 SPEI Payload - Account: 178939001378551 - Monto: 1499 - EmpresaID: 18 - Plan: plus - Plazo: mensual
+[14-Sep-2026 11:31:23 America/Mexico_City] ✅ Columna facturar agregada a domiciliacion_ligas
+[14-Sep-2026 11:31:23 America/Mexico_City] ✅ Columna factura_razon_social agregada a domiciliacion_ligas
+[14-Sep-2026 11:31:23 America/Mexico_City] ✅ Columna factura_rfc agregada a domiciliacion_ligas
+[14-Sep-2026 11:31:23 America/Mexico_City] ✅ Columna factura_email agregada a domiciliacion_ligas
+[14-Sep-2026 11:31:23 America/Mexico_City] ✅ Columna factura_regimen_fiscal agregada a domiciliacion_ligas
+[14-Sep-2026 11:31:23 America/Mexico_City] ✅ Columna factura_cp agregada a domiciliacion_ligas
+[14-Sep-2026 11:31:23 America/Mexico_City] ✅ Columna factura_estado agregada a domiciliacion_ligas
+[14-Sep-2026 11:31:23 America/Mexico_City] ✅ Columna factura_ciudad agregada a domiciliacion_ligas
+[14-Sep-2026 11:31:23 America/Mexico_City] ✅ Columna factura_metodo_pago agregada a domiciliacion_ligas
+[14-Sep-2026 11:31:23 America/Mexico_City] ✅ Columna factura_uso_cfdi agregada a domiciliacion_ligas
+[14-Sep-2026 11:58:23 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 11:58:23 America/Mexico_City] 📦 SPEI Payload - Account: 178940870323233 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 11:58:27 America/Mexico_City] ✅ Columna periodo agregada a clabes_spei
+[14-Sep-2026 11:58:27 America/Mexico_City] ✅ Columna facturar agregada a clabes_spei
+[14-Sep-2026 11:58:27 America/Mexico_City] ✅ Columna factura_razon_social agregada a clabes_spei
+[14-Sep-2026 11:58:27 America/Mexico_City] ✅ Columna factura_rfc agregada a clabes_spei
+[14-Sep-2026 11:58:27 America/Mexico_City] ✅ Columna factura_email agregada a clabes_spei
+[14-Sep-2026 11:58:27 America/Mexico_City] ✅ Columna factura_regimen_fiscal agregada a clabes_spei
+[14-Sep-2026 11:58:27 America/Mexico_City] ✅ Columna factura_cp agregada a clabes_spei
+[14-Sep-2026 11:58:27 America/Mexico_City] ✅ Columna factura_estado agregada a clabes_spei
+[14-Sep-2026 11:58:28 America/Mexico_City] ✅ Columna factura_ciudad agregada a clabes_spei
+[14-Sep-2026 11:58:28 America/Mexico_City] ✅ Columna factura_metodo_pago agregada a clabes_spei
+[14-Sep-2026 11:58:28 America/Mexico_City] ✅ Columna factura_uso_cfdi agregada a clabes_spei
+[14-Sep-2026 11:58:28 America/Mexico_City] ❌ Error en generar_clabe: There is no active transaction
+[14-Sep-2026 11:58:41 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 11:58:41 America/Mexico_City] 📦 SPEI Payload - Account: 178940872127257 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 12:00:33 America/Mexico_City] ✅ Suscripción activada por SPEI -- empresa 18, plan basico, vigencia nueva: 2027-07-11
+[14-Sep-2026 12:00:33 America/Mexico_City] ℹ️ Factura de suscripción no generada: El cliente no pidió factura para este pago.
+[14-Sep-2026 12:19:25 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:19:25 America/Mexico_City] 📦 SPEI Payload - Account: 178940996563070 - Monto: 1 - EmpresaID: 18
+[14-Sep-2026 12:19:29 America/Mexico_City] pagosuscripcion: columna `razon_social` agregada a `clabes_spei`
+[14-Sep-2026 12:19:29 America/Mexico_City] pagosuscripcion: columna `rfc` agregada a `clabes_spei`
+[14-Sep-2026 12:19:30 America/Mexico_City] pagosuscripcion: columna `email_factura` agregada a `clabes_spei`
+[14-Sep-2026 12:19:30 America/Mexico_City] pagosuscripcion: columna `regimen_fiscal` agregada a `clabes_spei`
+[14-Sep-2026 12:19:30 America/Mexico_City] pagosuscripcion: columna `cp_fiscal` agregada a `clabes_spei`
+[14-Sep-2026 12:19:30 America/Mexico_City] pagosuscripcion: columna `metodo_pago_cfdi` agregada a `clabes_spei`
+[14-Sep-2026 12:19:30 America/Mexico_City] pagosuscripcion: columna `uso_cfdi` agregada a `clabes_spei`
+[14-Sep-2026 12:19:30 America/Mexico_City] pagosuscripcion: columna `factura_uuid` agregada a `clabes_spei`
+[14-Sep-2026 12:19:30 America/Mexico_City] pagosuscripcion: columna `factura_folio` agregada a `clabes_spei`
+[14-Sep-2026 12:19:30 America/Mexico_City] ❌ Error en generar_clabe: There is no active transaction
+[14-Sep-2026 12:19:34 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:19:34 America/Mexico_City] 📦 SPEI Payload - Account: 178940997451907 - Monto: 1 - EmpresaID: 18
+[14-Sep-2026 12:19:50 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:19:50 America/Mexico_City] 📦 SPEI Payload - Account: 178940999017419 - Monto: 599 - EmpresaID: 18
+[14-Sep-2026 12:24:04 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:24:04 America/Mexico_City] 📦 SPEI Payload - Account: 178941024480238 - Monto: 1 - EmpresaID: 18
+[14-Sep-2026 12:25:39 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:25:39 America/Mexico_City] 📦 SPEI Payload - Account: 178941033930647 - Monto: 599 - EmpresaID: 18
+[14-Sep-2026 12:27:25 America/Mexico_City] pagosuscripcion: columna `razon_social` agregada a `domiciliacion_ligas`
+[14-Sep-2026 12:27:26 America/Mexico_City] pagosuscripcion: columna `rfc` agregada a `domiciliacion_ligas`
+[14-Sep-2026 12:27:26 America/Mexico_City] pagosuscripcion: columna `email_factura` agregada a `domiciliacion_ligas`
+[14-Sep-2026 12:27:26 America/Mexico_City] pagosuscripcion: columna `regimen_fiscal` agregada a `domiciliacion_ligas`
+[14-Sep-2026 12:27:26 America/Mexico_City] pagosuscripcion: columna `cp_fiscal` agregada a `domiciliacion_ligas`
+[14-Sep-2026 12:27:26 America/Mexico_City] pagosuscripcion: columna `metodo_pago_cfdi` agregada a `domiciliacion_ligas`
+[14-Sep-2026 12:27:26 America/Mexico_City] pagosuscripcion: columna `uso_cfdi` agregada a `domiciliacion_ligas`
+[14-Sep-2026 12:27:26 America/Mexico_City] pagosuscripcion: columna `factura_uuid` agregada a `domiciliacion_ligas`
+[14-Sep-2026 12:27:26 America/Mexico_City] pagosuscripcion: columna `factura_folio` agregada a `domiciliacion_ligas`
+[14-Sep-2026 12:27:34 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:27:34 America/Mexico_City] 📦 SPEI Payload - Account: 178941045435474 - Monto: 599 - EmpresaID: 18
+[14-Sep-2026 12:28:55 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:28:55 America/Mexico_City] 📦 SPEI Payload - Account: 178941053523019 - Monto: 1 - EmpresaID: 18
+[14-Sep-2026 12:36:03 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:36:03 America/Mexico_City] 📦 SPEI Payload - Account: 178941096367374 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 12:41:34 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:41:34 America/Mexico_City] 📦 SPEI Payload - Account: 178941129430661 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 12:52:04 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:52:04 America/Mexico_City] 📦 SPEI Payload - Account: 178941192463269 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 12:56:28 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:56:28 America/Mexico_City] 📦 SPEI Payload - Account: 178941218800991 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 12:58:48 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 12:58:48 America/Mexico_City] 📦 SPEI Payload - Account: 178941232828594 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 13:07:40 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 13:07:40 America/Mexico_City] 📦 SPEI Payload - Account: 178941286038329 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 13:07:44 America/Mexico_City] ❌ Error en generar_clabe: There is no active transaction
+[14-Sep-2026 13:07:48 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 13:07:48 America/Mexico_City] 📦 SPEI Payload - Account: 178941286887546 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 13:09:27 America/Mexico_City] Correo de confirmación SPEI enviado
+[14-Sep-2026 13:21:02 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 13:21:02 America/Mexico_City] 📦 SPEI Payload - Account: 178941366291185 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 13:22:38 America/Mexico_City] Empresa 18 actualizada por SPEI con plan: basico
+[14-Sep-2026 13:22:40 America/Mexico_City] Correo de confirmación SPEI enviado
+[14-Sep-2026 13:22:40 America/Mexico_City] Facturapi (suscripción) request: {"customer":{"legal_name":"Alexis Sanchez Vanegas","email":"sanchez.vanegas.alexiscbtis44@gmail.com","tax_id":"SANS102154784","tax_system":"605","address":{"zip":"04369"}},"items":[{"quantity":1,"product":{"description":"Suscripci\u00f3n LibertyFin - Suscripcion B\u00e1sico - Mensual","product_key":"81112501","price":10}}],"payment_form":"28","use":"G03"}
+[14-Sep-2026 13:22:41 America/Mexico_City] Error timbrando factura de suscripción: No se obtuvo UUID de la factura. Respuesta: {"message":"La API key proporcionada no es v\u00e1lida.","status":401,"code":"api_key_invalid","ok":false}
+[14-Sep-2026 13:22:41 America/Mexico_City] Timbrado de factura SPEI: {"success":false,"uuid":null,"folio":null,"email_sent":false,"error":"No se obtuvo UUID de la factura. Respuesta: {\"message\":\"La API key proporcionada no es v\\u00e1lida.\",\"status\":401,\"code\":\"api_key_invalid\",\"ok\":false}"}
+[14-Sep-2026 13:22:41 America/Mexico_City] No se pudo guardar el resultado de la factura SPEI: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'factura_error' in 'field list'
+[14-Sep-2026 13:36:45 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 13:36:45 America/Mexico_City] 📦 SPEI Payload - Account: 178941460560628 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 13:37:23 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 13:37:23 America/Mexico_City] 📦 SPEI Payload - Account: 178941464320847 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 13:41:06 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 13:41:06 America/Mexico_City] 📦 SPEI Payload - Account: 178941486655921 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 13:41:10 America/Mexico_City] ❌ Error en generar_clabe: SQLSTATE[21S01]: Insert value list does not match column list: 1136 Column count doesn't match value count at row 1
+[14-Sep-2026 13:42:08 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 13:42:08 America/Mexico_City] 📦 SPEI Payload - Account: 178941492885378 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 13:44:28 America/Mexico_City] Empresa 18 actualizada por SPEI con plan: basico
+[14-Sep-2026 13:44:30 America/Mexico_City] Correo de confirmación SPEI enviado
+[14-Sep-2026 13:44:30 America/Mexico_City] Facturapi (suscripción) request: {"customer":{"legal_name":"Alexis Sanchez Vanegas","email":"sanchez.vanegas.alexiscbtis44@gmail.com","tax_id":"SANS102154784","tax_system":"605","address":{"zip":"04369"}},"items":[{"quantity":1,"product":{"description":"Suscripci\u00f3n LibertyFin - Suscripcion B\u00e1sico - Mensual","product_key":"81112501","price":10}}],"payment_form":"28","use":"G03"}
+[14-Sep-2026 13:44:30 America/Mexico_City] Error timbrando factura de suscripción: No se obtuvo UUID de la factura. Respuesta: {"message":"La API key proporcionada no es v\u00e1lida.","status":401,"code":"api_key_invalid","ok":false}
+[14-Sep-2026 13:44:30 America/Mexico_City] Timbrado de factura SPEI: {"success":false,"uuid":null,"folio":null,"email_sent":false,"error":"No se obtuvo UUID de la factura. Respuesta: {\"message\":\"La API key proporcionada no es v\\u00e1lida.\",\"status\":401,\"code\":\"api_key_invalid\",\"ok\":false}"}
+[14-Sep-2026 13:44:30 America/Mexico_City] No se pudo guardar el resultado de la factura SPEI: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'factura_error' in 'field list'
+[14-Sep-2026 14:03:57 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 14:03:57 America/Mexico_City] 📦 SPEI Payload - Account: 178941623706605 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 14:05:28 America/Mexico_City] Empresa 18 actualizada por SPEI con plan: basico
+[14-Sep-2026 14:05:31 America/Mexico_City] Correo de confirmación SPEI enviado
+[14-Sep-2026 14:05:31 America/Mexico_City] Facturapi (suscripción) request: {"customer":{"legal_name":"Alexis Sanchez Vanegas","email":"sanchez.vanegas.alexiscbtis44@gmail.com","tax_id":"SANS102154784","tax_system":"605","address":{"zip":"04369"}},"items":[{"quantity":1,"product":{"description":"Suscripci\u00f3n LibertyFin - Suscripcion B\u00e1sico - Mensual","product_key":"81112501","price":10}}],"payment_form":"28","use":"G03"}
+[14-Sep-2026 14:05:31 America/Mexico_City] Error timbrando factura de suscripción: No se obtuvo UUID de la factura. Respuesta: {"message":"La API key proporcionada no es v\u00e1lida.","status":401,"code":"api_key_invalid","ok":false}
+[14-Sep-2026 14:05:31 America/Mexico_City] Timbrado de factura SPEI: {"success":false,"uuid":null,"folio":null,"email_sent":false,"error":"No se obtuvo UUID de la factura. Respuesta: {\"message\":\"La API key proporcionada no es v\\u00e1lida.\",\"status\":401,\"code\":\"api_key_invalid\",\"ok\":false}"}
+[14-Sep-2026 14:05:31 America/Mexico_City] No se pudo guardar el resultado de la factura SPEI: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'factura_error' in 'field list'
+[14-Sep-2026 14:20:13 America/Mexico_City] PHP Fatal error:  Uncaught Error: Call to undefined method Facturapi\Resources\Organizations::getLiveApiKey() in /home2/juanc141/public_html/Service/facturapi_diagnostico.php:129
+Stack trace:
+#0 {main}
+  thrown in /home2/juanc141/public_html/Service/facturapi_diagnostico.php on line 129
+[14-Sep-2026 14:28:15 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 14:28:15 America/Mexico_City] 📦 SPEI Payload - Account: 178941769567429 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 14:29:19 America/Mexico_City] Empresa 18 actualizada por SPEI con plan: basico
+[14-Sep-2026 14:29:21 America/Mexico_City] Correo de confirmación SPEI enviado
+[14-Sep-2026 14:29:21 America/Mexico_City] Facturapi (suscripción) request: {"customer":{"legal_name":"Alexis Sanchez Vanegas","email":"sanchez.vanegas.alexiscbtis44@gmail.com","tax_id":"SANS102154784","tax_system":"605","address":{"zip":"04369"}},"items":[{"quantity":1,"product":{"description":"Suscripci\u00f3n LibertyFin - Suscripcion B\u00e1sico - Mensual","product_key":"81112501","price":10}}],"payment_form":"28","use":"G03"}
+[14-Sep-2026 14:29:22 America/Mexico_City] Error timbrando factura de suscripción: No se obtuvo UUID de la factura. Respuesta: {"message":"La API key proporcionada no es v\u00e1lida.","status":401,"code":"api_key_invalid","ok":false}
+[14-Sep-2026 14:29:22 America/Mexico_City] Timbrado de factura SPEI: {"success":false,"uuid":null,"folio":null,"email_sent":false,"error":"No se obtuvo UUID de la factura. Respuesta: {\"message\":\"La API key proporcionada no es v\\u00e1lida.\",\"status\":401,\"code\":\"api_key_invalid\",\"ok\":false}"}
+[14-Sep-2026 14:36:01 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 14:36:01 America/Mexico_City] 📦 SPEI Payload - Account: 178941816151565 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 14:37:57 America/Mexico_City] Empresa 18 actualizada por SPEI con plan: basico
+[14-Sep-2026 14:37:59 America/Mexico_City] Correo de confirmación SPEI enviado
+[14-Sep-2026 14:37:59 America/Mexico_City] Facturapi (suscripción) request: {"customer":{"legal_name":"Alexis Sanchez Vanegas","email":"sanchez.vanegas.alexiscbtis44@gmail.com","tax_id":"SANS102154784","tax_system":"605","address":{"zip":"04369"}},"items":[{"quantity":1,"product":{"description":"Suscripci\u00f3n LibertyFin - Suscripcion B\u00e1sico - Mensual","product_key":"81112501","price":10}}],"payment_form":"28","use":"G03"}
+[14-Sep-2026 14:38:00 America/Mexico_City] Error timbrando factura de suscripción: No se obtuvo UUID de la factura. Respuesta: {"message":"El campo \"customer.tax_id\" tiene un formato inv\u00e1lido.","status":400,"code":"invalid_request","errors":[{"source":"facturapi","code":"invalid_format","path":"customer.tax_id","location":"body","message":"El campo \"customer.tax_id\" tiene un formato inv\u00e1lido."}],"location":"body","path":"customer.tax_id","ok":false}
+[14-Sep-2026 14:38:00 America/Mexico_City] Timbrado de factura SPEI: {"success":false,"uuid":null,"folio":null,"email_sent":false,"error":"No se obtuvo UUID de la factura. Respuesta: {\"message\":\"El campo \\\"customer.tax_id\\\" tiene un formato inv\\u00e1lido.\",\"status\":400,\"code\":\"invalid_request\",\"errors\":[{\"source\":\"facturapi\",\"code\":\"invalid_format\",\"path\":\"customer.tax_id\",\"location\":\"body\",\"message\":\"El campo \\\"customer.tax_id\\\" tiene un formato inv\\u00e1lido.\"}],\"location\":\"body\",\"path\":\"customer.tax_id\",\"ok\":false}"}
+[14-Sep-2026 14:40:52 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 14:40:52 America/Mexico_City] 📦 SPEI Payload - Account: 178941845285200 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 14:42:06 America/Mexico_City] Empresa 18 actualizada por SPEI con plan: basico
+[14-Sep-2026 14:42:08 America/Mexico_City] Correo de confirmación SPEI enviado
+[14-Sep-2026 14:42:08 America/Mexico_City] Facturapi (suscripción) request: {"customer":{"legal_name":"Alexis Sanchez Vanegas","email":"sanchez.vanegas.alexiscbtis44@gmail.com","tax_id":"XAXX010101000","tax_system":"605","address":{"zip":"04369"}},"items":[{"quantity":1,"product":{"description":"Suscripci\u00f3n LibertyFin - Suscripcion B\u00e1sico - Mensual","product_key":"81112501","price":10}}],"payment_form":"28","use":"G03"}
+[14-Sep-2026 14:42:09 America/Mexico_City] Error timbrando factura de suscripción: No se obtuvo UUID de la factura. Respuesta: {"message":"El campo \"customer.tax_system\" no tiene un valor permitido.","status":400,"code":"invalid_request","errors":[{"source":"facturapi","code":"not_allowed","path":"customer.tax_system","location":"body","message":"El campo \"customer.tax_system\" no tiene un valor permitido."}],"location":"body","path":"customer.tax_system","ok":false}
+[14-Sep-2026 14:42:09 America/Mexico_City] Timbrado de factura SPEI: {"success":false,"uuid":null,"folio":null,"email_sent":false,"error":"No se obtuvo UUID de la factura. Respuesta: {\"message\":\"El campo \\\"customer.tax_system\\\" no tiene un valor permitido.\",\"status\":400,\"code\":\"invalid_request\",\"errors\":[{\"source\":\"facturapi\",\"code\":\"not_allowed\",\"path\":\"customer.tax_system\",\"location\":\"body\",\"message\":\"El campo \\\"customer.tax_system\\\" no tiene un valor permitido.\"}],\"location\":\"body\",\"path\":\"customer.tax_system\",\"ok\":false}"}
+[14-Sep-2026 14:45:47 America/Mexico_City] 📌 empresa_id desde payload: 18
+[14-Sep-2026 14:45:47 America/Mexico_City] 📦 SPEI Payload - Account: 178941874749989 - Monto: 10 - EmpresaID: 18
+[14-Sep-2026 14:47:27 America/Mexico_City] Empresa 18 actualizada por SPEI con plan: basico
+[14-Sep-2026 14:47:30 America/Mexico_City] Correo de confirmación SPEI enviado
+[14-Sep-2026 14:47:30 America/Mexico_City] Facturapi (suscripción) request: {"customer":{"legal_name":"Alexis Sanchez Vanegas","email":"sanchez.vanegas.alexiscbtis44@gmail.com","tax_id":"SAVA971109947","tax_system":"605","address":{"zip":"04369"}},"items":[{"quantity":1,"product":{"description":"Suscripci\u00f3n LibertyFin - Suscripcion B\u00e1sico - Mensual","product_key":"81112501","price":10}}],"payment_form":"28","use":"G03"}
+[14-Sep-2026 14:47:34 America/Mexico_City] Timbrado de factura SPEI: {"success":true,"uuid":"46410c45-d376-4cee-8576-2cd8a14eb77f","folio":1,"email_sent":true,"error":null}
+[15-Sep-2026 06:05:36 America/Mexico_City] PHP Fatal error:  Uncaught Error: Call to undefined function referenciaConfig() in /home2/juanc141/public_html/Service/generar_referencia.php:31
+Stack trace:
+#0 {main}
+  thrown in /home2/juanc141/public_html/Service/generar_referencia.php on line 31
+[15-Sep-2026 06:05:42 America/Mexico_City] PHP Fatal error:  Uncaught Error: Call to undefined function referenciaConfig() in /home2/juanc141/public_html/Service/generar_referencia.php:31
+Stack trace:
+#0 {main}
+  thrown in /home2/juanc141/public_html/Service/generar_referencia.php on line 31
+[15-Sep-2026 06:11:16 America/Mexico_City] [CCT GenerarReferencia] HTTP 400 - Body: {"Reference":null,"ReferenceEmisor":null,"BarCode":null,"PayFormat":null,"Message":"El formato de la referencia es incorrecto.","Error":"22","Folio":null,"Date":null,"Clabe":null}
+[15-Sep-2026 06:14:38 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Profesional - Mensual","Amount":"59900","Reference":"260915061438323","CustomerEmail":"","CustomerName":"zcz","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 06:19:12 America/Mexico_City] [CCT ConsultaReferencia] Error: SQLSTATE[HY093]: Invalid parameter number
+[15-Sep-2026 06:21:54 America/Mexico_City] [CCT ConsultaReferencia] Error: SQLSTATE[HY093]: Invalid parameter number
+[15-Sep-2026 06:25:17 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php?r=77743300000500000012345830010
+[15-Sep-2026 06:25:17 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77743300000500000012345830010"}
+[15-Sep-2026 06:25:17 America/Mexico_City] [CCT ConsultaReferencia] EXCEPCION: SQLSTATE[HY093]: Invalid parameter number
+[15-Sep-2026 06:25:17 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":50,"mensaje":"Error de sistema.","monto":"0","referencia":"77743300000500000012345830010","transaccion":"","parcial":true}
+[15-Sep-2026 06:25:44 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091506143832316
+[15-Sep-2026 06:25:44 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091506143832316"}
+[15-Sep-2026 06:25:44 America/Mexico_City] [CCT ConsultaReferencia] EXCEPCION: SQLSTATE[HY093]: Invalid parameter number
+[15-Sep-2026 06:25:44 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":50,"mensaje":"Error de sistema.","monto":"0","referencia":"77787800000226091506143832316","transaccion":"","parcial":true}
+[15-Sep-2026 06:29:46 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php?r=77743300000500000012345830010
+[15-Sep-2026 06:29:46 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77743300000500000012345830010"}
+[15-Sep-2026 06:29:46 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 06:29:46 America/Mexico_City] [CCT ConsultaReferencia] EXCEPCION: SQLSTATE[HY093]: Invalid parameter number | Archivo: /home2/juanc141/public_html/Service/consulta_referencia.php:135
+[15-Sep-2026 06:29:46 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":50,"mensaje":"DEBUG >> SQLSTATE[HY093]: Invalid parameter number | consulta_referencia.php:135","monto":"0","referencia":"77743300000500000012345830010","transaccion":"","parcial":true}
+[15-Sep-2026 06:30:55 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php?r=77743300000500000012345830010
+[15-Sep-2026 06:30:55 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77743300000500000012345830010"}
+[15-Sep-2026 06:30:55 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 06:30:55 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: NO
+[15-Sep-2026 06:30:55 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":40,"mensaje":"Adquirente invalido: referencia no reconocida.","monto":"0","referencia":"77743300000500000012345830010","transaccion":"","parcial":true}
+[15-Sep-2026 06:31:26 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Profesional - Mensual","Amount":"59900","Reference":"260915063126304","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 06:31:44 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php?r=77787800000226091506312630418
+[15-Sep-2026 06:31:44 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091506312630418"}
+[15-Sep-2026 06:31:44 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 06:31:44 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=2)
+[15-Sep-2026 06:31:44 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"59900","referencia":"77787800000226091506312630418","transaccion":"453729","parcial":true}
+[15-Sep-2026 06:34:53 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php?r=77787800000226091506312630418
+[15-Sep-2026 06:34:53 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091506312630418"}
+[15-Sep-2026 06:34:53 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 06:34:53 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=2)
+[15-Sep-2026 06:34:53 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"59900","referencia":"77787800000226091506312630418","transaccion":"453729","parcial":true}
+[15-Sep-2026 06:35:39 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091506312630418
+[15-Sep-2026 06:35:39 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091506312630418"}
+[15-Sep-2026 06:35:39 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 06:35:39 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=2)
+[15-Sep-2026 06:35:39 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"59900","referencia":"77787800000226091506312630418","transaccion":"453729","parcial":true}
+[15-Sep-2026 06:35:57 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091506312630418","fecha":"2026-09-15T07:35:56Z","monto":"59900","transaccion":"101"}
+[15-Sep-2026 06:35:57 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091506312630418","fecha":"2026-09-15T07:35:56Z","monto":"59900","transaccion":"101"}
+[15-Sep-2026 06:35:57 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=2)
+[15-Sep-2026 06:35:57 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":0,"autorizacion":"64862644","mensaje":"Operación exitosa","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 06:36:15 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091506312630418
+[15-Sep-2026 06:36:15 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091506312630418"}
+[15-Sep-2026 06:36:15 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 06:36:15 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=2)
+[15-Sep-2026 06:36:15 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":13,"mensaje":"Referencia sin adeudo: ya fue pagada.","monto":"0","referencia":"77787800000226091506312630418","transaccion":"101","parcial":true}
+[15-Sep-2026 06:45:39 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Profesional - Mensual","Amount":"59900","Reference":"260915064539053","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 06:45:52 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial - Mensual","Amount":"99900","Reference":"260915064552827","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 06:46:56 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Profesional - Mensual","Amount":"59900","Reference":"260915064656777","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 06:49:50 America/Mexico_City] 📌 empresa_id desde payload: 18
+[15-Sep-2026 06:49:50 America/Mexico_City] 📦 SPEI Payload - Account: 178947659077849 - Monto: 1499 - EmpresaID: 18
+[15-Sep-2026 06:59:03 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Profesional - Mensual","Amount":"59900","Reference":"260915065903048","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 06:59:25 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915065925857","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 07:05:12 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915070512660","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 07:07:57 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial - Mensual","Amount":"99900","Reference":"260915070757945","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 07:10:49 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915071049900","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 07:17:43 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915071743342","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 07:17:58 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091507174334214
+[15-Sep-2026 07:17:58 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091507174334214"}
+[15-Sep-2026 07:17:58 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 07:17:58 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=11)
+[15-Sep-2026 07:17:58 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091507174334214","transaccion":"453738","parcial":true}
+[15-Sep-2026 07:18:14 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091507174334214
+[15-Sep-2026 07:18:14 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091507174334214"}
+[15-Sep-2026 07:18:14 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 07:18:14 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=11)
+[15-Sep-2026 07:18:14 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091507174334214","transaccion":"453738","parcial":true}
+[15-Sep-2026 07:18:24 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091507174334214","fecha":"2026-09-15T08:18:23Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 07:18:24 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091507174334214","fecha":"2026-09-15T08:18:23Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 07:18:24 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=11)
+[15-Sep-2026 07:18:24 America/Mexico_City] [CCT PagoReferencia] Empresa 18 activada con plan: premium (mensual)
+[15-Sep-2026 07:18:24 America/Mexico_City] [CCT PagoReferencia] enviarCorreoConfirmacionPago() no existe — omitiendo correo
+[15-Sep-2026 07:18:24 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":0,"autorizacion":"64624820","mensaje":"Operación exitosa","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 07:28:11 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915072811098","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez Vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 07:28:28 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091507281109814
+[15-Sep-2026 07:28:28 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091507281109814"}
+[15-Sep-2026 07:28:28 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 07:28:28 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=12)
+[15-Sep-2026 07:28:28 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091507281109814","transaccion":"453739","parcial":true}
+[15-Sep-2026 07:28:42 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091507281109814","fecha":"2026-09-15T08:28:42Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 07:28:42 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091507281109814","fecha":"2026-09-15T08:28:42Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 07:28:42 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=12)
+[15-Sep-2026 07:28:42 America/Mexico_City] [CCT PagoReferencia] Empresa 18 activada con plan: premium (mensual)
+[15-Sep-2026 07:28:45 America/Mexico_City] [CCT PagoReferencia] Correo enviado a sanchez.vanegas.alexis@gmail.com
+[15-Sep-2026 07:28:45 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":0,"autorizacion":"27700256","mensaje":"Operación exitosa","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 08:51:19 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915085119171","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 08:51:30 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091508511917117
+[15-Sep-2026 08:51:30 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091508511917117"}
+[15-Sep-2026 08:51:30 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 08:51:30 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=13)
+[15-Sep-2026 08:51:30 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091508511917117","transaccion":"453741","parcial":true}
+[15-Sep-2026 08:51:37 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091508511917117","fecha":"2026-09-15T09:51:36Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 08:51:37 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091508511917117","fecha":"2026-09-15T09:51:36Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 08:51:37 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=13)
+[15-Sep-2026 08:51:37 America/Mexico_City] [CCT PagoReferencia] Empresa 18 activada con plan: premium (mensual)
+[15-Sep-2026 08:51:40 America/Mexico_City] [CCT PagoReferencia] Correo enviado a sanchez.vanegas.alexis@gmail.com
+[15-Sep-2026 08:51:40 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":0,"autorizacion":"74733495","mensaje":"Operación exitosa","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 08:52:40 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915085240506","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez Vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 08:53:17 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091508524050617
+[15-Sep-2026 08:53:17 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091508524050617"}
+[15-Sep-2026 08:53:17 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 08:53:17 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=14)
+[15-Sep-2026 08:53:17 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091508524050617","transaccion":"453742","parcial":true}
+[15-Sep-2026 08:53:19 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091508524050617
+[15-Sep-2026 08:53:19 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091508524050617"}
+[15-Sep-2026 08:53:19 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 08:53:19 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=14)
+[15-Sep-2026 08:53:19 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091508524050617","transaccion":"453742","parcial":true}
+[15-Sep-2026 08:53:21 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091508524050617
+[15-Sep-2026 08:53:21 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091508524050617"}
+[15-Sep-2026 08:53:21 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 08:53:21 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=14)
+[15-Sep-2026 08:53:21 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091508524050617","transaccion":"453742","parcial":true}
+[15-Sep-2026 08:53:22 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091508524050617
+[15-Sep-2026 08:53:22 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091508524050617"}
+[15-Sep-2026 08:53:22 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 08:53:22 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=14)
+[15-Sep-2026 08:53:22 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091508524050617","transaccion":"453742","parcial":true}
+[15-Sep-2026 08:53:28 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091508524050617","fecha":"2026-09-15T09:53:27Z","monto":"1499900","transaccion":"101"}
+[15-Sep-2026 08:53:28 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091508524050617","fecha":"2026-09-15T09:53:27Z","monto":"1499900","transaccion":"101"}
+[15-Sep-2026 08:53:28 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=14)
+[15-Sep-2026 08:53:28 America/Mexico_City] [CCT PagoReferencia] Monto no coincide: recibido=1499900, esperado=149900
+[15-Sep-2026 08:53:28 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":30,"autorizacion":"","mensaje":"Monto inválido: no coincide con el monto de la referencia.","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 08:53:34 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091508524050617","fecha":"2026-09-15T09:53:33Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 08:53:34 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091508524050617","fecha":"2026-09-15T09:53:33Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 08:53:34 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=14)
+[15-Sep-2026 08:53:34 America/Mexico_City] [CCT PagoReferencia] Empresa 18 activada con plan: premium (mensual)
+[15-Sep-2026 08:53:36 America/Mexico_City] [CCT PagoReferencia] Correo enviado a sanchez.vanegas.alexis@gmail.com
+[15-Sep-2026 08:53:36 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":0,"autorizacion":"68094429","mensaje":"Operación exitosa","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 08:58:36 America/Mexico_City] Error de conexión a BD: SQLSTATE[HY000] [2002] Connection timed out
+[15-Sep-2026 09:13:35 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915091335135","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 09:36:37 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915093637763","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 09:38:39 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915093839528","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 09:42:05 America/Mexico_City] 📌 empresa_id desde payload: 18
+[15-Sep-2026 09:42:05 America/Mexico_City] 📦 SPEI Payload - Account: 178948692521181 - Monto: 1499 - EmpresaID: 18
+[15-Sep-2026 09:51:14 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091509383952810
+[15-Sep-2026 09:51:14 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091509383952810"}
+[15-Sep-2026 09:51:14 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 09:51:14 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=17)
+[15-Sep-2026 09:51:14 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091509383952810","transaccion":"453745","parcial":true}
+[15-Sep-2026 09:51:24 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091509383952810","fecha":"2026-09-15T10:51:24Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 09:51:24 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091509383952810","fecha":"2026-09-15T10:51:24Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 09:51:24 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=17)
+[15-Sep-2026 09:51:24 America/Mexico_City] [CCT PagoReferencia] Empresa 18 activada con plan: premium (mensual)
+[15-Sep-2026 09:51:26 America/Mexico_City] [CCT PagoReferencia] Correo enviado a sanchez.vanegas.alexis@gmail.com
+[15-Sep-2026 09:51:26 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":0,"autorizacion":"06939362","mensaje":"Operación exitosa","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 12:58:43 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915125843224","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 13:00:00 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091512584322411
+[15-Sep-2026 13:00:00 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091512584322411"}
+[15-Sep-2026 13:00:00 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 13:00:00 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=18)
+[15-Sep-2026 13:00:00 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091512584322411","transaccion":"453746","parcial":true}
+[15-Sep-2026 13:00:23 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091512584322411","fecha":"2026-09-15T14:00:22Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 13:00:23 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091512584322411","fecha":"2026-09-15T14:00:22Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 13:00:23 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=18)
+[15-Sep-2026 13:00:23 America/Mexico_City] [CCT PagoReferencia] Empresa 18 activada con plan: premium (mensual)
+[15-Sep-2026 13:00:25 America/Mexico_City] [CCT PagoReferencia] Correo enviado a sanchez.vanegas.alexis@gmail.com
+[15-Sep-2026 13:00:25 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":0,"autorizacion":"09895855","mensaje":"Operación exitosa","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 14:05:47 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915140547234","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez Vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 14:07:12 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091514054723417
+[15-Sep-2026 14:07:12 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091514054723417"}
+[15-Sep-2026 14:07:12 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 14:07:12 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=19)
+[15-Sep-2026 14:07:12 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091514054723417","transaccion":"453750","parcial":true}
+[15-Sep-2026 14:07:14 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091514054723417
+[15-Sep-2026 14:07:14 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091514054723417"}
+[15-Sep-2026 14:07:14 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 14:07:14 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=19)
+[15-Sep-2026 14:07:14 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091514054723417","transaccion":"453750","parcial":true}
+[15-Sep-2026 14:07:23 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091514054723417","fecha":"2026-09-15T15:07:22Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 14:07:23 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091514054723417","fecha":"2026-09-15T15:07:22Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 14:07:23 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=19)
+[15-Sep-2026 14:07:23 America/Mexico_City] [CCT PagoReferencia] Empresa 18 activada con plan: premium (mensual)
+[15-Sep-2026 14:07:25 America/Mexico_City] [CCT PagoReferencia] Correo enviado a sanchez.vanegas.alexis@gmail.com
+[15-Sep-2026 14:07:25 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":0,"autorizacion":"84701955","mensaje":"Operación exitosa","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 14:13:59 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915141359761","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 14:14:14 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091514135976117
+[15-Sep-2026 14:14:14 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091514135976117"}
+[15-Sep-2026 14:14:14 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 14:14:14 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=20)
+[15-Sep-2026 14:14:14 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091514135976117","transaccion":"453751","parcial":true}
+[15-Sep-2026 14:14:15 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091514135976117
+[15-Sep-2026 14:14:15 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091514135976117"}
+[15-Sep-2026 14:14:15 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 14:14:15 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=20)
+[15-Sep-2026 14:14:15 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091514135976117","transaccion":"453751","parcial":true}
+[15-Sep-2026 14:14:25 America/Mexico_City] [CCT PagoReferencia] === BOOT === file=/home2/juanc141/public_html/Service/pago_referencia.php | mtime=2026-09-15 14:11:41 | md5=15af1fcd | pid=352983
+[15-Sep-2026 14:14:25 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091514135976117","fecha":"2026-09-15T15:14:25Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 14:14:25 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091514135976117","fecha":"2026-09-15T15:14:25Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 14:14:25 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=20)
+[15-Sep-2026 14:14:25 America/Mexico_City] [CCT PagoReferencia] Datos fiscales en BD: {"requiere_factura":1,"rfc":"SAVA971109947","razon_social":"Alexis Sanchez Vanegas","regimen_fiscal":"605","cp_factura":null,"email_factura":"sanchez.vanegas.alexiscbtis44@gmail.com","metodo_pago_sat":"PUE","uso_cfdi":"G03"}
+[15-Sep-2026 14:14:25 America/Mexico_City] [CCT PagoReferencia] Empresa 18 activada con plan: premium (mensual)
+[15-Sep-2026 14:14:28 America/Mexico_City] [CCT PagoReferencia] Correo enviado a sanchez.vanegas.alexis@gmail.com
+[15-Sep-2026 14:14:28 America/Mexico_City] [CCT PagoReferencia] >>> ENTRA A 6.5 (facturación). requiere_factura=1
+[15-Sep-2026 14:14:28 America/Mexico_City] [CCT PagoReferencia] Llamando timbrarFacturaSuscripcion con: {"razon_social":"Alexis Sanchez Vanegas","rfc":"SAVA971109947","email_factura":"sanchez.vanegas.alexiscbtis44@gmail.com","regimen_fiscal":"605","cp":null,"metodo_pago_sat":"PUE","uso_cfdi":"G03"}
+[15-Sep-2026 14:14:28 America/Mexico_City] Error timbrando factura de suscripción: Faltan datos fiscales obligatorios (razón social, régimen fiscal o CP)
+[15-Sep-2026 14:14:28 America/Mexico_City] [CCT PagoReferencia] Timbrado factura: {"success":false,"uuid":null,"folio":null,"email_sent":false,"error":"Faltan datos fiscales obligatorios (razón social, régimen fiscal o CP)"}
+[15-Sep-2026 14:14:28 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":0,"autorizacion":"85609296","mensaje":"Operación exitosa","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 14:18:11 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915141811942","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 14:18:34 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091514181194219
+[15-Sep-2026 14:18:34 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091514181194219"}
+[15-Sep-2026 14:18:34 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 14:18:34 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=21)
+[15-Sep-2026 14:18:34 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091514181194219","transaccion":"453752","parcial":true}
+[15-Sep-2026 14:18:47 America/Mexico_City] [CCT PagoReferencia] === BOOT === file=/home2/juanc141/public_html/Service/pago_referencia.php | mtime=2026-09-15 14:16:42 | md5=d67fde94 | pid=384114
+[15-Sep-2026 14:18:47 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091514181194219","fecha":"2026-09-15T15:18:46Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 14:18:47 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091514181194219","fecha":"2026-09-15T15:18:46Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 14:18:47 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=21)
+[15-Sep-2026 14:18:47 America/Mexico_City] [CCT PagoReferencia] Datos fiscales en BD: {"requiere_factura":1,"rfc":"SANS102154784","razon_social":"Alexis Sanchez Vanegas","regimen_fiscal":"605","cp_factura":null,"email_factura":"sanchez.vanegas.alexiscbtis44@gmail.com","metodo_pago_sat":"PUE","uso_cfdi":"G03"}
+[15-Sep-2026 14:18:47 America/Mexico_City] [CCT PagoReferencia] Empresa 18 activada con plan: premium (mensual)
+[15-Sep-2026 14:18:47 America/Mexico_City] [CCT PagoReferencia] Error activando suscripción: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'requiere_factura' in 'field list'
+[15-Sep-2026 14:18:47 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":0,"autorizacion":"87445067","mensaje":"Operación exitosa","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 14:23:16 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Empresarial Plus - Mensual","Amount":"149900","Reference":"260915142316465","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}
+[15-Sep-2026 14:23:28 America/Mexico_City] [CCT ConsultaReferencia] REQUEST_URI: /Service/consulta_referencia.php/?r=77787800000226091514231646515
+[15-Sep-2026 14:23:28 America/Mexico_City] [CCT ConsultaReferencia] GET: {"r":"77787800000226091514231646515"}
+[15-Sep-2026 14:23:28 America/Mexico_City] [CCT ConsultaReferencia] DB actual: juanc141_ventas
+[15-Sep-2026 14:23:28 America/Mexico_City] [CCT ConsultaReferencia] ¿Encontrada?: SÍ (id=22)
+[15-Sep-2026 14:23:28 America/Mexico_City] [CCT ConsultaReferencia] RESPONDIENDO: {"codigo":0,"mensaje":"Operacion exitosa","monto":"149900","referencia":"77787800000226091514231646515","transaccion":"453753","parcial":true}
+[15-Sep-2026 14:23:38 America/Mexico_City] [CCT PagoReferencia] === BOOT === file=/home2/juanc141/public_html/Service/pago_referencia.php | mtime=2026-09-15 14:22:11 | md5=45f08cd5 | pid=400424
+[15-Sep-2026 14:23:38 America/Mexico_City] [CCT PagoReferencia] RAW BODY: {"referencia":"77787800000226091514231646515","fecha":"2026-09-15T15:23:37Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 14:23:38 America/Mexico_City] [CCT PagoReferencia] INPUT parseado: {"referencia":"77787800000226091514231646515","fecha":"2026-09-15T15:23:37Z","monto":"149900","transaccion":"101"}
+[15-Sep-2026 14:23:38 America/Mexico_City] [CCT PagoReferencia] ¿Encontrada?: SÍ (id=22)
+[15-Sep-2026 14:23:38 America/Mexico_City] [CCT PagoReferencia] Datos fiscales en BD: {"requiere_factura":1,"rfc":"SAVA971109947","razon_social":"Alexis Sanchez Vanegas","regimen_fiscal":"605","cp_factura":null,"cp_fiscal":"04369","factura_cp":null,"email_factura":"sanchez.vanegas.alexiscbtis44@gmail.com","metodo_pago_sat":"PUE","uso_cfdi":"G03"}
+[15-Sep-2026 14:23:38 America/Mexico_City] [CCT PagoReferencia] Empresa 18 activada con plan: premium (mensual)
+[15-Sep-2026 14:23:40 America/Mexico_City] [CCT PagoReferencia] Correo enviado a sanchez.vanegas.alexis@gmail.com
+[15-Sep-2026 14:23:40 America/Mexico_City] [CCT PagoReferencia] >>> ENTRA A 6.5 (facturación). requiere_factura=1
+[15-Sep-2026 14:23:40 America/Mexico_City] [CCT PagoReferencia] Datos fiscales resueltos: {"razon_social":"Alexis Sanchez Vanegas","rfc":"SAVA971109947","email_factura":"sanchez.vanegas.alexiscbtis44@gmail.com","regimen_fiscal":"605","cp":"04369","metodo_pago_sat":"PUE","uso_cfdi":"G03"}
+[15-Sep-2026 14:23:41 America/Mexico_City] Facturapi (suscripción) request: {"customer":{"legal_name":"Alexis Sanchez Vanegas","email":"sanchez.vanegas.alexiscbtis44@gmail.com","tax_id":"SAVA971109947","tax_system":"605","address":{"zip":"04369"}},"items":[{"quantity":1,"product":{"description":"Suscripci\u00f3n LibertyFin - Suscripcion Empresarial Plus - Mensual","product_key":"81112501","price":1499}}],"payment_form":"28","use":"G03"}
+[15-Sep-2026 14:23:43 America/Mexico_City] [CCT PagoReferencia] Timbrado factura: {"success":true,"uuid":"c32f8bb2-ea5b-4072-bdb6-570d50783d1c","folio":2,"email_sent":true,"error":null}
+[15-Sep-2026 14:23:43 America/Mexico_City] [CCT PagoReferencia] RESPONDIENDO: {"codigo":0,"autorizacion":"62767445","mensaje":"Operación exitosa","transaccion":"101","fecha":"2026-09-15","notificacion_sms":"","mensaje_sms":"","mensaje_ticket":""}
+[15-Sep-2026 16:50:01 America/Mexico_City] [CCT GenerarReferencia] Payload enviado: {"User":"p9E5Vdu5Ya","Password":"Ak63MKo#1\/","IntegrationID":"124","BusinessID":"000002","Description":"Suscripcion Profesional - Mensual","Amount":"59900","Reference":"260915165001266","CustomerEmail":"sanchez.vanegas.alexiscbtis44@gmail.com","CustomerName":"Alexis Sanchez vanegas","ExpirationDate":"2026-09-18"}

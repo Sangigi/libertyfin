@@ -58,6 +58,31 @@ function guardarLogEnBD($pdo, $datos) {
     }
 }
 
+// Asegura que domiciliacion_ligas tenga las columnas de facturación
+// (se auto-crean la primera vez que se necesitan, igual que en generar_clabe.php)
+function asegurarColumnasFacturacion($pdo) {
+    $columnas = [
+        'requiere_factura' => "ALTER TABLE domiciliacion_ligas ADD COLUMN requiere_factura TINYINT(1) DEFAULT 0",
+        'razon_social'     => "ALTER TABLE domiciliacion_ligas ADD COLUMN razon_social VARCHAR(255) DEFAULT NULL",
+        'rfc'              => "ALTER TABLE domiciliacion_ligas ADD COLUMN rfc VARCHAR(20) DEFAULT NULL",
+        'email_factura'    => "ALTER TABLE domiciliacion_ligas ADD COLUMN email_factura VARCHAR(150) DEFAULT NULL",
+        'regimen_fiscal'   => "ALTER TABLE domiciliacion_ligas ADD COLUMN regimen_fiscal VARCHAR(10) DEFAULT NULL",
+        'cp'               => "ALTER TABLE domiciliacion_ligas ADD COLUMN cp VARCHAR(10) DEFAULT NULL",
+        'metodo_pago_sat'  => "ALTER TABLE domiciliacion_ligas ADD COLUMN metodo_pago_sat VARCHAR(10) DEFAULT NULL",
+        'uso_cfdi'         => "ALTER TABLE domiciliacion_ligas ADD COLUMN uso_cfdi VARCHAR(10) DEFAULT NULL",
+    ];
+    foreach ($columnas as $col => $sql) {
+        try {
+            $chk = $pdo->query("SHOW COLUMNS FROM domiciliacion_ligas LIKE " . $pdo->quote($col));
+            if ($chk->rowCount() === 0) {
+                $pdo->exec($sql);
+            }
+        } catch (PDOException $e) {
+            error_log("No se pudo verificar/crear columna $col en domiciliacion_ligas: " . $e->getMessage());
+        }
+    }
+}
+
 // Conectar a la base de datos
 try {
     $pdo = getDBConnection();
@@ -71,6 +96,18 @@ try {
 $input = json_decode(file_get_contents('php://input'), true);
 $monto = $input['monto'] ?? 0;
 $descripcion = $input['descripcion'] ?? 'Pago en caja';
+
+// Datos de facturación (opcionales, solo si el cliente marcó "Sí, requiero factura")
+$requiereFactura = !empty($input['requiere_factura']) ? 1 : 0;
+$facturacion = [
+    'razon_social'    => $input['razon_social'] ?? null,
+    'rfc'             => $input['rfc'] ?? null,
+    'email_factura'   => $input['email_factura'] ?? null,
+    'regimen_fiscal'  => $input['regimen_fiscal'] ?? null,
+    'cp'              => $input['cp'] ?? null,
+    'metodo_pago_sat' => $input['metodo_pago_sat'] ?? null,
+    'uso_cfdi'        => $input['uso_cfdi'] ?? null,
+];
 
 // Convertir a float
 $monto = floatval($monto);
@@ -299,15 +336,29 @@ if (isset($clean['url']) && !empty($clean['url'])) {
         elseif (strpos($descripcion, 'Plus') !== false) $plan = 'plus';
         
         $periodo = (strpos($descripcion, 'Anual') !== false) ? 'anual' : 'mensual';
-        
+
+        asegurarColumnasFacturacion($pdo);
+
         $stmt = $pdo->prepare(
             "INSERT INTO domiciliacion_ligas 
-                (reference, reference_emisor, empresa_id, plan, periodo, monto, url_pago, status, created_at)
+                (reference, reference_emisor, empresa_id, plan, periodo, monto, url_pago, status,
+                 requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp, metodo_pago_sat, uso_cfdi,
+                 created_at)
              VALUES 
-                (:reference, :reference_emisor, :empresa_id, :plan, :periodo, :monto, :url_pago, 'pendiente', NOW())
+                (:reference, :reference_emisor, :empresa_id, :plan, :periodo, :monto, :url_pago, 'pendiente',
+                 :requiere_factura, :razon_social, :rfc, :email_factura, :regimen_fiscal, :cp, :metodo_pago_sat, :uso_cfdi,
+                 NOW())
              ON DUPLICATE KEY UPDATE
                 url_pago = VALUES(url_pago),
                 reference_emisor = VALUES(reference_emisor),
+                requiere_factura = VALUES(requiere_factura),
+                razon_social = VALUES(razon_social),
+                rfc = VALUES(rfc),
+                email_factura = VALUES(email_factura),
+                regimen_fiscal = VALUES(regimen_fiscal),
+                cp = VALUES(cp),
+                metodo_pago_sat = VALUES(metodo_pago_sat),
+                uso_cfdi = VALUES(uso_cfdi),
                 updated_at = NOW()"
         );
         $stmt->execute([
@@ -318,6 +369,14 @@ if (isset($clean['url']) && !empty($clean['url'])) {
             ':periodo'          => $periodo,
             ':monto'            => $monto,
             ':url_pago'         => $clean['url'] ?? '',
+            ':requiere_factura' => $requiereFactura,
+            ':razon_social'     => $facturacion['razon_social'],
+            ':rfc'              => $facturacion['rfc'],
+            ':email_factura'    => $facturacion['email_factura'],
+            ':regimen_fiscal'   => $facturacion['regimen_fiscal'],
+            ':cp'               => $facturacion['cp'],
+            ':metodo_pago_sat'  => $facturacion['metodo_pago_sat'],
+            ':uso_cfdi'         => $facturacion['uso_cfdi'],
         ]);
         escribirLog("Liga guardada en BD con referencia: $reference_devuelta", 'INFO');
     } catch (PDOException $e) {
