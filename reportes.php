@@ -1347,15 +1347,20 @@ try {
                                     <thead class="table-light"><tr><th>Producto</th><th class="text-center">Vendidos</th><th class="text-end">Total</th></tr></thead>
                                     <tbody>
                 `;
-                data.productos_vendidos.forEach(prod => {
-                    productosHtml += `
-                        <tr>
-                            <td><div class="d-flex align-items-center"><span class="badge bg-primary me-2">#${prod.rank}</span><div><strong>${prod.nombre}</strong>${prod.categoria ? '<br><small class="text-muted">'+prod.categoria+'</small>' : ''}</div></div></td>
-                            <td class="text-center"><span class="badge badge-ventas">${prod.total_vendido}</span></td>
-                            <td class="text-end text-success fw-bold">${prod.ingresos_totales}</td>
-                        </tr>
-                    `;
-                });
+data.productos_vendidos.forEach(prod => {
+    productosHtml += `
+        <tr>
+            <td data-label="Producto">
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-primary me-2">#${prod.rank}</span>
+                    <div><strong>${prod.nombre}</strong>${prod.categoria ? '<br><small class="text-muted">'+prod.categoria+'</small>' : ''}</div>
+                </div>
+            </td>
+            <td class="text-center" data-label="Vendidos"><span class="badge badge-ventas">${prod.total_vendido}</span></td>
+            <td class="text-end text-success fw-bold" data-label="Total">${prod.ingresos_totales}</td>
+        </tr>
+    `;
+});
                 productosHtml += '</tbody></table></div></div></div>';
                 productosContainer.innerHTML = productosHtml;
             } else {

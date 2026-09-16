@@ -2907,20 +2907,25 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
 
                 </div>
                 <div class="modal-footer">
-                    <form method="POST" id="formPagoModal" class="w-100">
-                        <input type="hidden" name="metodo_pago" id="modal-metodoPagoInput" value="efectivo">
-                        <input type="hidden" name="efectivo_recibido" id="modal-efectivoRecibidoHidden" value="0">
-                        <input type="hidden" name="cambio" id="modal-cambioHidden" value="0">
-                        <input type="hidden" name="descuento_total" id="modal-descuentoTotal" value="<?php echo $descuento_carrito; ?>">
-                        <input type="hidden" name="descripcion" id="modal-descripcionHidden" value="">
-                        <input type="hidden" name="iva_porcentaje" id="modal-ivaPorcentajeHidden" value="<?php echo number_format($iva_porcentaje, 2, '.', ''); ?>">
-                        <input type="hidden" name="monto_anticipo" id="modal-anticipoHidden" value="0">
-                        <button type="submit" name="procesar_pago" class="btn btn-pagar w-100" id="modal-btnPagar">
-                            <i class="fas fa-check-circle me-2"></i>
-                            CONFIRMAR PAGO - $<?php echo number_format($total_carrito, 2); ?>
-                        </button>
-                    </form>
-                </div>
+    <div class="d-flex w-100 gap-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="modal-btnSalir">
+            <i class="fas fa-times me-1"></i>Salir
+        </button>
+        <form method="POST" id="formPagoModal" class="flex-grow-1">
+            <input type="hidden" name="metodo_pago" id="modal-metodoPagoInput" value="efectivo">
+            <input type="hidden" name="efectivo_recibido" id="modal-efectivoRecibidoHidden" value="0">
+            <input type="hidden" name="cambio" id="modal-cambioHidden" value="0">
+            <input type="hidden" name="descuento_total" id="modal-descuentoTotal" value="<?php echo $descuento_carrito; ?>">
+            <input type="hidden" name="descripcion" id="modal-descripcionHidden" value="">
+            <input type="hidden" name="iva_porcentaje" id="modal-ivaPorcentajeHidden" value="<?php echo number_format($iva_porcentaje, 2, '.', ''); ?>">
+            <input type="hidden" name="monto_anticipo" id="modal-anticipoHidden" value="0">
+            <button type="submit" name="procesar_pago" class="btn btn-pagar w-100" id="modal-btnPagar">
+                <i class="fas fa-check-circle me-2"></i>
+                CONFIRMAR PAGO - $<?php echo number_format($total_carrito, 2); ?>
+            </button>
+        </form>
+    </div>
+</div>
             </div>
         </div>
     </div>
@@ -3717,19 +3722,25 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
 
             <div class="mobile-content" id="mobile-carrito">
                 <div class="left-section scrollable">
-                    <div class="d-flex justify-content-between align-items-center mb-3" style="flex-shrink: 0; padding: 15px 15px 0 15px;">
-                        <div class="section-title">
-                            <i class="fas fa-shopping-cart me-2"></i>Carrito de Compra
-                            <?php if (!empty($_SESSION['carrito'])): ?>
-                                <span class="badge bg-primary ms-2"><?php echo count($_SESSION['carrito']); ?></span>
-                            <?php endif; ?>
-                        </div>
-                        <?php if (!empty($_SESSION['carrito'])): ?>
-                            <button type="button" class="btn btn-outline-danger btn-sm" id="mobileBtnVaciarCarrito">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        <?php endif; ?>
-                    </div>
+<div class="d-flex justify-content-between align-items-center mb-3" style="flex-shrink: 0; padding: 15px 15px 0 15px;">
+    <div class="section-title">
+        <i class="fas fa-shopping-cart me-2"></i>Carrito de Compra
+        <?php if (!empty($_SESSION['carrito'])): ?>
+            <span class="badge bg-primary ms-2"><?php echo count($_SESSION['carrito']); ?></span>
+        <?php endif; ?>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#gastosOperacionModal">
+            <i class="fas fa-money-bill-wave me-1"></i>Gastos
+            <span class="badge bg-warning text-dark ms-1" id="badgeGastosOperacionCountMobile" style="display:none;">0</span>
+        </button>
+        <?php if (!empty($_SESSION['carrito'])): ?>
+            <button type="button" class="btn btn-outline-danger btn-sm" id="mobileBtnVaciarCarrito">
+                <i class="fas fa-trash"></i>
+            </button>
+        <?php endif; ?>
+    </div>
+</div>
 
                     <div class="scrollable-content" id="mobile-carrito-container" style="padding: 0 15px 15px 15px;">
                         <?php if (empty($_SESSION['carrito'])): ?>

@@ -503,3 +503,294 @@ Stack trace:
 #1 {main}
   thrown in /home2/juanc141/public_html/login.php on line 69
 [14-Sep-2026 13:04:42 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.124.44.61
+[14-Sep-2026 14:34:50 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.124.44.61
+[14-Sep-2026 14:35:07 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.124.44.61
+[14-Sep-2026 17:50:28 America/Mexico_City] Posible secuestro de sesión - IP cambio de 201.103.234.29 a 201.124.44.61
+[14-Sep-2026 17:50:34 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 69
+[14-Sep-2026 17:50:34 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:69
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(69): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 69
+[14-Sep-2026 17:50:47 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.124.44.61
+[15-Sep-2026 05:35:13 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.190.255.222
+[15-Sep-2026 05:50:43 America/Mexico_City] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list' in /home2/juanc141/public_html/checkout.php:21
+Stack trace:
+#0 /home2/juanc141/public_html/checkout.php(21): PDO->prepare('SELECT plan, no...')
+#1 {main}
+  thrown in /home2/juanc141/public_html/checkout.php on line 21
+[15-Sep-2026 05:50:51 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.190.255.222
+[15-Sep-2026 05:51:04 America/Mexico_City] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nombre' in 'field list' in /home2/juanc141/public_html/checkout.php:21
+Stack trace:
+#0 /home2/juanc141/public_html/checkout.php(21): PDO->prepare('SELECT plan, no...')
+#1 {main}
+  thrown in /home2/juanc141/public_html/checkout.php on line 21
+[15-Sep-2026 08:49:51 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.124.44.61
+[15-Sep-2026 09:24:11 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.124.44.61
+[15-Sep-2026 09:48:34 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 09:52:00 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 09:52:17 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 09:52:17 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 09:52:21 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 09:58:02 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.124.44.61
+[15-Sep-2026 10:01:34 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 10:04:47 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 10:04:49 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 10:04:50 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 10:09:29 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.189.102.73
+[15-Sep-2026 10:14:41 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 10:14:52 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 10:14:54 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:14:54 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:17:30 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:17:30 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:17:33 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:17:33 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:18:12 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:18:12 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:18:22 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:18:22 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:18:22 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 10:18:43 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:18:43 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:18:57 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:18:57 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:18:57 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:18:57 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:19:01 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:19:01 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:19:42 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:19:42 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:19:48 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:19:48 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:20:47 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:20:47 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:20:49 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:20:49 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:22:07 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:22:07 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:22:15 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:22:15 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:28:12 America/Mexico_City] ✓ IMAGEN MANTENIDA: /uploads/productos/producto_67_1784316700_6a5a831c03673.jpg
+[15-Sep-2026 10:28:12 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[15-Sep-2026 10:28:12 America/Mexico_City] Producto ID: 67
+[15-Sep-2026 10:28:12 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_67_1784316700_6a5a831c03673.jpg
+)
+
+[15-Sep-2026 10:28:12 America/Mexico_City] Índice principal: 0
+[15-Sep-2026 10:28:12 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[15-Sep-2026 10:28:12 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_67_1784316700_6a5a831c03673.jpg
+[15-Sep-2026 10:28:12 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[15-Sep-2026 10:28:12 America/Mexico_City] IMÁGENES GUARDADAS EN BD: 1 imágenes, Principal índice: 0
+[15-Sep-2026 10:28:41 America/Mexico_City] ✓ IMAGEN MANTENIDA: /uploads/productos/producto_99_1784327168_6a5aac001790f.jpg
+[15-Sep-2026 10:28:41 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[15-Sep-2026 10:28:41 America/Mexico_City] Producto ID: 99
+[15-Sep-2026 10:28:41 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_99_1784327168_6a5aac001790f.jpg
+)
+
+[15-Sep-2026 10:28:41 America/Mexico_City] Índice principal: 0
+[15-Sep-2026 10:28:41 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[15-Sep-2026 10:28:41 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_99_1784327168_6a5aac001790f.jpg
+[15-Sep-2026 10:28:41 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[15-Sep-2026 10:28:41 America/Mexico_City] IMÁGENES GUARDADAS EN BD: 1 imágenes, Principal índice: 0
+[15-Sep-2026 10:31:25 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:31:25 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:31:38 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:31:38 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:32:09 America/Mexico_City] No hay imágenes para el producto ID: 85, eliminando todas
+[15-Sep-2026 10:32:32 America/Mexico_City] No hay imágenes para el producto ID: 85, eliminando todas
+[15-Sep-2026 10:32:44 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:32:44 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:32:50 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:32:50 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:55:21 America/Mexico_City] ✓ IMAGEN MANTENIDA: /uploads/productos/producto_99_1784327168_6a5aac001790f.jpg
+[15-Sep-2026 10:55:21 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[15-Sep-2026 10:55:21 America/Mexico_City] Producto ID: 99
+[15-Sep-2026 10:55:21 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_99_1784327168_6a5aac001790f.jpg
+)
+
+[15-Sep-2026 10:55:21 America/Mexico_City] Índice principal: 0
+[15-Sep-2026 10:55:21 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[15-Sep-2026 10:55:21 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_99_1784327168_6a5aac001790f.jpg
+[15-Sep-2026 10:55:21 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[15-Sep-2026 10:55:21 America/Mexico_City] IMÁGENES GUARDADAS EN BD: 1 imágenes, Principal índice: 0
+[15-Sep-2026 10:59:55 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 10:59:55 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 10:59:55 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 11:03:01 America/Mexico_City] ✅ Imagen subida exitosamente: /uploads/productos/producto_10_1789491781_6aa97a457a7c8.jpg
+[15-Sep-2026 11:03:01 America/Mexico_City]    Ruta física: /home2/juanc141/public_html/uploads/productos/producto_10_1789491781_6aa97a457a7c8.jpg
+[15-Sep-2026 11:03:01 America/Mexico_City] Total imágenes subidas: 1
+[15-Sep-2026 11:03:01 America/Mexico_City] Se agregaron 1 nuevas imágenes
+[15-Sep-2026 11:03:01 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[15-Sep-2026 11:03:01 America/Mexico_City] Producto ID: 10
+[15-Sep-2026 11:03:01 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_10_1789491781_6aa97a457a7c8.jpg
+)
+
+[15-Sep-2026 11:03:01 America/Mexico_City] Índice principal: 0
+[15-Sep-2026 11:03:01 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[15-Sep-2026 11:03:01 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_10_1789491781_6aa97a457a7c8.jpg
+[15-Sep-2026 11:03:01 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[15-Sep-2026 11:03:01 America/Mexico_City] IMÁGENES GUARDADAS EN BD: 1 imágenes, Principal índice: 0
+[15-Sep-2026 11:07:03 America/Mexico_City] ✅ Imagen subida exitosamente: /uploads/productos/producto_44_1789492023_6aa97b37e6228.jpg
+[15-Sep-2026 11:07:03 America/Mexico_City]    Ruta física: /home2/juanc141/public_html/uploads/productos/producto_44_1789492023_6aa97b37e6228.jpg
+[15-Sep-2026 11:07:03 America/Mexico_City] Total imágenes subidas: 1
+[15-Sep-2026 11:07:03 America/Mexico_City] Se agregaron 1 nuevas imágenes
+[15-Sep-2026 11:07:03 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[15-Sep-2026 11:07:03 America/Mexico_City] Producto ID: 44
+[15-Sep-2026 11:07:03 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_44_1789492023_6aa97b37e6228.jpg
+)
+
+[15-Sep-2026 11:07:03 America/Mexico_City] Índice principal: 0
+[15-Sep-2026 11:07:03 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[15-Sep-2026 11:07:03 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_44_1789492023_6aa97b37e6228.jpg
+[15-Sep-2026 11:07:03 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[15-Sep-2026 11:07:03 America/Mexico_City] IMÁGENES GUARDADAS EN BD: 1 imágenes, Principal índice: 0
+[15-Sep-2026 11:08:29 America/Mexico_City] ✓ IMAGEN MANTENIDA: /uploads/productos/producto_44_1789492023_6aa97b37e6228.jpg
+[15-Sep-2026 11:08:29 America/Mexico_City] ✅ Imagen subida exitosamente: /uploads/productos/producto_44_1789492109_6aa97b8d6ec55.jpg
+[15-Sep-2026 11:08:29 America/Mexico_City]    Ruta física: /home2/juanc141/public_html/uploads/productos/producto_44_1789492109_6aa97b8d6ec55.jpg
+[15-Sep-2026 11:08:29 America/Mexico_City] Total imágenes subidas: 1
+[15-Sep-2026 11:08:29 America/Mexico_City] Se agregaron 1 nuevas imágenes
+[15-Sep-2026 11:08:29 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[15-Sep-2026 11:08:29 America/Mexico_City] Producto ID: 44
+[15-Sep-2026 11:08:29 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_44_1789492023_6aa97b37e6228.jpg
+    [1] => /uploads/productos/producto_44_1789492109_6aa97b8d6ec55.jpg
+)
+
+[15-Sep-2026 11:08:29 America/Mexico_City] Índice principal: 0
+[15-Sep-2026 11:08:29 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[15-Sep-2026 11:08:29 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_44_1789492023_6aa97b37e6228.jpg
+[15-Sep-2026 11:08:29 America/Mexico_City] ✓ Imagen 1 guardada en BD - Principal: NO - Ruta: /uploads/productos/producto_44_1789492109_6aa97b8d6ec55.jpg
+[15-Sep-2026 11:08:29 America/Mexico_City] === FINALIZADO: 2 de 2 imágenes guardadas ===
+[15-Sep-2026 11:08:29 America/Mexico_City] IMÁGENES GUARDADAS EN BD: 2 imágenes, Principal índice: 0
+[15-Sep-2026 11:18:11 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 11:22:57 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 11:47:00 America/Mexico_City] ✅ Imagen subida exitosamente: /uploads/productos/producto_15_1789494420_6aa9849456099.jpg
+[15-Sep-2026 11:47:00 America/Mexico_City]    Ruta física: /home2/juanc141/public_html/uploads/productos/producto_15_1789494420_6aa9849456099.jpg
+[15-Sep-2026 11:47:00 America/Mexico_City] Total imágenes subidas: 1
+[15-Sep-2026 11:47:00 America/Mexico_City] Se agregaron 1 nuevas imágenes
+[15-Sep-2026 11:47:00 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[15-Sep-2026 11:47:00 America/Mexico_City] Producto ID: 15
+[15-Sep-2026 11:47:00 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_15_1789494420_6aa9849456099.jpg
+)
+
+[15-Sep-2026 11:47:00 America/Mexico_City] Índice principal: 0
+[15-Sep-2026 11:47:00 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[15-Sep-2026 11:47:00 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_15_1789494420_6aa9849456099.jpg
+[15-Sep-2026 11:47:00 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[15-Sep-2026 11:47:00 America/Mexico_City] IMÁGENES GUARDADAS EN BD: 1 imágenes, Principal índice: 0
+[15-Sep-2026 11:48:19 America/Mexico_City] ✅ Imagen subida exitosamente: /uploads/productos/producto_14_1789494499_6aa984e356703.webp
+[15-Sep-2026 11:48:19 America/Mexico_City]    Ruta física: /home2/juanc141/public_html/uploads/productos/producto_14_1789494499_6aa984e356703.webp
+[15-Sep-2026 11:48:19 America/Mexico_City] Total imágenes subidas: 1
+[15-Sep-2026 11:48:19 America/Mexico_City] Se agregaron 1 nuevas imágenes
+[15-Sep-2026 11:48:19 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[15-Sep-2026 11:48:19 America/Mexico_City] Producto ID: 14
+[15-Sep-2026 11:48:19 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_14_1789494499_6aa984e356703.webp
+)
+
+[15-Sep-2026 11:48:19 America/Mexico_City] Índice principal: 0
+[15-Sep-2026 11:48:19 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[15-Sep-2026 11:48:19 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_14_1789494499_6aa984e356703.webp
+[15-Sep-2026 11:48:19 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[15-Sep-2026 11:48:19 America/Mexico_City] IMÁGENES GUARDADAS EN BD: 1 imágenes, Principal índice: 0
+[15-Sep-2026 11:49:44 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 11:49:44 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 11:57:01 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 11:57:01 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 11:57:08 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 11:57:08 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 12:00:17 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 12:00:17 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 12:00:17 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 12:07:19 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.124.44.61
+[15-Sep-2026 12:08:15 America/Mexico_City] Login exitoso - Usuario: terepruebas, Empresa: PRUEBAS, IP: 201.124.44.61
+[15-Sep-2026 12:20:29 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 12:20:29 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 12:22:27 America/Mexico_City] Login exitoso - Usuario: victoriart, Empresa: PRUEBAS, IP: 201.124.44.61
+[15-Sep-2026 12:26:52 America/Mexico_City] === CÁLCULOS CIERRE CAJA ===
+[15-Sep-2026 12:26:52 America/Mexico_City] Caja ID: 8
+[15-Sep-2026 12:26:52 America/Mexico_City] Monto Apertura: 5000.00
+[15-Sep-2026 12:26:52 America/Mexico_City] Ventas Efectivo: 31673.96
+[15-Sep-2026 12:26:52 America/Mexico_City] Otros Ingresos: 0
+[15-Sep-2026 12:26:52 America/Mexico_City] Otros Egresos: 0
+[15-Sep-2026 12:26:52 America/Mexico_City] Monto Esperado: 36673.96
+[15-Sep-2026 12:26:52 America/Mexico_City] Total Ventas: 67393.54
+[15-Sep-2026 12:29:30 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 12:29:30 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 12:34:04 America/Mexico_City] ✅ Imagen subida exitosamente: /uploads/productos/producto_104_1789497244_6aa98f9c8c994.jpg
+[15-Sep-2026 12:34:04 America/Mexico_City]    Ruta física: /home2/juanc141/public_html/uploads/productos/producto_104_1789497244_6aa98f9c8c994.jpg
+[15-Sep-2026 12:34:04 America/Mexico_City] Total imágenes subidas: 1
+[15-Sep-2026 12:34:04 America/Mexico_City] === INICIANDO guardarImagenesProducto ===
+[15-Sep-2026 12:34:04 America/Mexico_City] Producto ID: 104
+[15-Sep-2026 12:34:04 America/Mexico_City] Imágenes a guardar: Array
+(
+    [0] => /uploads/productos/producto_104_1789497244_6aa98f9c8c994.jpg
+)
+
+[15-Sep-2026 12:34:04 America/Mexico_City] Índice principal: 0
+[15-Sep-2026 12:34:04 America/Mexico_City] ✓ Imágenes existentes eliminadas
+[15-Sep-2026 12:34:04 America/Mexico_City] ✓ Imagen 0 guardada en BD - Principal: SÍ - Ruta: /uploads/productos/producto_104_1789497244_6aa98f9c8c994.jpg
+[15-Sep-2026 12:34:04 America/Mexico_City] === FINALIZADO: 1 de 1 imágenes guardadas ===
+[15-Sep-2026 12:34:04 America/Mexico_City] Se subieron 1 imágenes para el producto ID: 104
+[15-Sep-2026 12:35:15 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 12:35:15 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 12:35:15 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 12:35:36 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 12:35:36 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 12:35:36 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 12:38:03 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 12:38:03 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 12:39:53 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 12:39:53 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 12:42:00 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 12:42:52 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 12:42:52 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 12:42:52 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 12:43:05 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 12:43:05 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 12:43:05 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 12:44:04 America/Mexico_City] PHP Warning:  The use statement with non-compound name 'TCPDF' has no effect in /home2/juanc141/public_html/generar_pdf_ticket.php on line 5
+[15-Sep-2026 12:44:42 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 12:44:42 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 12:44:42 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 15:19:26 America/Mexico_City] === CÁLCULOS CIERRE CAJA ===
+[15-Sep-2026 15:19:26 America/Mexico_City] Caja ID: 8
+[15-Sep-2026 15:19:26 America/Mexico_City] Monto Apertura: 5000.00
+[15-Sep-2026 15:19:26 America/Mexico_City] Ventas Efectivo: 32172.76
+[15-Sep-2026 15:19:26 America/Mexico_City] Otros Ingresos: 0
+[15-Sep-2026 15:19:26 America/Mexico_City] Otros Egresos: 0
+[15-Sep-2026 15:19:26 America/Mexico_City] Monto Esperado: 37172.76
+[15-Sep-2026 15:19:26 America/Mexico_City] Total Ventas: 67892.34
+[15-Sep-2026 15:27:24 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 15:27:32 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 15:27:32 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 15:33:02 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 15:47:53 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.189.102.73
+[15-Sep-2026 16:00:29 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 16:00:29 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 16:00:31 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 16:53:57 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.124.44.61
+[15-Sep-2026 17:13:47 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 17:13:47 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 17:13:47 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[15-Sep-2026 17:19:14 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 17:19:14 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 17:23:17 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 48
+[15-Sep-2026 17:23:17 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 58
+[15-Sep-2026 17:27:01 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[16-Sep-2026 12:43:03 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.190.255.222

@@ -109,7 +109,7 @@ $planes = [
             'Pagos' => ['Pasarela de pago', 'SPEI / PayPal']
         ]
     ],
-    'plus' => [
+    'premium' => [
         'nombre' => 'Empresarial Plus',
         'precio_mensual' => 1499,
         'precio_anual' => 1199,

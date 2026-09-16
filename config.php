@@ -4,11 +4,13 @@
 // Cargar variables de entorno
 require_once __DIR__ . '/env_loader.php';
 
-class Config {
+class Config
+{
     private static $instance = null;
     private $config = [];
-    
-    private function __construct() {
+
+    private function __construct()
+    {
         // Cargar configuración desde variables de entorno
         $this->config = [
             // Database Configuration
@@ -18,20 +20,20 @@ class Config {
                 'password' => getenv('DB_PASSWORD') ?: '',
                 'db_main' => getenv('DB_MAIN') ?: 'juanc141_ventas'
             ],
-            
+
             // Facturapi Configuration
             'facturapi' => [
                 'api_key' => getenv('FACTURAPI_API_KEY') ?: ''
-                
+
             ],
-            
+
             // cPanel API Configuration
             'cpanel' => [
                 'host' => getenv('CPANEL_HOST') ?: 'libertyfin.com.mx',
                 'user' => getenv('CPANEL_USER') ?: '',
                 'api_token' => getenv('CPANEL_API_TOKEN') ?: ''
             ],
-            
+
             // SMTP Configuration
             'smtp' => [
                 'host' => getenv('SMTP_HOST') ?: 'smtp.titan.email',
@@ -39,7 +41,7 @@ class Config {
                 'password' => getenv('SMTP_PASSWORD') ?: '',
                 'port' => getenv('SMTP_PORT') ?: 465
             ],
-            
+
             // Application Configuration
             'app' => [
                 'name' => getenv('APP_NAME') ?: 'LibertyFin',
@@ -47,7 +49,7 @@ class Config {
                 'upload_dir' => getenv('UPLOAD_DIR') ?: 'uploads/',
                 'timezone' => 'America/Mexico_City'
             ],
-            
+
             // ==========================================
             // CONFIGURACIÓN SPEI - NUEVA
             // ==========================================
@@ -61,7 +63,7 @@ class Config {
                 'url_generar' => getenv('SPEI_URL_GENERAR') ?: 'https://pagadetodo.mx/Pagadetodo/Service/GenerarLigaIndi',
                 'url_generar_ligatdc' => getenv('SPEI_URL_GENERAR_LIGA') ?: 'https://pagadetodo.mx/Pagadetodo/Service/GenerarClabeIndi',
                 'url_generar_liga_dom' => getenv('DOM_URL_GENERAR_LIGA') ?: 'https://pagadetodo.mx/Pagadetodo/Service/GenerarLigaDomiciliacionInd',
-		'url_pagar_dom' => getenv('DOMICILIACION_PAGAR') ?: 'https://pagadetodo.mx/Pagadetodo/Service/PagarDomiciliacionIndi',
+                'url_pagar_dom' => getenv('DOMICILIACION_PAGAR') ?: 'https://pagadetodo.mx/Pagadetodo/Service/PagarDomiciliacionIndi',
 
                 'url_sandbox' => getenv('SPEI_URL_SANDBOX') ?: 'https://pagadetodo.mx/Sandbox/Login.aspx',
                 'timeout' => (int) (getenv('SPEI_TIMEOUT') ?: 30),
@@ -73,9 +75,29 @@ class Config {
                 'integration_id_dom' => getenv('DOMICILIACION_INTEGRATION_ID') ?: '',
                 'business_id_dom' => getenv('DOMICILIACION_INTEGRATION_BUSINESS_ID') ?: '',
                 'url_generar_liga_dom' => getenv('DOMI_URL_GENERAR_LIGA') ?: 'https://pagadetodo.mx/Pagadetodo/Service/GenerarLigaDomiciliacionIndi',
-		        'url_pago_dom' => getenv('DOMI_PAGAR') ?: 'https://pagadetodo.mx/Pagadetodo/Service/PagarDomiciliacionIndi',
+                'url_pago_dom' => getenv('DOMI_PAGAR') ?: 'https://pagadetodo.mx/Pagadetodo/Service/PagarDomiciliacionIndi',
                 'url_cancelar_dom' => getenv('DOMI_CANCELAR') ?: '',
                 'dias_vigencia_dom' => (int) (getenv('DOMICILIACION_DIAS_VIGENCIA') ?: 2)
+            ],
+            'referencia' => [
+                // Credenciales dedicadas (no reutilizar las de SPEI sandbox)
+                'user_ref' => getenv('REFERENCIA_USER') ?: '',
+                'password_ref' => getenv('REFERENCIA_PASSWORD') ?: '',
+                'integration_id_ref' => getenv('REFERENCIA_INTEGRATION_ID') ?: '',
+                'business_id_ref' => getenv('REFERENCIA_INTEGRATION_BUSINESS_ID') ?: '',
+
+                // Endpoint del generador de referencias de CCT / Paga de Todo
+                'url_general_ref' => getenv('REFERENCIA_GENERAR') ?: '',
+
+                // Vigencia por defecto de la referencia
+                'dias_vigencia_ref' => (int) (getenv('REFERENCIA_DIAS_VIGENCIA') ?: 3),
+
+                // Límites de monto (pág. 8 del documento: $50 – $15,000)
+                'monto_min_ref' => (float) (getenv('REFERENCIA_MONTO_MIN') ?: 50),
+                'monto_max_ref' => (float) (getenv('REFERENCIA_MONTO_MAX') ?: 15000),
+
+                // Timeout en segundos para cURL
+                'timeout_ref' => (int) (getenv('REFERENCIA_TIMEOUT') ?: 20),
             ],
 
             // ==========================================
@@ -86,76 +108,93 @@ class Config {
                 'organization_id' => getenv('FACTURAPI_SUSCRIPCIONES_ORG_ID') ?: '696ffda4c95bb2e1eee22e4c',
             ]
         ];
-        
+
         // Establecer zona horaria
         date_default_timezone_set($this->config['app']['timezone']);
     }
-    
-    public static function getInstance() {
+
+    public static function getInstance()
+    {
         if (self::$instance === null) {
             self::$instance = new self();
         }
         return self::$instance;
     }
-    
-    public function get($key, $default = null) {
+
+    public function get($key, $default = null)
+    {
         $keys = explode('.', $key);
         $value = $this->config;
-        
+
         foreach ($keys as $k) {
             if (!isset($value[$k])) {
                 return $default;
             }
             $value = $value[$k];
         }
-        
+
         return $value;
     }
-    
-    public function getDBConfig() {
+
+    public function getDBConfig()
+    {
         return $this->config['db'];
     }
-    
-    public function getFacturapiConfig() {
+
+    public function getFacturapiConfig()
+    {
         return $this->config['facturapi'];
     }
-    
-    public function getCpanelConfig() {
+
+    public function getCpanelConfig()
+    {
         return $this->config['cpanel'];
     }
-    
-    public function getSmtpConfig() {
+
+    public function getSmtpConfig()
+    {
         return $this->config['smtp'];
     }
-    
-    public function getAppConfig() {
+
+    public function getAppConfig()
+    {
         return $this->config['app'];
     }
-    
+
     // ==========================================
     // NUEVO: Obtener configuración SPEI
     // ==========================================
-    public function getSpeiConfig() {
+    public function getSpeiConfig()
+    {
         return $this->config['spei'];
     }
 
-    public function getDomiciliacionDonfig(){
+    public function getDomiciliacionDonfig()
+    {
         return $this->config['domicilacion'];
     }
 
-    public function getFacturapiSuscripcionesConfig(){
+    public function getFacturapiSuscripcionesConfig()
+    {
         return $this->config['facturapi_suscripciones'];
+    }
+
+    public function getReferencia()
+    {
+        return $this->config['referencia'];
     }
 
 }
 
 // Función helper para acceder a la configuración fácilmente
-function config($key, $default = null) {
+function config($key, $default = null)
+{
     return Config::getInstance()->get($key, $default);
 }
 
 // Función helper para obtener configuración SPEI
-function speiConfig($key = null, $default = null) {
+function speiConfig($key = null, $default = null)
+{
     $config = Config::getInstance()->getSpeiConfig();
     if ($key === null) {
         return $config;
@@ -163,7 +202,8 @@ function speiConfig($key = null, $default = null) {
     return $config[$key] ?? $default;
 }
 
-function domiciliacionConfig($key = null, $default = null) {
+function domiciliacionConfig($key = null, $default = null)
+{
     $config = Config::getInstance()->getDomiciliacionDonfig();
     if ($key === null) {
         return $config;
@@ -171,8 +211,18 @@ function domiciliacionConfig($key = null, $default = null) {
     return $config[$key] ?? $default;
 }
 
-function facturapiSuscripcionesConfig($key = null, $default = null) {
+function facturapiSuscripcionesConfig($key = null, $default = null)
+{
     $config = Config::getInstance()->getFacturapiSuscripcionesConfig();
+    if ($key === null) {
+        return $config;
+    }
+    return $config[$key] ?? $default;
+}
+
+function referenciaConfig($key = null, $default = null)
+{
+    $config = Config::getInstance()->getReferencia();
     if ($key === null) {
         return $config;
     }
