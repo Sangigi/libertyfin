@@ -29,22 +29,49 @@ $categorias_gasto = [
 try {
     $conn = getEmpresaDBConnection($_SESSION['empresa_db']);
 
+    // La empresa pudo haberse dado de alta con una versión antigua del
+    // script de registro, cuya tabla `gastos` no traía estas dos columnas.
+    // Sin ellas, guardar un gasto revienta con "Unknown column" porque el
+    // formulario y el guardado sí las usan. Se agregan aquí mismo, una sola
+    // vez, si todavía no existen: así funciona sin importar cómo se creó
+    // la base de la empresa.
+    $cols_gastos = $conn->query("SHOW COLUMNS FROM gastos")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('proveedor', $cols_gastos, true)) {
+        $conn->exec("ALTER TABLE gastos ADD COLUMN proveedor VARCHAR(150) DEFAULT NULL AFTER metodo_pago");
+    }
+    if (!in_array('numero_referencia', $cols_gastos, true)) {
+        $conn->exec("ALTER TABLE gastos ADD COLUMN numero_referencia VARCHAR(100) DEFAULT NULL AFTER proveedor");
+    }
+
     // === Obtener plan/colores/logo de la empresa (igual que en otras páginas) ===
     $conn_main = getDBConnection();
-    $empresa_plan = "prueba";
-    $timbres_totales = 0;
+    $empresa_plan        = "prueba";
+    $timbres_totales     = 0;
     $timbres_disponibles = 0;
+    $terminal_emida      = null;   // <-- FALTABA
+    $notification_status = null;   // <-- FALTABA
 
     if ($conn_main) {
-        $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?";
+        $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida 
+                        FROM empresas WHERE id = ?";
         $stmt_empresa = $conn_main->prepare($sql_empresa);
         $stmt_empresa->execute([$_SESSION['empresa_id']]);
         $result_empresa = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
         if ($result_empresa) {
-            $empresa_plan = $result_empresa['plan'];
-            $timbres_totales = $result_empresa['timbres_totales'] ?? 0;
+            $empresa_plan        = $result_empresa['plan'];
+            $timbres_totales     = $result_empresa['timbres_totales'] ?? 0;
             $timbres_disponibles = $result_empresa['timbres_disponibles'] ?? 0;
+            $terminal_emida      = $result_empresa['terminal_emida'] ?? null;
         }
+
+        // Notificaciones Emida
+        if (file_exists(__DIR__ . '/../EmidaServicios/config.php')) {
+            require_once __DIR__ . '/../EmidaServicios/config.php';
+            if (function_exists('getNotificationStatus')) {
+                $notification_status = getNotificationStatus($conn_main);
+            }
+        }
+
         $stmt_empresa = null;
         $conn_main = null;
     }

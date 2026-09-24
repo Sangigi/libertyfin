@@ -14,22 +14,35 @@ require_once __DIR__ . '/env_loader.php';
 // OBTENER EL PLAN DE LA EMPRESA DESDE LA BASE DE DATOS PRINCIPAL
 $conn_main = getDBConnection();
 
-// Valores por defecto
-$empresa_plan = "prueba";
-$timbres_totales = 0;
+// Valores por defecto (para que el sidebar nunca falle)
+$empresa_plan        = "prueba";
+$timbres_totales     = 0;
 $timbres_disponibles = 0;
+$terminal_emida      = null;   // <-- FALTABA
+$notification_status = null;   // <-- FALTABA
 
 if ($conn_main) {
-    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?";
+    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida 
+                    FROM empresas WHERE id = ?";
     $stmt_empresa = $conn_main->prepare($sql_empresa);
     $stmt_empresa->execute([$_SESSION['empresa_id']]);
     $result_empresa = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
 
     if ($result_empresa) {
-        $empresa_plan = $result_empresa['plan'];
-        $timbres_totales = $result_empresa['timbres_totales'] ?? 0;
+        $empresa_plan        = $result_empresa['plan'];
+        $timbres_totales     = $result_empresa['timbres_totales'] ?? 0;
         $timbres_disponibles = $result_empresa['timbres_disponibles'] ?? 0;
+        $terminal_emida      = $result_empresa['terminal_emida'] ?? null;
     }
+
+    // Notificaciones Emida
+    if (file_exists(__DIR__ . '/../EmidaServicios/config.php')) {
+        require_once __DIR__ . '/../EmidaServicios/config.php';
+        if (function_exists('getNotificationStatus')) {
+            $notification_status = getNotificationStatus($conn_main);
+        }
+    }
+
     $stmt_empresa = null;
     $conn_main = null;
 }
@@ -117,11 +130,24 @@ try {
         $campos_select = "p.id, p.nombre, p.contacto, p.telefono, p.email, p.direccion, p.rfc, p.activo, p.fecha_creacion, p.fecha_actualizacion";
     }
 
+    // Búsqueda: antes sólo filtraba con JS las filas de la página actual, así
+    // que un proveedor en otra página nunca aparecía. Ahora se busca en toda
+    // la tabla y se reinicia a la página 1 (ver JS más abajo).
+    $buscar = trim($_GET['buscar'] ?? '');
+    $where_prov = '';
+    $params_prov = [];
+    if ($buscar !== '') {
+        $where_prov = "WHERE (p.nombre LIKE ? OR p.contacto LIKE ? OR p.telefono LIKE ? OR p.email LIKE ? OR p.rfc LIKE ?)";
+        $like = '%' . $buscar . '%';
+        $params_prov = [$like, $like, $like, $like, $like];
+    }
+
     // Obtener el total de registros para paginación
-    $sql_count = "SELECT COUNT(*) as total FROM proveedores p";
-    $result_count = $conn->query($sql_count);
-    $total_registros = $result_count->fetch(PDO::FETCH_ASSOC)['total'];
-    $result_count = null;
+    $sql_count = "SELECT COUNT(*) as total FROM proveedores p $where_prov";
+    $stmt_count = $conn->prepare($sql_count);
+    $stmt_count->execute($params_prov);
+    $total_registros = $stmt_count->fetch(PDO::FETCH_ASSOC)['total'];
+    $stmt_count = null;
 
     // Calcular total de páginas
     $total_paginas = ceil($total_registros / $registros_por_pagina);
@@ -135,11 +161,12 @@ try {
     SELECT 
         $campos_select
     FROM proveedores p 
+    $where_prov
     ORDER BY p.fecha_actualizacion DESC, p.id DESC
     LIMIT ? OFFSET ?
 ";
     $stmt_proveedores = $conn->prepare($sql_proveedores);
-    $stmt_proveedores->execute([$registros_por_pagina, $offset]);
+    $stmt_proveedores->execute(array_merge($params_prov, [$registros_por_pagina, $offset]));
     $proveedores = $stmt_proveedores->fetchAll(PDO::FETCH_ASSOC);
     
     // Sanitizar valores
@@ -606,21 +633,16 @@ function eliminarProveedor($conn)
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <div class="search-box">
                                     <i class="fas fa-search"></i>
-                                    <input type="text" class="form-control" placeholder="Buscar proveedores..." id="searchInput">
+                                    <input type="text" class="form-control" placeholder="Buscar proveedores..." id="searchInput"
+                                           value="<?php echo htmlspecialchars($buscar); ?>">
                                 </div>
                             </div>
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="col-md-6 mb-3 mb-md-0">
                                 <select class="form-select" id="estadoFilter">
                                     <option value="">Todos los estados</option>
                                     <option value="activo">Activos</option>
                                     <option value="inactivo">Inactivos</option>
                                 </select>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="showRFC">
-                                    <label class="form-check-label" for="showRFC">Mostrar RFC</label>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -1407,21 +1429,24 @@ function eliminarProveedor($conn)
             });
         });
 
-        // Búsqueda en tiempo real
+        // Búsqueda: se manda al servidor (con debounce) para que encuentre
+        // proveedores aunque estén en otra página del listado.
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
+            let searchTimer = null;
             searchInput.addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-                const rows = document.querySelectorAll('#proveedoresTable tbody tr');
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchTerm) ? '' : 'none';
-                });
-                const cards = document.querySelectorAll('#mobileProveedores .col-12');
-                cards.forEach(card => {
-                    const text = card.textContent.toLowerCase();
-                    card.style.display = text.includes(searchTerm) ? '' : 'none';
-                });
+                clearTimeout(searchTimer);
+                const valor = e.target.value;
+                searchTimer = setTimeout(function() {
+                    const params = new URLSearchParams(window.location.search);
+                    if (valor.trim() === '') {
+                        params.delete('buscar');
+                    } else {
+                        params.set('buscar', valor);
+                    }
+                    params.set('pagina', '1');
+                    window.location.search = params.toString();
+                }, 450);
             });
         }
 
@@ -1466,7 +1491,6 @@ function eliminarProveedor($conn)
         // Función para aplicar filtros
         function aplicarFiltros() {
             const estadoFilter = document.getElementById('estadoFilter').value;
-            const showRFC = document.getElementById('showRFC').checked;
 
             const rows = document.querySelectorAll('#proveedoresTable tbody tr');
             rows.forEach(row => {
@@ -1474,10 +1498,6 @@ function eliminarProveedor($conn)
                 let show = true;
                 if (estadoFilter === 'activo' && !isActive) show = false;
                 if (estadoFilter === 'inactivo' && isActive) show = false;
-                const rfcBadge = row.querySelector('.rfc-badge');
-                if (rfcBadge) {
-                    rfcBadge.style.display = showRFC ? 'inline-block' : 'none';
-                }
                 row.style.display = show ? '' : 'none';
             });
 
@@ -1487,18 +1507,12 @@ function eliminarProveedor($conn)
                 let show = true;
                 if (estadoFilter === 'activo' && !isActive) show = false;
                 if (estadoFilter === 'inactivo' && isActive) show = false;
-                const rfcBadge = card.querySelector('.rfc-badge');
-                if (rfcBadge) {
-                    rfcBadge.style.display = showRFC ? 'inline-block' : 'none';
-                }
                 card.style.display = show ? '' : 'none';
             });
         }
 
         const estadoFilter = document.getElementById('estadoFilter');
-        const showRFCCheckbox = document.getElementById('showRFC');
         if (estadoFilter) estadoFilter.addEventListener('change', aplicarFiltros);
-        if (showRFCCheckbox) showRFCCheckbox.addEventListener('change', aplicarFiltros);
         
         // Botones de cambio de estado existentes (para cuando se usan los botones originales)
         document.querySelectorAll('.cambiar-estado-form').forEach(form => {

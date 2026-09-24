@@ -41,25 +41,38 @@ function formatMoney($amount) {
     return '$' . number_format(floatval($amount), 2);
 }
 
-// OBTENER EL PLAN DE LA EMPRESA DESDE LA BASE DE DATOS PRINCIPAL
+// OBTENER DATOS DE LA EMPRESA DESDE LA BASE DE DATOS PRINCIPAL
 $conn_main = getDBConnection();
 
-// Valores por defecto
-$empresa_plan = "prueba";
-$timbres_totales = 0;
+// Valores por defecto (para que el sidebar nunca falle)
+$empresa_plan        = "prueba";
+$timbres_totales     = 0;
 $timbres_disponibles = 0;
+$terminal_emida      = null;   // <-- FALTABA
+$notification_status = null;   // <-- FALTABA
 
 if ($conn_main) {
-    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?";
+    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida 
+                    FROM empresas WHERE id = ?";
     $stmt_empresa = $conn_main->prepare($sql_empresa);
     $stmt_empresa->execute([$_SESSION['empresa_id']]);
     $result_empresa = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
 
     if ($result_empresa) {
-        $empresa_plan = $result_empresa['plan'];
-        $timbres_totales = $result_empresa['timbres_totales'] ?? 0;
+        $empresa_plan        = $result_empresa['plan'];
+        $timbres_totales     = $result_empresa['timbres_totales'] ?? 0;
         $timbres_disponibles = $result_empresa['timbres_disponibles'] ?? 0;
+        $terminal_emida      = $result_empresa['terminal_emida'] ?? null;
     }
+
+    // Notificaciones Emida
+    if (file_exists(__DIR__ . '/../EmidaServicios/config.php')) {
+        require_once __DIR__ . '/../EmidaServicios/config.php';
+        if (function_exists('getNotificationStatus')) {
+            $notification_status = getNotificationStatus($conn_main);
+        }
+    }
+
     $stmt_empresa = null;
     $conn_main = null;
 }
@@ -1018,7 +1031,7 @@ try {
                             </div>
                             <div class="col-md-8 d-flex align-items-end gap-2">
                                 <button type="button" class="btn btn-light flex-grow-1" id="btnAplicarFiltros">
-                                    <i class="fas fa-filter me-2"></i>Aplicar Filtros y Generar Reporte
+                                    <i class="fas fa-filter me-2"></i>Aplicar Filtros
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" id="btnImprimirComisiones"
                                         title="Imprime solo el bloque de comisiones">
@@ -1141,7 +1154,7 @@ try {
 
         if (sidebarToggle) sidebarToggle.addEventListener('click', toggleSidebar);
         if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', toggleSidebar);
-
+                                        
         // Mostrar/ocultar loading
         function showLoading() {
             document.getElementById('loadingOverlay').style.display = 'flex';

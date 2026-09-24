@@ -15,9 +15,6 @@ $venta = $_SESSION['venta_realizada'];
 $timbres_disponibles = $venta['timbres_disponibles'] ?? 0;
 $plan_empresa = $venta['plan_empresa'] ?? 'prueba';
 
-// Determinar si mostrar QR de facturación basado en timbres disponibles
-$mostrar_qr_facturacion = ($timbres_disponibles > 0 && !empty($venta['url_facturacion'] ?? $venta['facturapi_invoice_url'] ?? ''));
-
 // Configuración de la base de datos
 $servername = "libertyfin.com.mx";
 $username = "juanc141_alexis";
@@ -40,6 +37,9 @@ $cliente_nombre = "Cliente General";
 $descuento_total = $venta['descuento'] ?? 0;
 $subtotal_sin_descuento = $venta['subtotal'] ?? 0;
 $subtotal_con_descuento = $subtotal_sin_descuento - $descuento_total;
+
+// Variable de IVA
+$iva = $venta['iva'] ?? 0;
 
 // Variables para facturación (solo si hay timbres disponibles)
 $url_facturacion = $venta['url_facturacion'] ?? $venta['facturapi_invoice_url'] ?? '';
@@ -103,20 +103,6 @@ if (!empty($dbname)) {
                 $stmt_cliente->close();
             }
 
-            // Si hay timbres disponibles y no tenemos URL en sesión, buscar en la BD
-            if ($timbres_disponibles > 0 && empty($url_facturacion)) {
-                $sql_url = "SELECT urlfacturacion FROM ventas WHERE id = ?";
-                $stmt_url = $conn->prepare($sql_url);
-                $stmt_url->bind_param("i", $venta['venta_id']);
-                $stmt_url->execute();
-                $result_url = $stmt_url->get_result();
-                if ($url_data = $result_url->fetch_assoc()) {
-                    $url_facturacion = $url_data['urlfacturacion'] ?? '';
-                    $mostrar_qr_facturacion = ($timbres_disponibles > 0 && !empty($url_facturacion));
-                }
-                $stmt_url->close();
-            }
-
             $conn->close();
         }
     } catch (Exception $e) {
@@ -149,17 +135,6 @@ function acortarUrlFacturapi($url) {
     
     // Si no se puede parsear, devolver truncado
     return (strlen($url) > 30) ? substr($url, 0, 30) . "..." : $url;
-}
-
-// Generar QR solo si hay timbres disponibles y hay URL
-if ($mostrar_qr_facturacion) {
-    // Generar QR usando API QR Server
-    $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($url_facturacion);
-    // Crear URL acortada para mostrar
-    $facturacion_short_url = acortarUrlFacturapi($url_facturacion);
-} else {
-    // Si no hay timbres, no mostrar QR
-    $mostrar_qr_facturacion = false;
 }
 
 // Limpiar la venta de la sesión después de obtener los datos
@@ -535,6 +510,12 @@ header('Content-Type: text/html; charset=utf-8');
             font-weight: bold;
         }
 
+        /* ESTILO PARA IVA */
+        .texto-iva {
+            color: #000000 !important;
+            font-weight: bold;
+        }
+
         /* DESCUENTO POR PRODUCTO */
         .descuento-producto {
             font-size: 8px !important;
@@ -547,6 +528,10 @@ header('Content-Type: text/html; charset=utf-8');
 
         @media print {
             .descuento-producto {
+                color: #000000 !important;
+            }
+
+            .texto-iva {
                 color: #000000 !important;
             }
         }
@@ -688,6 +673,19 @@ header('Content-Type: text/html; charset=utf-8');
                 color: #000000 !important;
                 border-color: #000000 !important;
             }
+        }
+
+        /* DESGLOSE FISCAL */
+        .desglose-fiscal {
+            font-size: 9px;
+            line-height: 1.2;
+            font-weight: bold;
+            margin: 3px 0;
+        }
+
+        .desglose-fiscal td {
+            font-size: 9px;
+            padding: 1px 0;
         }
     </style>
 </head>
@@ -865,7 +863,7 @@ header('Content-Type: text/html; charset=utf-8');
 
         <div class="doble-linea"></div>
 
-        <!-- Totales CON DESCUENTO DETALLADO -->
+        <!-- Totales CON DESCUENTO E IVA DETALLADO -->
         <table class="seccion">
             <tr>
                 <td class="texto-izquierda">Subtotal:</td>
@@ -876,6 +874,17 @@ header('Content-Type: text/html; charset=utf-8');
                 <tr class="texto-descuento negrita">
                     <td class="texto-izquierda">Descuento:</td>
                     <td class="texto-derecha">-$<?php echo number_format($descuento_total, 2); ?></td>
+                </tr>
+                <tr>
+                    <td class="texto-izquierda">Subtotal c/Desc:</td>
+                    <td class="texto-derecha">$<?php echo number_format($subtotal_con_descuento, 2); ?></td>
+                </tr>
+            <?php endif; ?>
+
+            <?php if ($iva > 0): ?>
+                <tr class="texto-iva negrita">
+                    <td class="texto-izquierda">IVA:</td>
+                    <td class="texto-derecha">$<?php echo number_format($iva, 2); ?></td>
                 </tr>
             <?php endif; ?>
 
@@ -908,41 +917,6 @@ header('Content-Type: text/html; charset=utf-8');
 
         <div class="linea-divisoria"></div>
 
-        <!-- SECCIÓN DE FACTURACIÓN SOLO SI HAY TIMBRES DISPONIBLES -->
-        <?php if ($mostrar_qr_facturacion): ?>
-        <div class="qr-section-premium">
-            <div class="qr-text negrita">
-                🌐 FACTURACIÓN ELECTRÓNICA
-            </div>
-            <div class="qr-container">
-                <img src="<?php echo $qr_url; ?>" alt="Código QR para facturación" class="qr-code">
-                <div class="facturacion-nota">
-                    Escanee para factura electrónica
-                </div>
-                <div class="qr-link">
-                    <?php echo htmlspecialchars($facturacion_short_url); ?>
-                </div>
-            </div>
-            <div class="texto-centro info-empresa" style="font-size: 7px;">
-                Recibo electrónico disponible en línea
-            </div>
-            <div class="info-timbres">
-                Timbres restantes: <?php echo $timbres_disponibles; ?>
-            </div>
-        </div>
-        <?php elseif ($timbres_disponibles <= 0 && !empty($plan_empresa)): ?>
-        <div class="mensaje-no-timbres">
-            ⚠️ Facturación electrónica no disponible<br>
-            <small>Sin timbres fiscales disponibles</small>
-        </div>
-        <?php else: ?>
-        <div class="mensaje-no-timbres">
-            * Facturación disponible con timbres *
-        </div>
-        <?php endif; ?>
-
-        <div class="linea-divisoria"></div>
-
         <!-- Pie del ticket -->
         <div class="texto-centro pie-ticket seccion">
             <div class="espacio-minimo"></div>
@@ -952,14 +926,15 @@ header('Content-Type: text/html; charset=utf-8');
             <div class="espacio-minimo"></div>
             * Ticket comprobante *<br>
             * Conserve para aclaraciones *<br>
-            <?php if ($timbres_disponibles > 0): ?>
-            <div class="espacio-minimo"></div>
-            * Facturación electrónica disponible *
-            <?php endif; ?>
             <div class="espacio-minimo"></div>
             <?php if ($descuento_total > 0): ?>
                 <div class="texto-descuento" style="font-size: 8px;">
                     * Descuento aplicado: $<?php echo number_format($descuento_total, 2); ?> *
+                </div>
+            <?php endif; ?>
+            <?php if ($iva > 0): ?>
+                <div class="texto-iva" style="font-size: 8px;">
+                    * IVA incluido: $<?php echo number_format($iva, 2); ?> *
                 </div>
             <?php endif; ?>
         </div>

@@ -10,10 +10,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit();
 }
 
-// Valores por defecto
-$empresa_plan = "prueba";
-$timbres_totales = 0;
+// Valores por defecto (para que el sidebar nunca falle)
+$empresa_plan        = "prueba";
+$timbres_totales     = 0;
 $timbres_disponibles = 0;
+$terminal_emida      = null;   // <-- FALTABA
+$notification_status = null;   // <-- FALTABA
 
 try {
     // ============================================
@@ -21,14 +23,24 @@ try {
     // ============================================
     $pdo_main = getDBConnection();
 
-    $stmt = $pdo_main->prepare("SELECT plan, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?");
+    $stmt = $pdo_main->prepare("SELECT plan, timbres_totales, timbres_disponibles, terminal_emida 
+                                FROM empresas WHERE id = ?");
     $stmt->execute([$_SESSION['empresa_id']]);
     $empresa_data = $stmt->fetch();
 
     if ($empresa_data) {
-        $empresa_plan = $empresa_data['plan'];
-        $timbres_totales = $empresa_data['timbres_totales'] ?? 0;
+        $empresa_plan        = $empresa_data['plan'];
+        $timbres_totales     = $empresa_data['timbres_totales'] ?? 0;
         $timbres_disponibles = $empresa_data['timbres_disponibles'] ?? 0;
+        $terminal_emida      = $empresa_data['terminal_emida'] ?? null;
+    }
+
+    // Notificaciones Emida (igual que dashboard.php)
+    if (file_exists(__DIR__ . '/../EmidaServicios/config.php')) {
+        require_once __DIR__ . '/../EmidaServicios/config.php';
+        if (function_exists('getNotificationStatus')) {
+            $notification_status = getNotificationStatus($pdo_main);
+        }
     }
 
     // Guardar el plan en la sesión

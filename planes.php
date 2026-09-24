@@ -75,8 +75,8 @@ if (!empty($config['logo'])) {
 $planes = [
     'basico' => [
         'nombre' => 'Básico',
-        'precio_mensual' => 10,
-        'precio_anual' => 10,
+        'precio_mensual' => 299,
+        'precio_anual' => 239,
         'usuarios' => 1,
         'cajas' => 1,
         'productos' => 100,
@@ -84,7 +84,7 @@ $planes = [
         'popular' => false,
         'etiquetas' => ['Punto de Venta' => ['1 caja registradora', '100 productos', 'Pago en efectivo']]
     ],
-    'profesional' => [
+    'starter' => [
         'nombre' => 'Profesional',
         'precio_mensual' => 599,
         'precio_anual' => 479,
@@ -95,7 +95,7 @@ $planes = [
         'popular' => false,
         'etiquetas' => ['Punto de Venta' => ['2 cajas registradoras', '500 productos', 'Pago en efectivo']]
     ],
-    'empresarial' => [
+    'emprendedor' => [
         'nombre' => 'Empresarial',
         'precio_mensual' => 999,
         'precio_anual' => 799,
@@ -106,7 +106,7 @@ $planes = [
         'popular' => true,
         'etiquetas' => [
             'Punto de Venta' => ['3 cajas registradoras', '1 sucursal', '500 productos'],
-            'Pagos' => ['Pasarela de pago', 'SPEI / PayPal']
+            'Pagos' => ['Pasarela de pago', 'SPEI']
         ]
     ],
     'premium' => [
@@ -120,7 +120,7 @@ $planes = [
         'popular' => false,
         'etiquetas' => [
             'Punto de Venta' => ['10 cajas registradoras', '3 sucursales', 'Productos ilimitados'],
-            'Pagos' => ['Pasarela de pago', 'SPEI / PayPal', 'Tarjeta de crédito'],
+            'Pagos' => ['Pasarela de pago', 'SPEI', 'Tarjeta de crédito'],
             'Facturación' => ['500 CFDI / Timbres']
         ]
     ]

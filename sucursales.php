@@ -11,18 +11,38 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/env_loader.php';
 
-// OBTENER EL PLAN DE LA EMPRESA DESDE LA BASE DE DATOS PRINCIPAL
+// OBTENER DATOS DE LA EMPRESA DESDE LA BASE DE DATOS PRINCIPAL
 $conn_main = getDBConnection();
 
-$empresa_plan = "prueba"; // Valor por defecto
+// Valores por defecto (para que el sidebar nunca falle)
+$empresa_plan        = "prueba";
+$timbres_totales     = 0;      // <-- FALTABA
+$timbres_disponibles = 0;      // <-- FALTABA
+$terminal_emida      = null;   // <-- FALTABA
+$notification_status = null;   // <-- FALTABA
+
 if ($conn_main) {
-    $sql_plan = "SELECT plan FROM empresas WHERE id = ?";
+    $sql_plan = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida 
+                 FROM empresas WHERE id = ?";
     $stmt_plan = $conn_main->prepare($sql_plan);
     $stmt_plan->execute([$_SESSION['empresa_id']]);
     $result_plan = $stmt_plan->fetch(PDO::FETCH_ASSOC);
+
     if ($result_plan) {
-        $empresa_plan = $result_plan['plan'];
+        $empresa_plan        = $result_plan['plan'];
+        $timbres_totales     = $result_plan['timbres_totales'] ?? 0;
+        $timbres_disponibles = $result_plan['timbres_disponibles'] ?? 0;
+        $terminal_emida      = $result_plan['terminal_emida'] ?? null;
     }
+
+    // Notificaciones Emida
+    if (file_exists(__DIR__ . '/../EmidaServicios/config.php')) {
+        require_once __DIR__ . '/../EmidaServicios/config.php';
+        if (function_exists('getNotificationStatus')) {
+            $notification_status = getNotificationStatus($conn_main);
+        }
+    }
+
     $stmt_plan = null;
     $conn_main = null;
 }

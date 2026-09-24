@@ -1,1312 +1,739 @@
 <?php
+// =============================================
+// SESIÓN Y ENTORNO
+// =============================================
 ini_set('session.gc_maxlifetime', 28800);
 ini_set('session.cookie_lifetime', 28800);
 ini_set('session.gc_probability', 1);
 ini_set('session.gc_divisor', 100);
-ini_set('session.cookie_secure', 1);   // cambiar a 1, tu sitio es HTTPS
+ini_set('session.cookie_secure', 1);
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_strict_mode', 1);
 session_start();
+
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/env_loader.php';
 require 'vendor/autoload.php';
 
 use Facturapi\Facturapi;
 
-// Verificar si el usuario está logueado
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: Login");
     exit();
 }
 
-// Variables para Facturapi
-$organizacion = null;
-$mensaje = '';
-$tipo_mensaje = ''; // success, danger, warning
-$api_key = ''; // API Key de Facturapi (sk_user)
-$organization_id = ''; // ID de organización de Facturapi
-$test_api_key = null; // Nueva variable para API Key de prueba (sk_test)
+// =============================================
+// CONSTANTES
+// =============================================
+define('PRODUCTOS_POR_PAGINA', 5);
+define('MAX_IMAGENES_PRODUCTO', 5);
+define('MAX_TAMANO_IMAGEN', 4 * 1024 * 1024);
+define('RUTA_UPLOADS_RELATIVA', '/uploads/productos/');
+define('FACTURAPI_API_KEY', 'sk_user_LV9Sw1JcA15AUyxSfD53ntQH6sCMiYmRRMP6tpJCi2');
 
-// Configuración de la base de datos
-$servername = "libertyfin.com.mx";
-$username = "juanc141_alexis";
-$password = "Alexis1997";
-$dbname = $_SESSION['empresa_db'];
-
-// Obtener colores personalizados de la configuración
-$color_primario = '#27ae60';
-$color_secundario = '#2ecc71';
-
-// OBTENER EL PLAN DE LA EMPRESA Y DATOS DE TIMBRES DESDE LA BASE DE DATOS PRINCIPAL
-$empresa_plan = 'prueba'; // Valor por defecto
-$timbres_totales = 0;
-$timbres_disponibles = 0;
-$servername_main = "libertyfin.com.mx";
-$username_main = "juanc141_alexis";
-$password_main = "Alexis1997";
-$dbname_main = "juanc141_ventas";
-
-$conn_main = new mysqli($servername_main, $username_main, $password_main, $dbname_main);
-
-$mostrar_precio_compra = true;
-$mostrar_unidad_medida = true;
-$mostrar_proveedor = true;
-$mostrar_fecha_caducidad = true;
-$mostrar_categoria = true;
-$mostrar_tipo_producto = true;
-$mostrar_merma = true;
-$tipos_unidad_permitidos = ['pieza', 'kilo', 'litro'];
-$tipos_producto_permitidos = ['Estandar', 'Premium', 'Económico'];
-$config_merma = [
-    'porcentaje_danado' => 0,
-    'porcentaje_deshidratacion' => 0,
-    'aplicar_merma_venta' => 0,
-    'aplicar_merma_compra' => 0
+$PLANES_LIMITES = [
+    'prueba'      => 100,
+    'basico'      => 100,
+    'emprendedor' => 500,
+    'premium'     => PHP_INT_MAX,
 ];
 
-// Conectar a la base de datos principal para obtener características
-$conn_main_caract = new mysqli($servername_main, $username_main, $password_main, $dbname_main);
+$UNIDADES_CONFIG = [
+    'pieza'  => ['product_key' => '43211508', 'unit_key' => 'H87', 'unit_name' => 'Pieza',     'sufijo' => ' piezas'],
+    'kilo'   => ['product_key' => '43211601', 'unit_key' => 'KG',  'unit_name' => 'Kilogramo', 'sufijo' => ' kg'],
+    'litro'  => ['product_key' => '43211602', 'unit_key' => 'LTR', 'unit_name' => 'Litro',     'sufijo' => ' L'],
+];
 
-if (!$conn_main_caract->connect_error) {
-    // Verificar si la tabla existe
-    $check_table = "SHOW TABLES LIKE 'empresa_caracteristicas'";
-    $table_exists = $conn_main_caract->query($check_table);
+// =============================================
+// VARIABLES GLOBALES
+// =============================================
+$empresa_plan         = 'prueba';
+$timbres_disponibles  = 0;
+$timbres_totales      = 0;
+$terminal_emida       = null;
+$notification_status  = null;
+$organization_id      = null;
+$test_api_key_working = null;
+$stock_minimo_global  = 5;
 
-    if ($table_exists && $table_exists->num_rows > 0) {
-        $sql_caract = "SELECT caracteristica, habilitado, configuracion_extra 
-                       FROM empresa_caracteristicas 
-                       WHERE empresa_id = ?";
-        $stmt_caract = $conn_main_caract->prepare($sql_caract);
+// =============================================
+// CARACTERÍSTICAS DE LA EMPRESA (default)
+// =============================================
+$caracteristicas = [
+    'precio_compra'    => true,
+    'unidad_medida'    => true,
+    'proveedor'        => true,
+    'fecha_caducidad'  => true,
+    'categoria'        => true,
+    'tipo_producto'    => true,
+    'merma'            => true,
+];
+$tipos_unidad_permitidos   = ['pieza', 'kilo', 'litro'];
+$tipos_producto_permitidos = ['Estandar', 'Premium', 'Económico'];
+$config_merma = [
+    'porcentaje_danado'         => 0,
+    'porcentaje_deshidratacion' => 0,
+    'aplicar_merma_venta'       => 0,
+    'aplicar_merma_compra'      => 0,
+];
 
-        if ($stmt_caract) {
-            $stmt_caract->bind_param("i", $_SESSION['empresa_id']);
-            $stmt_caract->execute();
-            $result_caract = $stmt_caract->get_result();
-
-            while ($row = $result_caract->fetch_assoc()) {
-                switch ($row['caracteristica']) {
-                    case 'precio_compra':
-                        $mostrar_precio_compra = (bool)$row['habilitado'];
-                        break;
-                    case 'unidad_medida':
-                        $mostrar_unidad_medida = (bool)$row['habilitado'];
-                        if (!empty($row['configuracion_extra'])) {
-                            $tipos = json_decode($row['configuracion_extra'], true);
-                            if (is_array($tipos) && !empty($tipos)) {
-                                $tipos_unidad_permitidos = $tipos;
-                            }
-                        }
-                        break;
-                    case 'proveedor':
-                        $mostrar_proveedor = (bool)$row['habilitado'];
-                        break;
-                    case 'fecha_caducidad':
-                        $mostrar_fecha_caducidad = (bool)$row['habilitado'];
-                        break;
-                    case 'categoria':
-                        $mostrar_categoria = (bool)$row['habilitado'];
-                        break;
-                    case 'tipo_producto':
-                        $mostrar_tipo_producto = (bool)$row['habilitado'];
-                        if (!empty($row['configuracion_extra'])) {
-                            $tipos = json_decode($row['configuracion_extra'], true);
-                            if (is_array($tipos) && !empty($tipos)) {
-                                $tipos_producto_permitidos = $tipos;
-                            }
-                        }
-                        break;
-                    case 'merma':
-                        $mostrar_merma = (bool)$row['habilitado'];
-                        if (!empty($row['configuracion_extra'])) {
-                            $config_temp = json_decode($row['configuracion_extra'], true);
-                            if (is_array($config_temp)) {
-                                $config_merma = array_merge($config_merma, $config_temp);
-                            }
-                        }
-                        break;
-                }
-            }
-            $stmt_caract->close();
-        }
-    }
-}
-$conn_main_caract->close();
-
-// Si la unidad de medida está deshabilitada, forzar valores por defecto
-if (!$mostrar_unidad_medida) {
-    $tipos_unidad_permitidos = ['pieza'];
-}
-
-// Si tipo producto está deshabilitado, valores por defecto
-if (!$mostrar_tipo_producto) {
-    $tipos_producto_permitidos = ['Estandar'];
-}
-
-// Variables para CSS (ocultar/mostrar secciones completas)
-$hide_precio_compra_style = $mostrar_precio_compra ? '' : 'style="display: none;"';
-$hide_unidad_medida_style = $mostrar_unidad_medida ? '' : 'style="display: none;"';
-$hide_proveedor_style = $mostrar_proveedor ? '' : 'style="display: none;"';
-$hide_fecha_caducidad_style = $mostrar_fecha_caducidad ? '' : 'style="display: none;"';
-$hide_categoria_style = $mostrar_categoria ? '' : 'style="display: none;"';
-$hide_tipo_producto_style = $mostrar_tipo_producto ? '' : 'style="display: none;"';
-$hide_merma_style = $mostrar_merma ? '' : 'style="display: none;"';
-
-// API Key de Facturapi - FIJA
-$api_key = "sk_user_LV9Sw1JcA15AUyxSfD53ntQH6sCMiYmRRMP6tpJCi2";
-
-if (!$conn_main->connect_error) {
-    $sql_empresa = "SELECT plan, facturapi_organization_id, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?";
-    $stmt_empresa = $conn_main->prepare($sql_empresa);
-    $stmt_empresa->bind_param("i", $_SESSION['empresa_id']);
-    $stmt_empresa->execute();
-    $result_empresa = $stmt_empresa->get_result();
-
-    if ($result_empresa && $result_empresa->num_rows > 0) {
-        $empresa_data = $result_empresa->fetch_assoc();
-        $empresa_plan = $empresa_data['plan'];
-        $organization_id = $empresa_data['facturapi_organization_id'] ?? null;
-        $timbres_totales = $empresa_data['timbres_totales'] ?? 0;
-        $timbres_disponibles = $empresa_data['timbres_disponibles'] ?? 0;
-    }
-    $stmt_empresa->close();
-    $conn_main->close();
-}
-
-// CARGAR DATOS DE LA ORGANIZACIÓN SI TENEMOS CREDENCIALES
-if (!empty($api_key) && !empty($organization_id)) {
-    try {
-        $facturapi = new Facturapi($api_key);
-        $organizacion = $facturapi->Organizations->retrieve($organization_id);
-
-        // OBTENER API KEY DE PRUEBA DINÁMICAMENTE
-        try {
-            $test_api_key = $facturapi->Organizations->getTestApiKey($organization_id);
-            $_SESSION['test_api_key'] = $test_api_key;
-            $test_api_key_working = $test_api_key;
-        } catch (Exception $e) {
-            $test_api_key_error = $e->getMessage();
-            error_log("Error al obtener API Key de prueba: " . $test_api_key_error);
-            $test_api_key_working = null;
-        }
-    } catch (Exception $e) {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $mensaje = 'Error al cargar datos: ' . $e->getMessage();
-            $tipo_mensaje = 'danger';
-        }
-        $test_api_key_working = null;
-    }
-}
-
+// =============================================
+// CONEXIÓN ÚNICA A BD PRINCIPAL (PDO)
+// =============================================
+$conn_main = null;
 try {
-    $conn = new mysqli($servername, $username, $password, $dbname);
-    if (!$conn->connect_error) {
-        $sql_config = "SELECT color_primario, color_secundario, stock_minimo_global FROM sistema_config LIMIT 1";
-        $result_config = $conn->query($sql_config);
-        if ($result_config && $result_config->num_rows > 0) {
-            $config_colores = $result_config->fetch_assoc();
-            $color_primario = $config_colores['color_primario'] ?? $color_primario;
-            $color_secundario = $config_colores['color_secundario'] ?? $color_secundario;
-            $stock_minimo_global = $config_colores['stock_minimo_global'] ?? 5;
+    $conn_main = getDBConnection();
 
-            $_SESSION['color_primario'] = $color_primario;
-            $_SESSION['color_secundario'] = $color_secundario;
+    // Datos de empresa
+    $stmt = $conn_main->prepare("
+        SELECT plan, facturapi_organization_id, timbres_totales, timbres_disponibles, terminal_emida
+        FROM empresas WHERE id = ?
+    ");
+    $stmt->execute([$_SESSION['empresa_id']]);
+    $empresa_data = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = null;
+
+    if ($empresa_data) {
+        $empresa_plan         = $empresa_data['plan'] ?? 'prueba';
+        $organization_id      = $empresa_data['facturapi_organization_id'] ?? null;
+        $timbres_totales      = $empresa_data['timbres_totales'] ?? 0;
+        $timbres_disponibles  = $empresa_data['timbres_disponibles'] ?? 0;
+        $terminal_emida       = $empresa_data['terminal_emida'] ?? null;
+    }
+
+    // Características
+    $stmt = $conn_main->prepare("
+        SELECT caracteristica, habilitado, configuracion_extra
+        FROM empresa_caracteristicas
+        WHERE empresa_id = ?
+    ");
+    $stmt->execute([$_SESSION['empresa_id']]);
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        if (!array_key_exists($row['caracteristica'], $caracteristicas)) continue;
+        $caracteristicas[$row['caracteristica']] = (bool)$row['habilitado'];
+
+        if (!empty($row['configuracion_extra'])) {
+            $extra = json_decode($row['configuracion_extra'], true);
+            if (!is_array($extra)) continue;
+
+            if ($row['caracteristica'] === 'unidad_medida' && !empty($extra)) {
+                $tipos_unidad_permitidos = $extra;
+            } elseif ($row['caracteristica'] === 'tipo_producto' && !empty($extra)) {
+                $tipos_producto_permitidos = $extra;
+            } elseif ($row['caracteristica'] === 'merma') {
+                $config_merma = array_merge($config_merma, $extra);
+            }
+        }
+    }
+    $stmt = null;
+
+    // Notificaciones Emida
+    if (file_exists(__DIR__ . '/../EmidaServicios/config.php')) {
+        require_once __DIR__ . '/../EmidaServicios/config.php';
+        if (function_exists('getNotificationStatus')) {
+            $notification_status = getNotificationStatus($conn_main);
         }
     }
 } catch (Exception $e) {
-    $stock_minimo_global = 5;
+    error_log("Error conexión/config BD principal: " . $e->getMessage());
+}
+
+// Aliases para template
+$mostrar_precio_compra    = $caracteristicas['precio_compra'];
+$mostrar_unidad_medida    = $caracteristicas['unidad_medida'];
+$mostrar_proveedor        = $caracteristicas['proveedor'];
+$mostrar_fecha_caducidad  = $caracteristicas['fecha_caducidad'];
+$mostrar_categoria        = $caracteristicas['categoria'];
+$mostrar_tipo_producto    = $caracteristicas['tipo_producto'];
+$mostrar_merma            = $caracteristicas['merma'];
+
+if (!$mostrar_unidad_medida) $tipos_unidad_permitidos = ['pieza'];
+if (!$mostrar_tipo_producto) $tipos_producto_permitidos = ['Estandar'];
+
+$hide_precio_compra_style   = $mostrar_precio_compra    ? '' : 'style="display: none;"';
+$hide_unidad_medida_style   = $mostrar_unidad_medida    ? '' : 'style="display: none;"';
+$hide_proveedor_style       = $mostrar_proveedor        ? '' : 'style="display: none;"';
+$hide_fecha_caducidad_style = $mostrar_fecha_caducidad  ? '' : 'style="display: none;"';
+$hide_categoria_style       = $mostrar_categoria        ? '' : 'style="display: none;"';
+$hide_tipo_producto_style   = $mostrar_tipo_producto    ? '' : 'style="display: none;"';
+$hide_merma_style           = $mostrar_merma            ? '' : 'style="display: none;"';
+
+// =============================================
+// FACTURAPI (solo si hay organización)
+// =============================================
+if (!empty($organization_id)) {
+    try {
+        $facturapi = new Facturapi(FACTURAPI_API_KEY);
+        $organizacion = $facturapi->Organizations->retrieve($organization_id);
+        try {
+            $test_api_key_working = $facturapi->Organizations->getTestApiKey($organization_id);
+            $_SESSION['test_api_key'] = $test_api_key_working;
+        } catch (Exception $e) {
+            error_log("Error getTestApiKey: " . $e->getMessage());
+        }
+    } catch (Exception $e) {
+        error_log("Error Facturapi: " . $e->getMessage());
+    }
 }
 
 // =============================================
-// FUNCIONES PARA MÚLTIPLES IMÁGENES
+// HELPERS — IMÁGENES
 // =============================================
-
-/**
- * Función para subir múltiples imágenes
- * @param array $files Archivos subidos ($_FILES)
- * @param int $producto_id ID del producto
- * @return array Rutas de las imágenes subidas
- */
-function subirMultiplesImagenes($files, $producto_id)
+function resolverDirectorioUploads(): array
 {
-    $imagenes_subidas = [];
-
-    if (!isset($files['imagenes']) || empty($files['imagenes']['tmp_name'][0])) {
-        error_log("No hay archivos para subir");
-        return $imagenes_subidas;
+    $candidatos = [
+        $_SERVER['DOCUMENT_ROOT'] . RUTA_UPLOADS_RELATIVA => RUTA_UPLOADS_RELATIVA,
+        dirname(__FILE__) . '/uploads/productos/'        => 'uploads/productos/',
+    ];
+    foreach ($candidatos as $abs => $rel) {
+        if (!is_dir($abs) && !@mkdir($abs, 0777, true)) continue;
+        if (is_writable($abs)) return ['abs' => rtrim($abs, '/') . '/', 'rel' => $rel];
     }
-
-    // Crear directorio si no existe - Usar ruta absoluta
-    $directorio = $_SERVER['DOCUMENT_ROOT'] . "/uploads/productos/";
-    $directorio_relativo = "/uploads/productos/";
-
-    // También intentar con ruta relativa desde el script actual
-    if (!is_dir($directorio)) {
-        $directorio = dirname(__FILE__) . "/uploads/productos/";
-        $directorio_relativo = "uploads/productos/";
-    }
-
-    // Crear directorio si no existe
-    if (!is_dir($directorio)) {
-        if (mkdir($directorio, 0777, true)) {
-            error_log("Directorio creado: " . $directorio);
-        } else {
-            error_log("ERROR: No se pudo crear el directorio: " . $directorio);
-            return $imagenes_subidas;
-        }
-    }
-
-    // Verificar permisos
-    if (!is_writable($directorio)) {
-        error_log("ERROR: El directorio no tiene permisos de escritura: " . $directorio);
-        return $imagenes_subidas;
-    }
-
-    // Validar tipos de archivo
-    $tiposPermitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    $max_imagenes = 5; // Máximo 5 imágenes
-
-    // Procesar cada imagen (limitar a 5)
-    $total_imagenes = count($files['imagenes']['tmp_name']);
-    for ($key = 0; $key < min($total_imagenes, $max_imagenes); $key++) {
-        // Verificar si hubo error en la subida
-        if ($files['imagenes']['error'][$key] !== UPLOAD_ERR_OK) {
-            error_log("Error al subir imagen {$key}: Código " . $files['imagenes']['error'][$key]);
-            continue;
-        }
-
-        // Validar tipo MIME
-        $tipoArchivo = mime_content_type($files['imagenes']['tmp_name'][$key]);
-        if (!in_array($tipoArchivo, $tiposPermitidos)) {
-            error_log("Tipo de archivo no permitido: " . $tipoArchivo . " para archivo: " . $files['imagenes']['name'][$key]);
-            continue;
-        }
-
-        // Validar tamaño (4MB máximo por imagen)
-        if ($files['imagenes']['size'][$key] > 4 * 1024 * 1024) {
-            error_log("Imagen demasiado grande: " . $files['imagenes']['size'][$key] . " bytes - " . $files['imagenes']['name'][$key]);
-            continue;
-        }
-
-        // Generar nombre único
-        $extension = strtolower(pathinfo($files['imagenes']['name'][$key], PATHINFO_EXTENSION));
-        $nombreArchivo = "producto_{$producto_id}_" . time() . "_" . uniqid() . "." . $extension;
-
-        $rutaCompleta = $directorio . $nombreArchivo;
-        $rutaRelativa = $directorio_relativo . $nombreArchivo;
-
-        // Mover archivo
-        if (move_uploaded_file($files['imagenes']['tmp_name'][$key], $rutaCompleta)) {
-            $imagenes_subidas[] = $rutaRelativa;
-            error_log("✅ Imagen subida exitosamente: " . $rutaRelativa);
-            error_log("   Ruta física: " . $rutaCompleta);
-        } else {
-            error_log("❌ Error al mover el archivo desde: " . $files['imagenes']['tmp_name'][$key] . " a: " . $rutaCompleta);
-        }
-    }
-
-    error_log("Total imágenes subidas: " . count($imagenes_subidas));
-    return $imagenes_subidas;
+    return ['abs' => null, 'rel' => RUTA_UPLOADS_RELATIVA];
 }
 
-/**
- * Función para guardar imágenes en la base de datos
- * @param mysqli $conn Conexión a la base de datos
- * @param int $producto_id ID del producto
- * @param array $imagenes Array con rutas de imágenes
- * @param int $principal_index Índice de la imagen principal
- */
-function guardarImagenesProducto($conn, $producto_id, $imagenes, $principal_index = 0)
+function subirMultiplesImagenes(array $files, int $producto_id): array
 {
-    error_log("=== INICIANDO guardarImagenesProducto ===");
-    error_log("Producto ID: " . $producto_id);
-    error_log("Imágenes a guardar: " . print_r($imagenes, true));
-    error_log("Índice principal: " . $principal_index);
+    $rutas = [];
+    if (empty($files['imagenes']['tmp_name'][0])) return $rutas;
 
-    // Verificar conexión
-    if (!$conn || $conn->connect_error) {
-        error_log("ERROR: Conexión a BD inválida");
-        return false;
+    $dir = resolverDirectorioUploads();
+    if (!$dir['abs']) {
+        error_log("No hay directorio escribible para uploads");
+        return $rutas;
     }
 
-    // Primero, eliminar imágenes existentes
-    $sql_delete = "DELETE FROM producto_imagenes WHERE producto_id = ?";
-    $stmt_delete = $conn->prepare($sql_delete);
-    if (!$stmt_delete) {
-        error_log("ERROR preparando DELETE: " . $conn->error);
-        return false;
-    }
+    $tipos_permitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    $total = min(count($files['imagenes']['tmp_name']), MAX_IMAGENES_PRODUCTO);
 
-    $stmt_delete->bind_param("i", $producto_id);
-    if (!$stmt_delete->execute()) {
-        error_log("ERROR ejecutando DELETE: " . $stmt_delete->error);
-        $stmt_delete->close();
-        return false;
-    }
-    $stmt_delete->close();
-    error_log("✓ Imágenes existentes eliminadas");
+    for ($i = 0; $i < $total; $i++) {
+        if ($files['imagenes']['error'][$i] !== UPLOAD_ERR_OK) continue;
+        if ($files['imagenes']['size'][$i] > MAX_TAMANO_IMAGEN) continue;
 
-    // Insertar nuevas imágenes
-    $insertados = 0;
-    foreach ($imagenes as $index => $ruta_imagen) {
-        // Determinar si es la imagen principal
-        $es_principal = ($index == $principal_index) ? 1 : 0;
-        $orden = $index;
+        $mime = mime_content_type($files['imagenes']['tmp_name'][$i]);
+        if (!in_array($mime, $tipos_permitidos, true)) continue;
 
-        // Asegurar que la ruta no tenga duplicados de /
-        $ruta_imagen = str_replace('//', '/', $ruta_imagen);
+        $ext = strtolower(pathinfo($files['imagenes']['name'][$i], PATHINFO_EXTENSION));
+        $nombre = "producto_{$producto_id}_" . time() . "_" . bin2hex(random_bytes(4)) . ".{$ext}";
 
-        $sql_insert = "INSERT INTO producto_imagenes (producto_id, ruta_imagen, orden, es_principal) 
-                       VALUES (?, ?, ?, ?)";
-        $stmt_insert = $conn->prepare($sql_insert);
-
-        if (!$stmt_insert) {
-            error_log("ERROR preparando INSERT: " . $conn->error);
-            continue;
+        if (move_uploaded_file($files['imagenes']['tmp_name'][$i], $dir['abs'] . $nombre)) {
+            $rutas[] = $dir['rel'] . $nombre;
         }
+    }
+    return $rutas;
+}
 
-        $stmt_insert->bind_param("isii", $producto_id, $ruta_imagen, $orden, $es_principal);
+function guardarImagenesProducto(PDO $conn, int $producto_id, array $imagenes, int $principal_index = 0): int
+{
+    try {
+        $conn->prepare("DELETE FROM producto_imagenes WHERE producto_id = ?")->execute([$producto_id]);
+        if (empty($imagenes)) return 0;
 
-        if ($stmt_insert->execute()) {
+        $stmt = $conn->prepare("
+            INSERT INTO producto_imagenes (producto_id, ruta_imagen, orden, es_principal)
+            VALUES (?, ?, ?, ?)
+        ");
+        $insertados = 0;
+        foreach ($imagenes as $i => $ruta) {
+            $ruta = str_replace('//', '/', $ruta);
+            $stmt->execute([$producto_id, $ruta, $i, $i === $principal_index ? 1 : 0]);
             $insertados++;
-            error_log("✓ Imagen $index guardada en BD - Principal: " . ($es_principal ? "SÍ" : "NO") . " - Ruta: $ruta_imagen");
-        } else {
-            error_log("❌ Error insertando imagen $index: " . $stmt_insert->error);
         }
-
-        $stmt_insert->close();
-    }
-
-    error_log("=== FINALIZADO: $insertados de " . count($imagenes) . " imágenes guardadas ===");
-    return $insertados > 0;
-}
-
-function verificarDirectorioUploads()
-{
-    $directorios = [
-        __DIR__ . "/uploads/productos/",
-        $_SERVER['DOCUMENT_ROOT'] . "/uploads/productos/",
-        "uploads/productos/"
-    ];
-
-    $resultados = [];
-    foreach ($directorios as $dir) {
-        $existe = is_dir($dir);
-        $escribible = is_writable($dir);
-        $resultados[] = [
-            'ruta' => $dir,
-            'existe' => $existe,
-            'escribible' => $escribible,
-            'permisos' => $existe ? substr(sprintf('%o', fileperms($dir)), -4) : 'N/A'
-        ];
-
-        if (!$existe) {
-            @mkdir($dir, 0777, true);
-            error_log("Directorio creado: " . $dir);
-        }
-    }
-
-    error_log("=== VERIFICACIÓN DE DIRECTORIOS ===");
-    foreach ($resultados as $r) {
-        error_log("Ruta: " . $r['ruta']);
-        error_log("  - Existe: " . ($r['existe'] ? 'Sí' : 'No'));
-        error_log("  - Escribible: " . ($r['escribible'] ? 'Sí' : 'No'));
-        error_log("  - Permisos: " . $r['permisos']);
-    }
-
-    return $resultados;
-}
-
-/**
- * Función para obtener todas las imágenes de un producto
- * @param mysqli $conn Conexión a la base de datos
- * @param int $producto_id ID del producto
- * @return array Array con las imágenes del producto
- */
-function obtenerImagenesProducto($conn, $producto_id)
-{
-    $imagenes = [];
-
-    $sql = "SELECT id, ruta_imagen, orden, es_principal 
-            FROM producto_imagenes 
-            WHERE producto_id = ? 
-            ORDER BY es_principal DESC, orden ASC";
-
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $producto_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        $imagenes[] = $row;
-    }
-    $stmt->close();
-
-    return $imagenes;
-}
-
-/**
- * Función para eliminar imágenes de un producto
- * @param mysqli $conn Conexión a la base de datos
- * @param int $producto_id ID del producto
- * @param array $excluir_ids IDs de imágenes a excluir
- */
-function eliminarImagenesProducto($conn, $producto_id, $excluir_ids = [])
-{
-    if (empty($excluir_ids)) {
-        // Eliminar todas las imágenes del producto
-        $sql = "DELETE FROM producto_imagenes WHERE producto_id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $producto_id);
-        $stmt->execute();
-        $stmt->close();
-    } else {
-        // Eliminar imágenes específicas
-        $ids_str = implode(',', array_map('intval', $excluir_ids));
-        $sql = "DELETE FROM producto_imagenes WHERE producto_id = ? AND id NOT IN ($ids_str)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $producto_id);
-        $stmt->execute();
-        $stmt->close();
+        return $insertados;
+    } catch (Exception $e) {
+        error_log("guardarImagenesProducto: " . $e->getMessage());
+        return 0;
     }
 }
 
-function verificarLimiteProductos($conn, $plan)
+function obtenerImagenesProducto(PDO $conn, int $producto_id): array
 {
-    // Obtener el total de productos activos
-    $sql_count = "SELECT COUNT(*) as total FROM productos WHERE activo = 1";
-    $result = $conn->query($sql_count);
-    $row = $result->fetch_assoc();
-    $total_productos = $row['total'];
+    $stmt = $conn->prepare("
+        SELECT id, ruta_imagen, orden, es_principal
+        FROM producto_imagenes
+        WHERE producto_id = ?
+        ORDER BY es_principal DESC, orden ASC
+    ");
+    $stmt->execute([$producto_id]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
-    // Definir límites según el plan
-    $limites = [
-        'prueba' => 100,
-        'basico' => 100,
-        'emprendedor' => 500,
-        'premium' => PHP_INT_MAX // ilimitado
-    ];
-
-    $limite = isset($limites[$plan]) ? $limites[$plan] : 100;
+// =============================================
+// HELPERS — NEGOCIO
+// =============================================
+function verificarLimiteProductos(PDO $conn, string $plan, array $planes_limites): array
+{
+    $total = (int)$conn->query("SELECT COUNT(*) FROM productos WHERE activo = 1")->fetchColumn();
+    $limite = $planes_limites[$plan] ?? 100;
 
     return [
-        'total' => $total_productos,
-        'limite' => $limite,
-        'disponibles' => max(0, $limite - $total_productos),
-        'alcanzado' => $total_productos >= $limite
+        'total'       => $total,
+        'limite'      => $limite,
+        'disponibles' => max(0, $limite - $total),
+        'alcanzado'   => $total >= $limite,
     ];
 }
 
-// Función para generar código automático
-function generarCodigoAutomatico($conn, $prefijo = 'PROD')
+function generarCodigoAutomatico(PDO $conn, string $prefijo = 'PROD'): string
 {
-    // Buscar el último código con el prefijo
-    $sql = "SELECT MAX(CAST(SUBSTRING(codigo, LENGTH(?) + 1) AS UNSIGNED)) as ultimo_num 
-            FROM productos 
-            WHERE codigo LIKE CONCAT(?, '%') 
-            AND codigo REGEXP '^' || ? || '[0-9]+$'";
+    $stmt = $conn->prepare("
+        SELECT MAX(CAST(SUBSTRING(codigo, LENGTH(?) + 1) AS UNSIGNED))
+        FROM productos
+        WHERE codigo LIKE CONCAT(?, '%')
+          AND codigo REGEXP CONCAT('^', ?, '[0-9]+$')
+    ");
+    $stmt->execute([$prefijo, $prefijo, $prefijo]);
+    $ultimo = (int)$stmt->fetchColumn();
+    $nuevo = sprintf('%s%04d', $prefijo, $ultimo + 1);
 
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $prefijo, $prefijo, $prefijo);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $stmt->close();
-
-    $ultimo_num = $row['ultimo_num'] ? intval($row['ultimo_num']) : 0;
-    $nuevo_num = $ultimo_num + 1;
-
-    // Formatear con ceros a la izquierda
-    $codigo = sprintf('%s%04d', $prefijo, $nuevo_num);
-
-    // Verificar que no exista
-    $sql_check = "SELECT COUNT(*) as existe FROM productos WHERE codigo = ?";
-    $stmt_check = $conn->prepare($sql_check);
-    $stmt_check->bind_param("s", $codigo);
-    $stmt_check->execute();
-    $result_check = $stmt_check->get_result();
-    $row_check = $result_check->fetch_assoc();
-    $stmt_check->close();
-
-    if ($row_check['existe'] > 0) {
-        // Si por alguna razón existe, intentar con el siguiente número
+    $stmt_check = $conn->prepare("SELECT COUNT(*) FROM productos WHERE codigo = ?");
+    $stmt_check->execute([$nuevo]);
+    if ((int)$stmt_check->fetchColumn() > 0) {
         return generarCodigoAutomatico($conn, $prefijo);
     }
-
-    return $codigo;
+    return $nuevo;
 }
 
-// Configuración de paginación
-$registros_por_pagina = 5;
-$pagina_actual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
-if ($pagina_actual < 1) $pagina_actual = 1;
+function formatearStockPorUnidad($stock, string $unidad_medida): string
+{
+    if (!is_numeric($stock)) return '0';
+
+    $es_decimal = ($stock - floor($stock)) > 0;
+    $num = $es_decimal
+        ? rtrim(rtrim(number_format((float)$stock, 3, '.', ''), '0'), '.')
+        : number_format((float)$stock, 0, '.', '');
+
+    $sufijos = [
+        'kg' => ' kg', 'kilo' => ' kg', 'kilogramo' => ' kg',
+        'litro' => ' L', 'l' => ' L',
+        'tonelada' => ' ton', 'ton' => ' ton',
+        'pieza' => ' piezas', 'unidad' => ' unidades',
+    ];
+    $sufijo = $sufijos[$unidad_medida] ?? '';
+    if (in_array($unidad_medida, ['pieza', 'unidad'], true) && (float)$stock === 1.0) {
+        $sufijo = rtrim($sufijo, 's');
+    }
+    return $num . $sufijo;
+}
+
+// =============================================
+// FACTURAPI — crear / actualizar
+// =============================================
+function construirFacturapiData(array $productoData, array $unidades_config): array
+{
+    $unidad = $productoData['unidad_medida'] ?? 'pieza';
+    $cfg = $unidades_config[$unidad] ?? $unidades_config['pieza'];
+
+    $descripcion = $productoData['nombre'];
+    if (!empty($productoData['descripcion'])) {
+        $descripcion .= ' - ' . $productoData['descripcion'];
+    }
+
+    return [
+        'description'  => $descripcion,
+        'product_key'  => $cfg['product_key'],
+        'unit_key'     => $cfg['unit_key'],
+        'unit_name'    => $cfg['unit_name'],
+        'price'        => (float)$productoData['precio'],
+        'tax_included' => true,
+        'taxability'   => '02',
+        'sku'          => $productoData['codigo'],
+        'taxes' => [[
+            'type' => 'IVA', 'rate' => 0.16, 'withholding' => false, 'factor' => 'Tasa',
+        ]],
+    ];
+}
+
+function sincronizarProductoFacturapi(?string $facturapi_id, array $productoData, ?string $test_api_key, ?string $organization_id, array $unidades_config): array
+{
+    if (empty($organization_id)) {
+        return ['success' => true, 'facturapi_producto_id' => $facturapi_id, 'message' => 'Producto sin facturación'];
+    }
+    if (empty($test_api_key)) {
+        return ['success' => true, 'facturapi_producto_id' => $facturapi_id, 'message' => 'Sin API key de prueba'];
+    }
+
+    try {
+        $facturapi = new Facturapi($test_api_key);
+        $data = construirFacturapiData($productoData, $unidades_config);
+
+        $response = empty($facturapi_id)
+            ? $facturapi->Products->create($data)
+            : $facturapi->Products->update($facturapi_id, $data);
+
+        if (!empty($response->id)) {
+            return [
+                'success' => true,
+                'facturapi_producto_id' => $response->id,
+                'message' => empty($facturapi_id) ? 'Producto creado en FacturaAPI' : 'Producto actualizado en FacturaAPI',
+            ];
+        }
+        return ['success' => false, 'facturapi_producto_id' => $facturapi_id, 'message' => 'FacturaAPI no devolvió ID'];
+    } catch (Exception $e) {
+        return ['success' => false, 'facturapi_producto_id' => $facturapi_id, 'message' => 'Error FacturaAPI: ' . $e->getMessage()];
+    }
+}
+
+// =============================================
+// PAGINACIÓN
+// =============================================
+$registros_por_pagina = PRODUCTOS_POR_PAGINA;
+$pagina_actual = max(1, (int)($_GET['pagina'] ?? 1));
 $offset = ($pagina_actual - 1) * $registros_por_pagina;
 
-// Conectar a la base de datos de la empresa
+// =============================================
+// BLOQUE PRINCIPAL
+// =============================================
+$productos                    = [];
+$categorias                   = [];
+$sucursales                   = [];
+$proveedores                  = [];
+$stock_por_sucursal           = [];
+$imagenes_por_producto        = [];
+$precios_mayoreo_por_producto = [];
+$total_registros              = 0;
+$total_paginas                = 0;
+$total_productos              = 0;
+$con_stock                    = 0;
+$sin_stock                    = 0;
+$bajo_stock                   = 0;
+$valor_total_inventario       = 0;
+$limite_alcanzado             = false;
+$productos_disponibles        = 0;
+$total_productos_activos      = 0;
+$limite_productos             = 100;
+$empresa_info                 = [];
+$logo_empresa                 = null;
+$logo_src_base64              = null;
+
 try {
-    $conn = new mysqli($servername, $username, $password, $dbname);
+    $conn = getEmpresaDBConnection($_SESSION['empresa_db']);
 
-    if ($conn->connect_error) {
-        throw new Exception("Error de conexión: " . $conn->connect_error);
-    }
+    // Límite
+    $limite_info              = verificarLimiteProductos($conn, $empresa_plan, $PLANES_LIMITES);
+    $limite_alcanzado         = $limite_info['alcanzado'];
+    $productos_disponibles    = $limite_info['disponibles'];
+    $total_productos_activos  = $limite_info['total'];
+    $limite_productos         = $limite_info['limite'];
 
-    // Obtener información del límite de productos
-    $limite_info = verificarLimiteProductos($conn, $empresa_plan);
-    $limite_alcanzado = $limite_info['alcanzado'];
-    $productos_disponibles = $limite_info['disponibles'];
-    $total_productos_activos = $limite_info['total'];
-    $limite_productos = $limite_info['limite'];
+    // Config sistema
+    $empresa_info = $conn->query("
+        SELECT nombre_empresa, rfc, telefono, email, color_primario, color_secundario, logo, stock_minimo_global
+        FROM sistema_config LIMIT 1
+    ")->fetch(PDO::FETCH_ASSOC) ?: [];
 
-    // Obtener información de la empresa
-    $sql_config = "SELECT nombre_empresa, rfc, telefono, email, color_primario, color_secundario, logo, stock_minimo_global FROM sistema_config LIMIT 1";
-    $result_config = $conn->query($sql_config);
-    $empresa_info = $result_config->fetch_assoc();
     $stock_minimo_global = $empresa_info['stock_minimo_global'] ?? 5;
 
-    // OBTENER LOGO DE LA EMPRESA
-    $logo_empresa = null;
-    $logo_src_base64 = null;
-
+    // Logo
     if (!empty($empresa_info['logo'])) {
-        $empresa_logo = $empresa_info['logo'];
-        $logo_path = '';
-        $rutas_posibles = [
-            $empresa_logo,
-            '../' . $empresa_logo,
-            '../../' . $empresa_logo,
-            'admin/' . $empresa_logo,
-            '../admin/' . $empresa_logo,
-            'logos/' . $empresa_logo,
-            'img/' . $empresa_logo,
-            'images/' . $empresa_logo,
-            'assets/' . $empresa_logo,
-            'uploads/' . $empresa_logo,
-            '../logos/' . $empresa_logo,
-            '../img/' . $empresa_logo,
-            '../images/' . $empresa_logo,
-            '../assets/' . $empresa_logo,
-            '../uploads/' . $empresa_logo
-        ];
-
-        foreach ($rutas_posibles as $ruta) {
-            if (file_exists($ruta) && is_file($ruta)) {
-                $logo_path = $ruta;
-                break;
-            }
+        $logo_path = null;
+        foreach ([
+            $empresa_info['logo'], '../' . $empresa_info['logo'],
+            'logos/' . $empresa_info['logo'], 'img/' . $empresa_info['logo'],
+            'images/' . $empresa_info['logo'], 'assets/' . $empresa_info['logo'],
+            'uploads/' . $empresa_info['logo'],
+            '../logos/' . $empresa_info['logo'], '../img/' . $empresa_info['logo'],
+            '../uploads/' . $empresa_info['logo'],
+        ] as $ruta) {
+            if (is_file($ruta)) { $logo_path = $ruta; break; }
         }
-
-        // Si encontramos el logo, convertirlo a base64
-        if (!empty($logo_path) && file_exists($logo_path)) {
-            $logo_empresa = $logo_path;
-
-            // Obtener la extensión del archivo
-            $extension = strtolower(pathinfo($logo_path, PATHINFO_EXTENSION));
-
-            // Verificar que sea una imagen válida
-            $extensiones_validas = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
-            if (in_array($extension, $extensiones_validas)) {
-                // Leer el archivo y convertirlo a base64
-                $logo_data = base64_encode(file_get_contents($logo_path));
-                $logo_src_base64 = 'data:image/' . $extension . ';base64,' . $logo_data;
+        if ($logo_path) {
+            $ext = strtolower(pathinfo($logo_path, PATHINFO_EXTENSION));
+            if (in_array($ext, ['jpg','jpeg','png','gif','webp','bmp'], true)) {
+                $logo_empresa = $logo_path;
+                $logo_src_base64 = 'data:image/' . $ext . ';base64,' . base64_encode(file_get_contents($logo_path));
             }
         }
     }
 
-    // Construir condiciones WHERE dinámicamente
-    $where_conditions = "WHERE 1=1";
+    // WHERE dinámico
+    $where = ["1=1"];
     $params = [];
-    $types = "";
 
-    // Obtener parámetros de filtro
-    $search = isset($_GET['search']) ? $_GET['search'] : '';
-    $categoria_filtro = isset($_GET['categoria']) ? $_GET['categoria'] : '';
-    $proveedor_filtro = isset($_GET['proveedor']) ? $_GET['proveedor'] : '';
-    $sucursal_filtro = isset($_GET['sucursal']) ? $_GET['sucursal'] : '';
-    $show_inactive = isset($_GET['show_inactive']) ? true : false;
+    $search           = trim($_GET['search'] ?? '');
+    $categoria_filtro = $_GET['categoria'] ?? '';
+    $proveedor_filtro = $_GET['proveedor'] ?? '';
+    $sucursal_filtro  = $_GET['sucursal'] ?? '';
+    $show_inactive    = isset($_GET['show_inactive']);
 
-    // Aplicar filtros si existen
-    if (!empty($search)) {
-        $search_term = "%" . $search . "%";
-        $where_conditions .= " AND (p.codigo LIKE ? OR p.nombre LIKE ? OR p.marca LIKE ? OR p.descripcion LIKE ?)";
-        $params = array_merge($params, [$search_term, $search_term, $search_term, $search_term]);
-        $types .= "ssss";
+    if ($search !== '') {
+        $where[] = "(p.codigo LIKE ? OR p.nombre LIKE ? OR p.marca LIKE ? OR p.descripcion LIKE ?)";
+        $term = "%$search%";
+        array_push($params, $term, $term, $term, $term);
     }
+    if ($categoria_filtro !== '') { $where[] = "p.categoria_id = ?"; $params[] = $categoria_filtro; }
+    if ($proveedor_filtro !== '') { $where[] = "p.proveedor_id = ?"; $params[] = $proveedor_filtro; }
+    if ($sucursal_filtro !== '')  { $where[] = "ps.sucursal_id = ?"; $params[] = $sucursal_filtro; }
+    if (!$show_inactive)          { $where[] = "p.activo = 1"; }
 
-    if (!empty($categoria_filtro)) {
-        $where_conditions .= " AND p.categoria_id = ?";
-        $params[] = $categoria_filtro;
-        $types .= "i";
-    }
+    $where_sql = implode(' AND ', $where);
 
-    if (!empty($proveedor_filtro)) {
-        $where_conditions .= " AND p.proveedor_id = ?";
-        $params[] = $proveedor_filtro;
-        $types .= "i";
-    }
+    // Total registros
+    $stmt = $conn->prepare("
+        SELECT COUNT(DISTINCT p.id)
+        FROM productos p
+        LEFT JOIN producto_sucursal ps ON p.id = ps.producto_id
+        WHERE $where_sql
+    ");
+    $stmt->execute($params);
+    $total_registros = (int)$stmt->fetchColumn();
+    $stmt = null;
 
-    if (!empty($sucursal_filtro)) {
-        $where_conditions .= " AND ps.sucursal_id = ?";
-        $params[] = $sucursal_filtro;
-        $types .= "i";
-    }
-
-    if (!$show_inactive) {
-        $where_conditions .= " AND p.activo = 1";
-    }
-
-    // Obtener el total de registros para paginación
-    $sql_count = "SELECT COUNT(DISTINCT p.id) as total 
-                  FROM productos p 
-                  LEFT JOIN producto_sucursal ps ON p.id = ps.producto_id 
-                  $where_conditions";
-
-    if (!empty($params)) {
-        $stmt_count = $conn->prepare($sql_count);
-        $stmt_count->bind_param($types, ...$params);
-        $stmt_count->execute();
-        $result_count = $stmt_count->get_result();
-    } else {
-        $result_count = $conn->query($sql_count);
-    }
-
-    $total_registros = $result_count->fetch_assoc()['total'];
-    if (isset($stmt_count)) $stmt_count->close();
-
-    // Calcular total de páginas
-    $total_paginas = ceil($total_registros / $registros_por_pagina);
-    if ($pagina_actual > $total_paginas && $total_paginas > 0) {
+    $total_paginas = (int)ceil($total_registros / $registros_por_pagina);
+    if ($total_paginas > 0 && $pagina_actual > $total_paginas) {
         $pagina_actual = $total_paginas;
         $offset = ($pagina_actual - 1) * $registros_por_pagina;
     }
 
-    // Obtener productos con información de múltiples sucursales con LIMIT para paginación
-    $sql_productos = "
-    SELECT p.*, c.nombre as categoria_nombre, pr.nombre as proveedor_nombre,
-           p.tipo_producto, p.porcentaje_merma_danado, p.porcentaje_merma_deshidratacion,
-           p.aplicar_merma_venta, p.aplicar_merma_compra,
-           COALESCE(GROUP_CONCAT(DISTINCT ps.sucursal_id), '') as sucursales_ids,
-           COALESCE(GROUP_CONCAT(DISTINCT s.nombre SEPARATOR ', '), 'Sin sucursales') as sucursales_nombres,
-           COALESCE(SUM(ps.stock), 0) as stock_total,
-           COALESCE(MIN(ps.stock_minimo), 0) as stock_minimo_total
-    FROM productos p 
-    LEFT JOIN categorias c ON p.categoria_id = c.id 
-    LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
-    LEFT JOIN producto_sucursal ps ON p.id = ps.producto_id
-    LEFT JOIN sucursales s ON ps.sucursal_id = s.id
-    $where_conditions
-    GROUP BY p.id
-    ORDER BY p.fecha_creacion DESC, p.id DESC
-    LIMIT ? OFFSET ?
-";
-
-    // Agregar parámetros para LIMIT y OFFSET
-    $params_limit = array_merge($params, [$registros_por_pagina, $offset]);
-    $types_limit = $types . "ii";
-
-    $stmt = $conn->prepare($sql_productos);
-    if (!empty($params_limit)) {
-        $stmt->bind_param($types_limit, ...$params_limit);
-    }
-    $stmt->execute();
-    $result_productos = $stmt->get_result();
-    $productos = [];
-    while ($row = $result_productos->fetch_assoc()) {
-        $productos[] = $row;
-    }
-    $stmt->close();
-
-    // Obtener stock por sucursal para cada producto
-    $stock_por_sucursal = [];
-    $sql_stock = "SELECT producto_id, sucursal_id, stock, stock_minimo FROM producto_sucursal";
-    $result_stock = $conn->query($sql_stock);
-    while ($row = $result_stock->fetch_assoc()) {
-        $stock_por_sucursal[$row['producto_id']][$row['sucursal_id']] = [
-            'stock' => $row['stock'],
-            'stock_minimo' => $row['stock_minimo']
-        ];
-    }
-
-    // Obtener imágenes de productos
-    $imagenes_por_producto = [];
-    if (!empty($productos)) {
-        $productos_ids = array_column($productos, 'id');
-        $ids_str = implode(',', $productos_ids);
-        $sql_imagenes = "SELECT * FROM producto_imagenes WHERE producto_id IN ($ids_str) ORDER BY producto_id, es_principal DESC, orden ASC";
-        $result_imagenes = $conn->query($sql_imagenes);
-        while ($row_img = $result_imagenes->fetch_assoc()) {
-            $producto_id = $row_img['producto_id'];
-            if (!isset($imagenes_por_producto[$producto_id])) {
-                $imagenes_por_producto[$producto_id] = [];
-            }
-            $imagenes_por_producto[$producto_id][] = $row_img;
-        }
-    }
-
-    // Obtener precios de mayoreo para todos los productos
-    $precios_mayoreo_por_producto = [];
-    if (!empty($productos)) {
-        $productos_ids = array_column($productos, 'id');
-        $ids_str = implode(',', $productos_ids);
-        $sql_mayoreo = "SELECT * FROM producto_precios_mayoreo WHERE producto_id IN ($ids_str) AND activo = 1 ORDER BY cantidad_minima ASC";
-        $result_mayoreo = $conn->query($sql_mayoreo);
-        while ($row_mayoreo = $result_mayoreo->fetch_assoc()) {
-            $producto_id = $row_mayoreo['producto_id'];
-            if (!isset($precios_mayoreo_por_producto[$producto_id])) {
-                $precios_mayoreo_por_producto[$producto_id] = [];
-            }
-            $precios_mayoreo_por_producto[$producto_id][] = $row_mayoreo;
-        }
-    }
-
-    // Obtener categorías
-    $sql_categorias = "SELECT id, nombre FROM categorias WHERE activo = 1";
-    $result_categorias = $conn->query($sql_categorias);
-    $categorias = [];
-    while ($row = $result_categorias->fetch_assoc()) {
-        $categorias[] = $row;
-    }
-
-    // Obtener sucursales
-    $sql_sucursales = "SELECT id, nombre FROM sucursales WHERE activo = 1";
-    $result_sucursales = $conn->query($sql_sucursales);
-    $sucursales = [];
-    while ($row = $result_sucursales->fetch_assoc()) {
-        $sucursales[] = $row;
-    }
-
-    // Obtener proveedores
-    $sql_proveedores = "SELECT id, nombre FROM proveedores WHERE activo = 1";
-    $result_proveedores = $conn->query($sql_proveedores);
-    $proveedores = [];
-    while ($row = $result_proveedores->fetch_assoc()) {
-        $proveedores[] = $row;
-    }
-
-    // Estadísticas (sin paginación para mostrar totales)
-    $sql_stats = "
-        SELECT 
-            COUNT(*) as total_productos,
-            SUM(CASE WHEN p.stock > 0 THEN 1 ELSE 0 END) as con_stock,
-            SUM(CASE WHEN p.stock = 0 THEN 1 ELSE 0 END) as sin_stock,
-            SUM(CASE WHEN p.stock > 0 AND p.stock <= ? THEN 1 ELSE 0 END) as bajo_stock
+    // Productos de la página
+    $stmt = $conn->prepare("
+        SELECT p.*, c.nombre AS categoria_nombre, pr.nombre AS proveedor_nombre,
+               p.tipo_producto, p.porcentaje_merma_danado, p.porcentaje_merma_deshidratacion,
+               p.aplicar_merma_venta, p.aplicar_merma_compra,
+               COALESCE(GROUP_CONCAT(DISTINCT ps.sucursal_id), '') AS sucursales_ids,
+               COALESCE(GROUP_CONCAT(DISTINCT s.nombre SEPARATOR ', '), 'Sin sucursales') AS sucursales_nombres,
+               COALESCE(SUM(ps.stock), 0) AS stock_total,
+               COALESCE(MIN(ps.stock_minimo), 0) AS stock_minimo_total
         FROM productos p
-        WHERE p.activo = 1
-    ";
-    $stmt_stats = $conn->prepare($sql_stats);
-    $stmt_stats->bind_param("i", $stock_minimo_global);
-    $stmt_stats->execute();
-    $result_stats = $stmt_stats->get_result();
-    $stats = $result_stats->fetch_assoc();
-    $stmt_stats->close();
+        LEFT JOIN categorias c ON p.categoria_id = c.id
+        LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
+        LEFT JOIN producto_sucursal ps ON p.id = ps.producto_id
+        LEFT JOIN sucursales s ON ps.sucursal_id = s.id
+        WHERE $where_sql
+        GROUP BY p.id
+        ORDER BY p.fecha_creacion DESC, p.id DESC
+        LIMIT ? OFFSET ?
+    ");
+    $stmt->execute(array_merge($params, [$registros_por_pagina, $offset]));
+    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt = null;
 
-    $total_productos = $stats['total_productos'] ?? 0;
-    $con_stock = $stats['con_stock'] ?? 0;
-    $sin_stock = $stats['sin_stock'] ?? 0;
-    $bajo_stock = $stats['bajo_stock'] ?? 0;
+    // Datos relacionados solo de la página
+    $productos_ids = array_column($productos, 'id');
+    if (!empty($productos_ids)) {
+        $placeholders = implode(',', array_fill(0, count($productos_ids), '?'));
 
-    $sql_valor = "SELECT SUM(p.precio * ps.stock) as valor_total 
-              FROM productos p 
-              INNER JOIN producto_sucursal ps ON p.id = ps.producto_id 
-              WHERE p.activo = 1";
-    $result_valor = $conn->query($sql_valor);
-    $valor_row = $result_valor->fetch_assoc();
-    $valor_total_inventario = $valor_row['valor_total'] ?? 0;
+        $stmt = $conn->prepare("
+            SELECT producto_id, sucursal_id, stock, stock_minimo
+            FROM producto_sucursal
+            WHERE producto_id IN ($placeholders)
+        ");
+        $stmt->execute($productos_ids);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $stock_por_sucursal[$r['producto_id']][$r['sucursal_id']] = [
+                'stock'        => $r['stock'],
+                'stock_minimo' => $r['stock_minimo'],
+            ];
+        }
+        $stmt = null;
+
+        $stmt = $conn->prepare("
+            SELECT * FROM producto_imagenes
+            WHERE producto_id IN ($placeholders)
+            ORDER BY producto_id, es_principal DESC, orden ASC
+        ");
+        $stmt->execute($productos_ids);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $imagenes_por_producto[$r['producto_id']][] = $r;
+        }
+        $stmt = null;
+
+        $stmt = $conn->prepare("
+            SELECT * FROM producto_precios_mayoreo
+            WHERE producto_id IN ($placeholders) AND activo = 1
+            ORDER BY cantidad_minima ASC
+        ");
+        $stmt->execute($productos_ids);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $precios_mayoreo_por_producto[$r['producto_id']][] = $r;
+        }
+        $stmt = null;
+    }
+
+    // Catálogos
+    $categorias  = $conn->query("SELECT id, nombre FROM categorias WHERE activo = 1")->fetchAll(PDO::FETCH_ASSOC);
+    $sucursales  = $conn->query("SELECT id, nombre FROM sucursales WHERE activo = 1")->fetchAll(PDO::FETCH_ASSOC);
+    $proveedores = $conn->query("SELECT id, nombre FROM proveedores WHERE activo = 1")->fetchAll(PDO::FETCH_ASSOC);
+
+    // Estadísticas reales (basadas en producto_sucursal)
+    $stmt = $conn->prepare("
+        SELECT
+            COUNT(*)                                                                AS total_productos,
+            SUM(CASE WHEN total_stock > 0 THEN 1 ELSE 0 END)                        AS con_stock,
+            SUM(CASE WHEN total_stock = 0 THEN 1 ELSE 0 END)                        AS sin_stock,
+            SUM(CASE WHEN total_stock > 0 AND total_stock <= ? THEN 1 ELSE 0 END)   AS bajo_stock,
+            SUM(total_stock * precio)                                               AS valor_total
+        FROM (
+            SELECT p.id, p.precio,
+                   COALESCE(SUM(ps.stock), 0) AS total_stock
+            FROM productos p
+            LEFT JOIN producto_sucursal ps ON p.id = ps.producto_id
+            WHERE p.activo = 1
+            GROUP BY p.id, p.precio
+        ) AS agg
+    ");
+    $stmt->execute([$stock_minimo_global]);
+    $stats = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    $stmt = null;
+
+    $total_productos        = (int)($stats['total_productos'] ?? 0);
+    $con_stock              = (int)($stats['con_stock'] ?? 0);
+    $sin_stock              = (int)($stats['sin_stock'] ?? 0);
+    $bajo_stock             = (int)($stats['bajo_stock'] ?? 0);
+    $valor_total_inventario = (float)($stats['valor_total'] ?? 0);
+
 } catch (Exception $e) {
     die("Error: " . $e->getMessage());
 }
 
-// Función para crear producto en FacturaAPI
-function crearProductoFacturapi($productoData, $test_api_key_working, $organization_id)
+// =============================================
+// CRUD
+// =============================================
+function guardarPreciosMayoreo(PDO $conn, int $producto_id, array $precios_mayoreo): void
 {
-    // Si no hay organization_id, simplemente retornar éxito sin sincronización
-    if (empty($organization_id)) {
-        return [
-            'success' => true,
-            'facturapi_producto_id' => null,
-            'message' => 'Producto sin facturación (sin organización)'
-        ];
+    $conn->prepare("DELETE FROM producto_precios_mayoreo WHERE producto_id = ?")->execute([$producto_id]);
+    if (empty($precios_mayoreo)) return;
+
+    $stmt = $conn->prepare("
+        INSERT INTO producto_precios_mayoreo (producto_id, cantidad_minima, precio_especial, activo)
+        VALUES (?, ?, ?, 1)
+    ");
+    foreach ($precios_mayoreo as $p) {
+        if (!isset($p['cantidad'], $p['precio'])) continue;
+        if ($p['cantidad'] <= 0 || $p['precio'] <= 0) continue;
+        $stmt->execute([$producto_id, $p['cantidad'], $p['precio']]);
     }
-
-    // Si no hay API key, retornar éxito sin sincronización
-    if (empty($test_api_key_working)) {
-        return [
-            'success' => true,
-            'facturapi_producto_id' => null,
-            'message' => 'Producto sin facturación (sin API key)'
-        ];
-    }
-
-    try {
-        $facturapi = new Facturapi($test_api_key_working);
-
-        // Determinar el product_key según la unidad de medida
-        $product_key = '43211508'; // Por defecto para "pieza"
-        if (isset($productoData['unidad_medida'])) {
-            switch ($productoData['unidad_medida']) {
-                case 'kilo':
-                    $product_key = '43211601';
-                    break;
-                case 'litro':
-                    $product_key = '43211602';
-                    break;
-                default:
-                    $product_key = '43211508';
-            }
-        }
-
-        // Determinar unit_key según unidad de medida
-        $unit_key = 'H87';
-        $unit_name = 'Pieza';
-        if (isset($productoData['unidad_medida'])) {
-            switch ($productoData['unidad_medida']) {
-                case 'kilo':
-                    $unit_key = 'KG';
-                    $unit_name = 'Kilogramo';
-                    break;
-                case 'litro':
-                    $unit_key = 'LTR';
-                    $unit_name = 'Litro';
-                    break;
-            }
-        }
-
-        $facturapiData = [
-            'description' => $productoData['nombre'],
-            'product_key' => $product_key,
-            'unit_key' => $unit_key,
-            'unit_name' => $unit_name,
-            'price' => floatval($productoData['precio']),
-            'tax_included' => true,
-            'taxability' => '02',
-            'sku' => $productoData['codigo'],
-            'taxes' => [
-                [
-                    'type' => 'IVA',
-                    'rate' => 0.16,
-                    'withholding' => false,
-                    'factor' => 'Tasa'
-                ]
-            ]
-        ];
-
-        if (!empty($productoData['descripcion'])) {
-            $facturapiData['description'] .= ' - ' . $productoData['descripcion'];
-        }
-
-        $response = $facturapi->Products->create($facturapiData);
-
-        if (isset($response->id)) {
-            return [
-                'success' => true,
-                'facturapi_producto_id' => $response->id,
-                'message' => 'Producto creado exitosamente en FacturaAPI'
-            ];
-        } else {
-            return [
-                'success' => false,
-                'message' => 'Error al crear producto en FacturaAPI: No se recibió ID'
-            ];
-        }
-    } catch (Exception $e) {
-        return [
-            'success' => false,
-            'message' => 'Error FacturaAPI: ' . $e->getMessage()
-        ];
-    }
+    $stmt = null;
 }
 
-
-/**
- * Formatea el stock según la unidad de medida
- * @param float $stock Cantidad
- * @param string $unidad_medida Unidad (kg, litro, tonelada, pieza, unidad)
- * @return string Stock formateado
- */
-function formatearStockPorUnidad($stock, $unidad_medida)
+function recolectarDatosFormulario(array $post): array
 {
-    // Mostrar con 3 decimales solo si hay decimales significativos
-    if (is_numeric($stock)) {
-        // Verificar si tiene decimales
-        $es_decimal = ($stock - floor($stock)) > 0;
-
-        if ($es_decimal) {
-            // Mostrar con 3 decimales máximo, quitando ceros innecesarios
-            $stock_formateado = rtrim(rtrim(number_format($stock, 3, '.', ''), '0'), '.');
-        } else {
-            $stock_formateado = number_format($stock, 0, '.', '');
-        }
-    } else {
-        $stock_formateado = '0';
-    }
-
-    // Agregar sufijo según unidad
-    $sufijo = '';
-    switch ($unidad_medida) {
-        case 'kg':
-        case 'kilo':
-        case 'kilogramo':
-            $sufijo = ' kg';
-            break;
-        case 'litro':
-        case 'l':
-            $sufijo = ' L';
-            break;
-        case 'tonelada':
-        case 'ton':
-            $sufijo = ' ton';
-            break;
-        case 'pieza':
-            $sufijo = ' piezas';
-            break;
-        case 'unidad':
-            $sufijo = ' unidades';
-            break;
-        default:
-            $sufijo = '';
-    }
-
-    // Para unidad y pieza, usar singular si es 1
-    if (($unidad_medida == 'pieza' || $unidad_medida == 'unidad') && $stock == 1) {
-        $sufijo = rtrim($sufijo, 's');
-    }
-
-    return $stock_formateado . $sufijo;
+    return [
+        'codigo'        => trim($post['codigo'] ?? ''),
+        'nombre'        => trim($post['nombre'] ?? ''),
+        'descripcion'   => trim($post['descripcion'] ?? ''),
+        'marca'         => trim($post['marca'] ?? ''),
+        'subprecio'     => (float)($post['subprecio'] ?? 0),
+        'descuento'     => (float)($post['descuento'] ?? 0),
+        'costo'         => (float)($post['costo'] ?? 0),
+        'utilidad'      => (float)($post['utilidad'] ?? 0),
+        'precio'        => (float)($post['precio'] ?? 0),
+        'categoria_id'  => !empty($post['categoria_id']) ? (int)$post['categoria_id'] : null,
+        'proveedor_id'  => !empty($post['proveedor_id']) ? (int)$post['proveedor_id'] : null,
+        'unidad_medida' => trim($post['unidad_medida'] ?? 'pieza'),
+        'peso_kg'       => (float)($post['peso_kg'] ?? 1.0),
+        'permite_fracciones'              => isset($post['permite_fracciones']) ? 1 : 0,
+        'fecha_caducidad'                 => !empty($post['fecha_caducidad']) ? $post['fecha_caducidad'] : null,
+        'tipo_producto'                   => trim($post['tipo_producto'] ?? 'Estandar'),
+        'porcentaje_merma_danado'         => (float)($post['porcentaje_merma_danado'] ?? 0),
+        'porcentaje_merma_deshidratacion' => (float)($post['porcentaje_merma_deshidratacion'] ?? 0),
+        'aplicar_merma_venta'             => isset($post['aplicar_merma_venta']) ? 1 : 0,
+        'aplicar_merma_compra'            => isset($post['aplicar_merma_compra']) ? 1 : 0,
+        'precios_mayoreo'                 => json_decode($post['precios_mayoreo'] ?? '[]', true) ?: [],
+    ];
 }
 
-// Función para actualizar producto en FacturaAPI
-function actualizarProductoFacturapi($facturapi_producto_id, $productoData, $empresa_plan, $test_api_key_working, $timbres_disponibles, $organization_id)
+function normalizarPrecioDescuento(float $precio, float $subprecio, float $descuento): array
 {
-    // Verificar si tenemos organización configurada
-    if (empty($organization_id)) {
-        return [
-            'success' => true,
-            'facturapi_producto_id' => null,
-            'message' => 'Producto actualizado solo localmente (sin organización)'
-        ];
-    }
-
-    // Verificar si tenemos API key y timbres disponibles
-    if (empty($test_api_key_working) || $timbres_disponibles <= 0) {
-        return [
-            'success' => true,
-            'facturapi_producto_id' => null,
-            'message' => 'Producto actualizado solo localmente (sin timbres o API key)'
-        ];
-    }
-
-    try {
-        // Configuración - usar la API key de prueba
-        $facturapi = new Facturapi($test_api_key_working);
-
-        // Determinar el product_key según la unidad de medida
-        $product_key = '43211508'; // Por defecto para "pieza"
-        if (isset($productoData['unidad_medida'])) {
-            switch ($productoData['unidad_medida']) {
-                case 'kilo':
-                    $product_key = '43211601'; // Código para kilos
-                    break;
-                case 'litro':
-                    $product_key = '43211602'; // Código para litros
-                    break;
-                default:
-                    $product_key = '43211508'; // Código para piezas
-            }
-        }
-
-        // Determinar unit_key según unidad de medida
-        $unit_key = 'H87'; // Por defecto para "pieza"
-        $unit_name = 'Pieza';
-        if (isset($productoData['unidad_medida'])) {
-            switch ($productoData['unidad_medida']) {
-                case 'kilo':
-                    $unit_key = 'KG'; // Kilogramos
-                    $unit_name = 'Kilogramo';
-                    break;
-                case 'litro':
-                    $unit_key = 'LTR'; // Litros
-                    $unit_name = 'Litro';
-                    break;
-            }
-        }
-
-        // Preparar datos para FacturaAPI
-        $facturapiData = [
-            'description' => $productoData['nombre'],
-            'product_key' => $product_key,
-            'unit_key' => $unit_key,
-            'unit_name' => $unit_name,
-            'price' => floatval($productoData['precio']),
-            'tax_included' => true,
-            'taxability' => '02', // Sí objeto de impuesto
-            'sku' => $productoData['codigo'],
-            'taxes' => [
-                [
-                    'type' => 'IVA',
-                    'rate' => 0.16, // 16%
-                    'withholding' => false,
-                    'factor' => 'Tasa'
-                ]
-            ]
-        ];
-
-        // Agregar descripción si existe
-        if (!empty($productoData['descripcion'])) {
-            $facturapiData['description'] .= ' - ' . $productoData['descripcion'];
-        }
-
-        // SI NO TIENE ID DE FACTURAPI, CREAR NUEVO PRODUCTO
-        if (empty($facturapi_producto_id)) {
-            // Crear producto en FacturaAPI
-            $response = $facturapi->Products->create($facturapiData);
-
-            if (isset($response->id)) {
-                return [
-                    'success' => true,
-                    'facturapi_producto_id' => $response->id,
-                    'message' => 'Producto creado exitosamente en FacturaAPI'
-                ];
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'Error al crear producto en FacturaAPI: No se recibió ID'
-                ];
-            }
-        } else {
-            // ACTUALIZAR PRODUCTO EXISTENTE EN FACTURAPI
-            $response = $facturapi->Products->update($facturapi_producto_id, $facturapiData);
-
-            // Verificar respuesta
-            if (isset($response->id)) {
-                return [
-                    'success' => true,
-                    'facturapi_producto_id' => $response->id,
-                    'message' => 'Producto actualizado exitosamente en FacturaAPI'
-                ];
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'Error al actualizar producto en FacturaAPI'
-                ];
-            }
-        }
-    } catch (Exception $e) {
-        return [
-            'success' => false,
-            'message' => 'Error FacturaAPI: ' . $e->getMessage()
-        ];
-    }
-}
-
-// Procesar formularios
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (isset($_POST['accion'])) {
-        switch ($_POST['accion']) {
-            case 'crear':
-                crearProducto($conn, $sucursales, $stock_minimo_global, $empresa_plan, $test_api_key_working, $timbres_disponibles, $organization_id);
-                break;
-            case 'editar':
-                editarProducto($conn, $sucursales, $stock_minimo_global, $empresa_plan, $test_api_key_working, $timbres_disponibles, $organization_id);
-                break;
-            case 'cambiar_estado':
-                cambiarEstadoProducto($conn);
-                break;
-        }
-    }
-}
-
-// Función para guardar precios de mayoreo
-function guardarPreciosMayoreo($conn, $producto_id, $precios_mayoreo)
-{
-    // Eliminar precios existentes
-    $sql_delete = "DELETE FROM producto_precios_mayoreo WHERE producto_id = ?";
-    $stmt_delete = $conn->prepare($sql_delete);
-    $stmt_delete->bind_param("i", $producto_id);
-    $stmt_delete->execute();
-    $stmt_delete->close();
-
-    // Insertar nuevos precios
-    if (!empty($precios_mayoreo) && is_array($precios_mayoreo)) {
-        $sql_insert = "INSERT INTO producto_precios_mayoreo (producto_id, cantidad_minima, precio_especial, activo) VALUES (?, ?, ?, 1)";
-        $stmt_insert = $conn->prepare($sql_insert);
-
-        foreach ($precios_mayoreo as $precio) {
-            if (isset($precio['cantidad']) && isset($precio['precio']) && $precio['cantidad'] > 0 && $precio['precio'] > 0) {
-                $stmt_insert->bind_param("idd", $producto_id, $precio['cantidad'], $precio['precio']);
-                $stmt_insert->execute();
-            }
-        }
-        $stmt_insert->close();
-    }
-}
-
-// Función para crear producto
-function crearProducto($conn, $sucursales, $stock_minimo_global, $empresa_plan, $test_api_key_working, $timbres_disponibles, $organization_id)
-{
-    $codigo = trim($conn->real_escape_string($_POST['codigo']));
-    $nombre = trim($conn->real_escape_string($_POST['nombre']));
-    $descripcion = trim($conn->real_escape_string($_POST['descripcion']));
-    $marca = trim($conn->real_escape_string($_POST['marca']));
-    $subprecio = floatval($_POST['subprecio']);
-    $descuento = floatval($_POST['descuento']);
-    $costo = floatval($_POST['costo']);
-    $categoria_id = $_POST['categoria_id'] ? intval($_POST['categoria_id']) : NULL;
-    $proveedor_id = $_POST['proveedor_id'] ? intval($_POST['proveedor_id']) : NULL;
-    $unidad_medida = trim($conn->real_escape_string($_POST['unidad_medida'] ?? 'pieza'));
-    $peso_kg = floatval($_POST['peso_kg'] ?? 1.0);
-    $permite_fracciones = isset($_POST['permite_fracciones']) ? 1 : 0;
-    $fecha_caducidad = !empty($_POST['fecha_caducidad']) ? $conn->real_escape_string($_POST['fecha_caducidad']) : NULL;
-    $tipo_producto = trim($conn->real_escape_string($_POST['tipo_producto'] ?? 'Estandar'));
-    $porcentaje_merma_danado = floatval($_POST['porcentaje_merma_danado'] ?? 0);
-    $porcentaje_merma_deshidratacion = floatval($_POST['porcentaje_merma_deshidratacion'] ?? 0);
-    $aplicar_merma_venta = isset($_POST['aplicar_merma_venta']) ? 1 : 0;
-    $aplicar_merma_compra = isset($_POST['aplicar_merma_compra']) ? 1 : 0;
-    $utilidad = floatval($_POST['utilidad'] ?? 0);
-
-    // Obtener precios de mayoreo del POST
-    $precios_mayoreo = [];
-    if (isset($_POST['precios_mayoreo'])) { 
-        $precios_mayoreo = json_decode($_POST['precios_mayoreo'], true);
-        if (!is_array($precios_mayoreo)) {
-            $precios_mayoreo = [];
-        }
-    }
-
-    // Calcular precio final
-    $precio = floatval($_POST['precio']);
     if ($precio <= 0) {
         $precio = $subprecio;
-        if ($descuento > 0) {
-            $precio = $subprecio - ($subprecio * ($descuento / 100));
-        }
+        if ($descuento > 0) $precio = $subprecio - ($subprecio * ($descuento / 100));
     }
-
-    // Asegurar coherencia entre precio y descuento
     if ($subprecio > 0 && $precio > 0) {
-        $descuento_calculado = (($subprecio - $precio) / $subprecio) * 100;
-        if ($descuento_calculado >= 0 && $descuento_calculado <= 100) {
-            $descuento = $descuento_calculado;
-        }
+        $calc = (($subprecio - $precio) / $subprecio) * 100;
+        if ($calc >= 0 && $calc <= 100) $descuento = $calc;
     }
+    return [$precio, $descuento];
+}
 
-    // Obtener sucursales seleccionadas
-    $sucursales_seleccionadas = isset($_POST['sucursales']) ? $_POST['sucursales'] : [];
+function calcularStockTotal(array $sucursales_seleccionadas, array $post): float
+{
+    $total = 0;
+    foreach ($sucursales_seleccionadas as $sid) {
+        $total += (float)($post['stock_' . $sid] ?? 0);
+    }
+    return $total;
+}
 
-    // Variable para almacenar el ID de FacturaAPI
-    $facturapi_producto_id = null;
+function crearProducto(PDO $conn, float $stock_minimo_global, ?string $test_api_key, ?string $organization_id, array $unidades_config): void
+{
+    $d = recolectarDatosFormulario($_POST);
+    [$d['precio'], $d['descuento']] = normalizarPrecioDescuento($d['precio'], $d['subprecio'], $d['descuento']);
+
+    $sucursales_seleccionadas = $_POST['sucursales'] ?? [];
+    $stock_total = calcularStockTotal($sucursales_seleccionadas, $_POST);
 
     try {
-        // Iniciar transacción
-        $conn->begin_transaction();
+        $conn->beginTransaction();
 
-        $stock_total = 0;
-        $stock_minimo_total = $stock_minimo_global;
+        $facturapi_result = sincronizarProductoFacturapi(
+            null,
+            ['nombre' => $d['nombre'], 'codigo' => $d['codigo'], 'precio' => $d['precio'],
+             'descripcion' => $d['descripcion'], 'unidad_medida' => $d['unidad_medida']],
+            $test_api_key,
+            $organization_id,
+            $unidades_config
+        );
+        $facturapi_id = $facturapi_result['facturapi_producto_id'] ?? null;
 
-        foreach ($sucursales_seleccionadas as $sucursal_id) {
-            $stock = floatval($_POST['stock_' . $sucursal_id]);
-            $stock_total += $stock;
+        $stmt = $conn->prepare("
+            INSERT INTO productos (
+                codigo, nombre, descripcion, marca, precio, subprecio, costo, descuento, utilidad,
+                categoria_id, proveedor_id, stock, stock_minimo, unidad_medida, peso_kg,
+                permite_fracciones, fecha_caducidad, facturapi_producto_id, tipo_producto,
+                porcentaje_merma_danado, porcentaje_merma_deshidratacion,
+                aplicar_merma_venta, aplicar_merma_compra
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ");
+        $stmt->execute([
+            $d['codigo'], $d['nombre'], $d['descripcion'], $d['marca'],
+            $d['precio'], $d['precio'], $d['costo'], $d['descuento'], $d['utilidad'],
+            $d['categoria_id'], $d['proveedor_id'], $stock_total, $stock_minimo_global,
+            $d['unidad_medida'], $d['peso_kg'], $d['permite_fracciones'], $d['fecha_caducidad'],
+            $facturapi_id, $d['tipo_producto'],
+            $d['porcentaje_merma_danado'], $d['porcentaje_merma_deshidratacion'],
+            $d['aplicar_merma_venta'], $d['aplicar_merma_compra'],
+        ]);
+        $producto_id = (int)$conn->lastInsertId();
+        $stmt = null;
+
+        if (!empty($d['precios_mayoreo'])) {
+            guardarPreciosMayoreo($conn, $producto_id, $d['precios_mayoreo']);
         }
 
-        // Primero, crear producto en FacturaAPI si hay organización configurada
-        $facturapi_result = null;
-
-        $productoData = [
-            'nombre' => $nombre,
-            'codigo' => $codigo,
-            'precio' => $precio,
-            'descripcion' => $descripcion,
-            'unidad_medida' => $unidad_medida
-        ];
-
-        // Pasar el organization_id a la función
-        $facturapi_result = crearProductoFacturapi($productoData, $test_api_key_working, $organization_id);
-
-        // Si se creó exitosamente en FacturaAPI, obtener el ID
-        if ($facturapi_result['success'] && isset($facturapi_result['facturapi_producto_id'])) {
-            $facturapi_producto_id = $facturapi_result['facturapi_producto_id'];
-        }
-
-        // Insertar producto
-       $sql = "INSERT INTO productos (codigo, nombre, descripcion, marca, precio, subprecio, costo, descuento, utilidad, categoria_id, proveedor_id, stock, stock_minimo, unidad_medida, peso_kg, permite_fracciones, fecha_caducidad, facturapi_producto_id, tipo_producto, porcentaje_merma_danado, porcentaje_merma_deshidratacion, aplicar_merma_venta, aplicar_merma_compra) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-
-        if (!$stmt) {
-            throw new Exception("Error en preparación: " . $conn->error);
-        }
-
-        $stmt->bind_param(
-    "ssssdddddiiddssssssddii",
-    $codigo, $nombre, $descripcion, $marca, $precio, $precio, $costo, $descuento, $utilidad, $categoria_id,
-    $proveedor_id, $stock_total, $stock_minimo_total, $unidad_medida, $peso_kg, $permite_fracciones,
-    $fecha_caducidad, $facturapi_producto_id, $tipo_producto, $porcentaje_merma_danado,
-    $porcentaje_merma_deshidratacion, $aplicar_merma_venta, $aplicar_merma_compra
-);
-
-        if (!$stmt->execute()) {
-            throw new Exception("Error al crear producto: " . $stmt->error);
-        }
-
-        $producto_id = $conn->insert_id;
-        $stmt->close();
-
-        // Guardar precios de mayoreo
-        if (!empty($precios_mayoreo)) {
-            guardarPreciosMayoreo($conn, $producto_id, $precios_mayoreo);
-        }
-
-        // PROCESAR MÚLTIPLES IMÁGENES
         $imagenes_subidas = [];
-        if (isset($_FILES['imagenes']) && !empty($_FILES['imagenes']['tmp_name'][0])) {
+        if (!empty($_FILES['imagenes']['tmp_name'][0])) {
             $imagenes_subidas = subirMultiplesImagenes($_FILES, $producto_id);
-
             if (!empty($imagenes_subidas)) {
-                $principal_index = isset($_POST['imagen_principal']) ? intval($_POST['imagen_principal']) : 0;
-                if ($principal_index >= count($imagenes_subidas)) {
-                    $principal_index = 0;
-                }
-                guardarImagenesProducto($conn, $producto_id, $imagenes_subidas, $principal_index);
-                error_log("Se subieron " . count($imagenes_subidas) . " imágenes para el producto ID: " . $producto_id);
+                $principal = min((int)($_POST['imagen_principal'] ?? 0), count($imagenes_subidas) - 1);
+                guardarImagenesProducto($conn, $producto_id, $imagenes_subidas, $principal);
             }
-        } else {
-            error_log("No se recibieron imágenes para el producto ID: " . $producto_id);
         }
 
-        // Insertar relaciones con sucursales
-        foreach ($sucursales_seleccionadas as $sucursal_id) {
-            $stock = floatval($_POST['stock_' . $sucursal_id]);
-
-            $sql_sucursal = "INSERT INTO producto_sucursal (producto_id, sucursal_id, stock, stock_minimo) 
-                            VALUES (?, ?, ?, ?)";
-            $stmt_sucursal = $conn->prepare($sql_sucursal);
-            $stmt_sucursal->bind_param("iidd", $producto_id, $sucursal_id, $stock, $stock_minimo_global);
-
-            if (!$stmt_sucursal->execute()) {
-                throw new Exception("Error al asignar sucursal: " . $stmt_sucursal->error);
+        if (!empty($sucursales_seleccionadas)) {
+            $stmt = $conn->prepare("
+                INSERT INTO producto_sucursal (producto_id, sucursal_id, stock, stock_minimo)
+                VALUES (?, ?, ?, ?)
+            ");
+            foreach ($sucursales_seleccionadas as $sid) {
+                $stmt->execute([$producto_id, $sid, (float)($_POST['stock_' . $sid] ?? 0), $stock_minimo_global]);
             }
-            $stmt_sucursal->close();
+            $stmt = null;
         }
 
         $conn->commit();
 
-        // Preparar mensaje
-        $mensaje = "Producto creado exitosamente";
-        if (!empty($imagenes_subidas)) {
-            $mensaje .= " con " . count($imagenes_subidas) . " imagen(es)";
-        }
-        if (!empty($precios_mayoreo)) {
-            $mensaje .= " con " . count($precios_mayoreo) . " regla(s) de mayoreo";
-        }
+        $_SESSION['mensaje'] = "Producto creado exitosamente"
+            . (!empty($imagenes_subidas) ? " con " . count($imagenes_subidas) . " imagen(es)" : "")
+            . (!empty($d['precios_mayoreo']) ? " con " . count($d['precios_mayoreo']) . " regla(s) de mayoreo" : "");
+        $_SESSION['tipo_mensaje'] = "success";
 
-        if (!empty($organization_id)) {
-            if (isset($facturapi_result) && $facturapi_result['success'] && isset($facturapi_result['facturapi_producto_id'])) {
-                $mensaje .= " y sincronizado con FacturaAPI (ID: " . $facturapi_producto_id . ")";
-            } elseif (isset($facturapi_result) && !$facturapi_result['success']) {
-                $mensaje .= " (Error en FacturaAPI: " . $facturapi_result['message'] . ")";
-                $_SESSION['tipo_mensaje'] = "warning";
-            }
+        if (!empty($organization_id) && isset($facturapi_result['success']) && !$facturapi_result['success']) {
+            $_SESSION['mensaje'] .= " (FacturaAPI: " . $facturapi_result['message'] . ")";
+            $_SESSION['tipo_mensaje'] = "warning";
         }
-
-        $_SESSION['mensaje'] = $mensaje;
-        $_SESSION['tipo_mensaje'] = $_SESSION['tipo_mensaje'] ?? "success";
     } catch (Exception $e) {
-        $conn->rollback();
+        $conn->rollBack();
         $_SESSION['mensaje'] = $e->getMessage();
         $_SESSION['tipo_mensaje'] = "danger";
     }
@@ -1315,315 +742,123 @@ function crearProducto($conn, $sucursales, $stock_minimo_global, $empresa_plan, 
     exit();
 }
 
-// Función para editar producto
-function editarProducto($conn, $sucursales, $stock_minimo_global, $empresa_plan, $test_api_key_working, $timbres_disponibles, $organization_id)
+function editarProducto(PDO $conn, float $stock_minimo_global, int $timbres_disponibles, ?string $test_api_key, ?string $organization_id, array $unidades_config): void
 {
-    $id = intval($_POST['id']);
-    $codigo = trim($conn->real_escape_string($_POST['codigo']));
-    $nombre = trim($conn->real_escape_string($_POST['nombre']));
-    $descripcion = trim($conn->real_escape_string($_POST['descripcion']));
-    $marca = trim($conn->real_escape_string($_POST['marca']));
-    $subprecio = floatval($_POST['subprecio']);
-    $descuento = floatval($_POST['descuento']);
-    $costo = floatval($_POST['costo']);
-    $categoria_id = $_POST['categoria_id'] ? intval($_POST['categoria_id']) : NULL;
-    $proveedor_id = $_POST['proveedor_id'] ? intval($_POST['proveedor_id']) : NULL;
-    $unidad_medida = trim($conn->real_escape_string($_POST['unidad_medida'] ?? 'pieza'));
-    $peso_kg = floatval($_POST['peso_kg'] ?? 1.0);
-    $permite_fracciones = isset($_POST['permite_fracciones']) ? 1 : 0;
-    $fecha_caducidad = !empty($_POST['fecha_caducidad']) ? $conn->real_escape_string($_POST['fecha_caducidad']) : NULL;
-    $tipo_producto = trim($conn->real_escape_string($_POST['tipo_producto'] ?? 'Estandar'));
-    $porcentaje_merma_danado = floatval($_POST['porcentaje_merma_danado'] ?? 0);
-    $porcentaje_merma_deshidratacion = floatval($_POST['porcentaje_merma_deshidratacion'] ?? 0);
-    $aplicar_merma_venta = isset($_POST['aplicar_merma_venta']) ? 1 : 0;
-    $aplicar_merma_compra = isset($_POST['aplicar_merma_compra']) ? 1 : 0;
-    $utilidad = floatval($_POST['utilidad'] ?? 0);
+    $id = (int)($_POST['id'] ?? 0);
+    if ($id <= 0) { header('Location: productos.php'); exit(); }
 
-    // Obtener precios de mayoreo del POST
-    $precios_mayoreo = [];
-    if (isset($_POST['precios_mayoreo'])) {
-        $precios_mayoreo = json_decode($_POST['precios_mayoreo'], true);
-        if (!is_array($precios_mayoreo)) {
-            $precios_mayoreo = [];
-        }
-    }
+    $d = recolectarDatosFormulario($_POST);
+    [$d['precio'], $d['descuento']] = normalizarPrecioDescuento($d['precio'], $d['subprecio'], $d['descuento']);
 
-    // Calcular precio final
-    $precio = floatval($_POST['precio']);
-
-    // Asegurar coherencia entre precio y descuento
-    if ($subprecio > 0 && $precio > 0) {
-        $descuento_calculado = (($subprecio - $precio) / $subprecio) * 100;
-        if ($descuento_calculado >= 0 && $descuento_calculado <= 100) {
-            $descuento = $descuento_calculado;
-        }
-    }
-
-    // Obtener sucursales seleccionadas
-    $sucursales_seleccionadas = isset($_POST['sucursales']) ? $_POST['sucursales'] : [];
+    $sucursales_seleccionadas = $_POST['sucursales'] ?? [];
+    $stock_total = calcularStockTotal($sucursales_seleccionadas, $_POST);
 
     try {
-        // Iniciar transacción
-        $conn->begin_transaction();
+        $conn->beginTransaction();
 
-        // Obtener facturapi_producto_id actual si existe
-        $sql_facturapi_actual = "SELECT facturapi_producto_id FROM productos WHERE id = ?";
-        $stmt_facturapi = $conn->prepare($sql_facturapi_actual);
-        $stmt_facturapi->bind_param("i", $id);
-        $stmt_facturapi->execute();
-        $result_facturapi = $stmt_facturapi->get_result();
-        $datos_actuales = $result_facturapi->fetch_assoc();
-        $facturapi_producto_id_actual = $datos_actuales['facturapi_producto_id'] ?? null;
-        $stmt_facturapi->close();
+        $stmt = $conn->prepare("SELECT facturapi_producto_id FROM productos WHERE id = ?");
+        $stmt->execute([$id]);
+        $facturapi_id_actual = $stmt->fetchColumn() ?: null;
+        $stmt = null;
 
-        // Calcular stock total
-        $stock_total = 0;
-        foreach ($sucursales_seleccionadas as $sucursal_id) {
-            $stock = floatval($_POST['stock_' . $sucursal_id]);
-            $stock_total += $stock;
-        }
-
-        // Preparar datos para FacturaAPI
-        $productoData = [
-            'nombre' => $nombre,
-            'codigo' => $codigo,
-            'precio' => $precio,
-            'descripcion' => $descripcion,
-            'unidad_medida' => $unidad_medida
-        ];
-
-        // Procesar FacturaAPI - solo si hay organización configurada
+        $nuevo_facturapi_id = $facturapi_id_actual;
         $facturapi_result = null;
-        $nuevo_facturapi_id = $facturapi_producto_id_actual;
 
-        // Solo procesar FacturaAPI si tenemos organización configurada
-        if (!empty($organization_id) && !empty($test_api_key_working) && $timbres_disponibles > 0) {
-            $facturapi_result = actualizarProductoFacturapi(
-                $facturapi_producto_id_actual,
-                $productoData,
-                $empresa_plan,
-                $test_api_key_working,
-                $timbres_disponibles,
-                $organization_id
+        if (!empty($organization_id) && !empty($test_api_key) && $timbres_disponibles > 0) {
+            $facturapi_result = sincronizarProductoFacturapi(
+                $facturapi_id_actual,
+                ['nombre' => $d['nombre'], 'codigo' => $d['codigo'], 'precio' => $d['precio'],
+                 'descripcion' => $d['descripcion'], 'unidad_medida' => $d['unidad_medida']],
+                $test_api_key,
+                $organization_id,
+                $unidades_config
             );
-
-            // Si la operación fue exitosa y devolvió un nuevo ID
-            if ($facturapi_result['success'] && isset($facturapi_result['facturapi_producto_id'])) {
+            if ($facturapi_result['success'] && !empty($facturapi_result['facturapi_producto_id'])) {
                 $nuevo_facturapi_id = $facturapi_result['facturapi_producto_id'];
             }
         }
 
-        // Actualizar producto en base de datos local
-        $sql = "UPDATE productos SET 
-                codigo = ?, 
-                nombre = ?, 
-                descripcion = ?, 
-                marca = ?, 
-                precio = ?, 
-                subprecio = ?, 
-                costo = ?, 
-                descuento = ?, 
-                stock = ?, 
-                stock_minimo = ?, 
-                categoria_id = ?, 
-                proveedor_id = ?, 
-                unidad_medida = ?, 
-                peso_kg = ?, 
-                permite_fracciones = ?, 
-                fecha_caducidad = ?, 
-                facturapi_producto_id = ?,
-                tipo_producto = ?,
-                porcentaje_merma_danado = ?,
-                porcentaje_merma_deshidratacion = ?,
-                aplicar_merma_venta = ?,
-                aplicar_merma_compra = ?,
-                utilidad = ? 
-                WHERE id = ?";
+        $stmt = $conn->prepare("
+            UPDATE productos SET
+                codigo = ?, nombre = ?, descripcion = ?, marca = ?, precio = ?, subprecio = ?,
+                costo = ?, descuento = ?, stock = ?, stock_minimo = ?, categoria_id = ?, proveedor_id = ?,
+                unidad_medida = ?, peso_kg = ?, permite_fracciones = ?, fecha_caducidad = ?,
+                facturapi_producto_id = ?, tipo_producto = ?, porcentaje_merma_danado = ?,
+                porcentaje_merma_deshidratacion = ?, aplicar_merma_venta = ?, aplicar_merma_compra = ?,
+                utilidad = ?
+            WHERE id = ?
+        ");
+        $stmt->execute([
+            $d['codigo'], $d['nombre'], $d['descripcion'], $d['marca'],
+            $d['precio'], $d['precio'], $d['costo'], $d['descuento'],
+            $stock_total, $stock_minimo_global, $d['categoria_id'], $d['proveedor_id'],
+            $d['unidad_medida'], $d['peso_kg'], $d['permite_fracciones'], $d['fecha_caducidad'],
+            $nuevo_facturapi_id, $d['tipo_producto'],
+            $d['porcentaje_merma_danado'], $d['porcentaje_merma_deshidratacion'],
+            $d['aplicar_merma_venta'], $d['aplicar_merma_compra'], $d['utilidad'], $id,
+        ]);
+        $stmt = null;
 
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) {
-            throw new Exception("Error en preparación: " . $conn->error);
-        }
+        guardarPreciosMayoreo($conn, $id, $d['precios_mayoreo']);
 
-       $stmt->bind_param(
-    "ssssddddiiddsdiissssddii",
-    
-    $codigo,                    
-    $nombre,                  
-    $descripcion,              
-    $marca,                    
-    $precio,                   
-    $precio,               
-    $costo,                   
-    $descuento,                
-    $stock_total,              
-    $stock_minimo_global,      
-    $categoria_id,              
-    $proveedor_id,             
-    $unidad_medida,             
-    $peso_kg,                  
-    $permite_fracciones,       
-    $fecha_caducidad,          
-    $nuevo_facturapi_id,        
-    $tipo_producto,             
-    $porcentaje_merma_danado,   
-    $porcentaje_merma_deshidratacion, 
-    $aplicar_merma_venta,       
-    $aplicar_merma_compra,      
-    $utilidad,                 
-    $id                        
-);
-
-        if (!$stmt->execute()) {
-            throw new Exception("Error al actualizar producto: " . $stmt->error);
-        }
-        $stmt->close();
-
-        // Guardar precios de mayoreo
-        guardarPreciosMayoreo($conn, $id, $precios_mayoreo);
-
-        // PROCESAR IMÁGENES MÚLTIPLES
-
-        $imagenes_para_guardar = [];
-
-        // 1. Procesar imágenes existentes que NO se eliminaron
-        if (isset($_POST['imagenes_existentes']) && !empty($_POST['imagenes_existentes'])) {
-            $imagenes_existentes = json_decode($_POST['imagenes_existentes'], true);
-            if (is_array($imagenes_existentes) && count($imagenes_existentes) > 0) {
-                // Verificar que cada imagen existe físicamente
-                foreach ($imagenes_existentes as $img) {
-                    // Buscar la ruta real de la imagen
-                    $ruta_img = isset($img['ruta_imagen']) ? $img['ruta_imagen'] : '';
-
-                    if (!empty($ruta_img)) {
-                        // Verificar si la imagen existe en el servidor
-                        $ruta_fisica = $_SERVER['DOCUMENT_ROOT'] . $ruta_img;
-                        $ruta_fisica_alternativa = dirname(__FILE__) . '/' . $ruta_img;
-                        $ruta_fisica_alternativa2 = dirname(__FILE__) . '/../' . $ruta_img;
-
-                        if (file_exists($ruta_fisica) || file_exists($ruta_fisica_alternativa) || file_exists($ruta_fisica_alternativa2)) {
-                            $imagenes_para_guardar[] = $ruta_img;
-                            error_log("✓ IMAGEN MANTENIDA: " . $ruta_img);
-                        } else {
-                            error_log("⚠ ADVERTENCIA: Imagen no encontrada en servidor: " . $ruta_img);
-                            // Aún así la mantenemos en BD (podría ser ruta relativa)
-                            $imagenes_para_guardar[] = $ruta_img;
-                        }
-                    }
-                }
+        // Imágenes
+        $imagenes_finales = [];
+        if (!empty($_POST['imagenes_existentes'])) {
+            $existentes = json_decode($_POST['imagenes_existentes'], true) ?: [];
+            foreach ($existentes as $img) {
+                if (!empty($img['ruta_imagen'])) $imagenes_finales[] = $img['ruta_imagen'];
             }
         } else {
-            // Si no hay imagenes_existentes en el POST, significa que el usuario no modificó las imágenes
-            // Así que debemos obtener las imágenes actuales de la base de datos
-            error_log("No se recibió imagenes_existentes, cargando desde BD para producto ID: " . $id);
-            $imagenes_bd = obtenerImagenesProducto($conn, $id);
-            if (!empty($imagenes_bd)) {
-                foreach ($imagenes_bd as $img) {
-                    $imagenes_para_guardar[] = $img['ruta_imagen'];
-                    error_log("✓ IMAGEN CARGADA DESDE BD: " . $img['ruta_imagen']);
-                }
+            foreach (obtenerImagenesProducto($conn, $id) as $img) {
+                $imagenes_finales[] = $img['ruta_imagen'];
             }
         }
 
-        // 2. Procesar nuevas imágenes subidas
         $nuevas_imagenes = [];
-        if (isset($_FILES['imagenes']) && !empty($_FILES['imagenes']['tmp_name'][0])) {
-            // Verificar que no se exceda el límite total
-            $total_imagenes_despues = count($imagenes_para_guardar) + count($_FILES['imagenes']['tmp_name']);
-            if ($total_imagenes_despues <= 5) {
-                $nuevas_imagenes = subirMultiplesImagenes($_FILES, $id);
-                $imagenes_para_guardar = array_merge($imagenes_para_guardar, $nuevas_imagenes);
-                error_log("Se agregaron " . count($nuevas_imagenes) . " nuevas imágenes");
-            } else {
-                error_log("ERROR: Excede el límite de 5 imágenes. Actuales: " . count($imagenes_para_guardar) . ", Nuevas: " . count($_FILES['imagenes']['tmp_name']));
-                throw new Exception("No se pueden agregar más de 5 imágenes por producto");
+        if (!empty($_FILES['imagenes']['tmp_name'][0])) {
+            $total_despues = count($imagenes_finales) + count($_FILES['imagenes']['tmp_name']);
+            if ($total_despues > MAX_IMAGENES_PRODUCTO) {
+                throw new Exception("No se pueden agregar más de " . MAX_IMAGENES_PRODUCTO . " imágenes por producto");
             }
+            $nuevas_imagenes = subirMultiplesImagenes($_FILES, $id);
+            $imagenes_finales = array_merge($imagenes_finales, $nuevas_imagenes);
         }
 
-        // 3. Guardar todas las imágenes en la base de datos
-        if (!empty($imagenes_para_guardar)) {
-            $principal_index = isset($_POST['imagen_principal']) ? intval($_POST['imagen_principal']) : 0;
-
-            // Asegurar que el índice principal sea válido
-            if ($principal_index < 0 || $principal_index >= count($imagenes_para_guardar)) {
-                $principal_index = 0;
-            }
-
-            // IMPORTANTE: Usar las rutas de imagen, no los IDs
-            // Necesitamos reconstruir el array para guardarImagenesProducto
-            $imagenes_con_rutas = [];
-            foreach ($imagenes_para_guardar as $ruta) {
-                $imagenes_con_rutas[] = ['ruta_imagen' => $ruta];
-            }
-
-            guardarImagenesProducto($conn, $id, $imagenes_para_guardar, $principal_index);
-            error_log("IMÁGENES GUARDADAS EN BD: " . count($imagenes_para_guardar) . " imágenes, Principal índice: " . $principal_index);
+        if (!empty($imagenes_finales)) {
+            $principal = (int)($_POST['imagen_principal'] ?? 0);
+            if ($principal < 0 || $principal >= count($imagenes_finales)) $principal = 0;
+            guardarImagenesProducto($conn, $id, $imagenes_finales, $principal);
         } else {
-            // Si no hay imágenes, eliminar todas las existentes
-            error_log("No hay imágenes para el producto ID: " . $id . ", eliminando todas");
-            eliminarImagenesProducto($conn, $id);
+            $conn->prepare("DELETE FROM producto_imagenes WHERE producto_id = ?")->execute([$id]);
         }
 
-        // Eliminar relaciones existentes con sucursales
-        $sql_delete = "DELETE FROM producto_sucursal WHERE producto_id = ?";
-        $stmt_delete = $conn->prepare($sql_delete);
-        $stmt_delete->bind_param("i", $id);
-        if (!$stmt_delete->execute()) {
-            throw new Exception("Error al eliminar relaciones de sucursales: " . $stmt_delete->error);
-        }
-        $stmt_delete->close();
-
-        // Insertar nuevas relaciones con sucursales
-        foreach ($sucursales_seleccionadas as $sucursal_id) {
-            $stock = floatval($_POST['stock_' . $sucursal_id]);
-
-            $sql_sucursal = "INSERT INTO producto_sucursal (producto_id, sucursal_id, stock, stock_minimo) 
-                            VALUES (?, ?, ?, ?)";
-            $stmt_sucursal = $conn->prepare($sql_sucursal);
-            if (!$stmt_sucursal) {
-                throw new Exception("Error al preparar inserción de sucursal: " . $conn->error);
+        // Sucursales
+        $conn->prepare("DELETE FROM producto_sucursal WHERE producto_id = ?")->execute([$id]);
+        if (!empty($sucursales_seleccionadas)) {
+            $stmt = $conn->prepare("
+                INSERT INTO producto_sucursal (producto_id, sucursal_id, stock, stock_minimo)
+                VALUES (?, ?, ?, ?)
+            ");
+            foreach ($sucursales_seleccionadas as $sid) {
+                $stmt->execute([$id, $sid, (float)($_POST['stock_' . $sid] ?? 0), $stock_minimo_global]);
             }
-
-            $stmt_sucursal->bind_param("iidd", $id, $sucursal_id, $stock, $stock_minimo_global);
-
-            if (!$stmt_sucursal->execute()) {
-                throw new Exception("Error al asignar sucursal: " . $stmt_sucursal->error);
-            }
-            $stmt_sucursal->close();
+            $stmt = null;
         }
 
-        // Commit de la transacción
         $conn->commit();
 
-        // Preparar mensaje
-        $mensaje = "Producto actualizado exitosamente";
-        if (!empty($nuevas_imagenes)) {
-            $mensaje .= " con " . count($nuevas_imagenes) . " nueva(s) imagen(es)";
-        }
-        if (!empty($precios_mayoreo)) {
-            $mensaje .= " con " . count($precios_mayoreo) . " regla(s) de mayoreo";
-        }
+        $_SESSION['mensaje'] = "Producto actualizado exitosamente"
+            . (!empty($nuevas_imagenes) ? " con " . count($nuevas_imagenes) . " nueva(s) imagen(es)" : "")
+            . (!empty($d['precios_mayoreo']) ? " con " . count($d['precios_mayoreo']) . " regla(s) de mayoreo" : "");
+        $_SESSION['tipo_mensaje'] = "success";
 
-        // Solo agregar información de FacturaAPI si hay organización configurada
-        if (!empty($organization_id)) {
-            if (isset($facturapi_result) && $facturapi_result['success']) {
-                if (empty($facturapi_producto_id_actual)) {
-                    $mensaje .= " y se creó en FacturaAPI (ID: " . $nuevo_facturapi_id . ")";
-                } else {
-                    $mensaje .= " y se actualizó en FacturaAPI";
-                }
-            } elseif (isset($facturapi_result) && !$facturapi_result['success']) {
-                $mensaje .= " (Error en FacturaAPI: " . $facturapi_result['message'] . ")";
-                $_SESSION['tipo_mensaje'] = "warning";
-            }
+        if (!empty($organization_id) && isset($facturapi_result['success']) && !$facturapi_result['success']) {
+            $_SESSION['mensaje'] .= " (FacturaAPI: " . $facturapi_result['message'] . ")";
+            $_SESSION['tipo_mensaje'] = "warning";
         }
-
-        $_SESSION['mensaje'] = $mensaje;
-        $_SESSION['tipo_mensaje'] = $_SESSION['tipo_mensaje'] ?? "success";
     } catch (Exception $e) {
-        // Rollback en caso de error
-        $conn->rollback();
-        error_log("Error en editarProducto: " . $e->getMessage());
+        $conn->rollBack();
+        error_log("editarProducto: " . $e->getMessage());
         $_SESSION['mensaje'] = "Error al actualizar producto: " . $e->getMessage();
         $_SESSION['tipo_mensaje'] = "danger";
     }
@@ -1632,52 +867,38 @@ function editarProducto($conn, $sucursales, $stock_minimo_global, $empresa_plan,
     exit();
 }
 
-function cambiarEstadoProducto($conn)
+function cambiarEstadoProducto(PDO $conn): void
 {
-    $id = intval($_POST['id']);
-    $activo = intval($_POST['activo']);
+    $id = (int)($_POST['id'] ?? 0);
+    $activo = (int)($_POST['activo'] ?? 0);
 
     try {
-        $sql = "UPDATE productos SET activo = ? WHERE id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ii", $activo, $id);
-
-        if ($stmt->execute()) {
-            $estado = $activo ? "activado" : "desactivado";
-            echo json_encode(['success' => true, 'message' => "Producto $estado exitosamente"]);
-        } else {
-            throw new Exception("Error al cambiar estado: " . $stmt->error);
-        }
-
-        $stmt->close();
+        $stmt = $conn->prepare("UPDATE productos SET activo = ? WHERE id = ?");
+        $stmt->execute([$activo, $id]);
+        echo json_encode(['success' => true, 'message' => "Producto " . ($activo ? "activado" : "desactivado") . " exitosamente"]);
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
     exit();
 }
 
-// Función para obtener stock por sucursal
-function getStockPorSucursal($conn, $producto_id)
-{
-    $stock_data = [];
-    $sql = "SELECT ps.sucursal_id, s.nombre as sucursal_nombre, ps.stock, ps.stock_minimo 
-            FROM producto_sucursal ps 
-            JOIN sucursales s ON ps.sucursal_id = s.id 
-            WHERE ps.producto_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $producto_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        $stock_data[$row['sucursal_id']] = $row;
+// =============================================
+// PROCESAR FORMULARIOS (POST)
+// =============================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
+    switch ($_POST['accion']) {
+        case 'crear':
+            crearProducto($conn, $stock_minimo_global, $test_api_key_working, $organization_id, $UNIDADES_CONFIG);
+            break;
+        case 'editar':
+            editarProducto($conn, $stock_minimo_global, $timbres_disponibles, $test_api_key_working, $organization_id, $UNIDADES_CONFIG);
+            break;
+        case 'cambiar_estado':
+            cambiarEstadoProducto($conn);
+            break;
     }
-    $stmt->close();
-
-    return $stock_data;
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 
@@ -1686,33 +907,25 @@ function getStockPorSucursal($conn, $producto_id)
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Productos - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
     <link rel="icon" href="images/favicon.ico" type="image/x-icon">
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SortableJS para ordenar imágenes -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <style>
-    /* Fuerza fondo sólido en el modal y sus partes críticas */
     .modal-dialog,
     .modal-content,
     .modal-body,
     .modal-header,
     .modal-footer {
-        background-color: #ffffff !important; /* Cambia a blanco sólido */
+        background-color: #ffffff !important;
     }
-
-    /* En modo oscuro, si lo tienes, ajusta */
     [data-theme="dark"] .modal-dialog,
     [data-theme="dark"] .modal-content,
     [data-theme="dark"] .modal-body,
     [data-theme="dark"] .modal-header,
     [data-theme="dark"] .modal-footer {
-        background-color: #1e1e1e !important; /* o el gris oscuro que uses */
+        background-color: #1e1e1e !important;
     }
-
-    /* Para pantallas pequeñas, cuando es fullscreen, refuerza */
     @media (max-width: 991.98px) {
         .modal-fullscreen-lg-down .modal-content {
             background-color: #ffffff !important;
@@ -1721,15 +934,12 @@ function getStockPorSucursal($conn, $producto_id)
             background-color: #1e1e1e !important;
         }
     }
-
-    /* Opcional: elimina cualquier sombra o borde que pueda interferir */
     .modal-content {
         border: none !important;
         box-shadow: none !important;
     }
-</style>
+    </style>
 
-    <!-- Tema unificado LibertyFin (estilo landing) -->
     <link rel="stylesheet" href="css/crm-theme.css">
 </head>
 
@@ -1737,19 +947,15 @@ function getStockPorSucursal($conn, $producto_id)
 
     <?php include 'includes/navbar.php'; ?>
 
-    <!-- Backdrop para móvil -->
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
             <?php include 'includes/sidebar.php'; ?>
 
-            <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4" id="mainContent">
                 <!-- Header -->
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 header-actions gap-3">
-                    <!-- Título con badge -->
                     <h2>
                         <i class="fas fa-boxes me-2"></i>
                         Gestión de Productos
@@ -1760,9 +966,7 @@ function getStockPorSucursal($conn, $producto_id)
                         <?php endif; ?>
                     </h2>
 
-                    <!-- Botones en fila para móvil con textos más cortos -->
                     <div class="d-flex flex-wrap gap-2 w-100 w-md-auto">
-                        <!-- Botón Nuevo Producto -->
                         <button class="btn btn-primary flex-grow-1 flex-md-grow-0" id="btnNuevoProducto"
                             <?php echo $limite_alcanzado ? 'disabled title="Ha alcanzado el límite de productos"' : ''; ?>>
                             <i class="fas fa-plus me-1 me-md-2"></i>
@@ -1770,7 +974,6 @@ function getStockPorSucursal($conn, $producto_id)
                             <span class="d-sm-none">Nuevo</span>
                         </button>
 
-                        <!-- Botón Importar -->
                         <button class="btn btn-success flex-grow-1 flex-md-grow-0" id="btnImportarProductos"
                             <?php echo $limite_alcanzado ? 'disabled title="Ha alcanzado el límite de productos"' : ''; ?>>
                             <i class="fas fa-file-import me-1 me-md-2"></i>
@@ -1778,14 +981,12 @@ function getStockPorSucursal($conn, $producto_id)
                             <span class="d-sm-none">Importar</span>
                         </button>
 
-                        <!-- Botón Reportes -->
                         <button class="btn btn-primary flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#reporteModal">
                             <i class="fas fa-chart-bar me-1 me-md-2"></i>
                             <span class="d-none d-sm-inline">Reportes</span>
                             <span class="d-sm-none">Reportes</span>
                         </button>
 
-                        <!-- Botón Plantilla -->
                         <a href="Documentos/plantilla_productos.xlsx" class="btn btn-outline-secondary flex-grow-1 flex-md-grow-0" download="plantilla_productos.xlsx">
                             <i class="fas fa-download me-1 me-md-2"></i>
                             <span class="d-none d-sm-inline">Descargar Plantilla</span>
@@ -1803,7 +1004,7 @@ function getStockPorSucursal($conn, $producto_id)
                     <?php unset($_SESSION['mensaje'], $_SESSION['tipo_mensaje']); ?>
                 <?php endif; ?>
 
-                <!-- Alerta de límite de productos -->
+                <!-- Alerta de límite -->
                 <?php if ($empresa_plan != 'premium' && $productos_disponibles <= 10 && $productos_disponibles > 0): ?>
                     <div class="alert alert-warning alert-dismissible fade show">
                         <i class="fas fa-exclamation-triangle me-2"></i>
@@ -1877,7 +1078,7 @@ function getStockPorSucursal($conn, $producto_id)
                     </div>
                 </div>
 
-                <!-- Barra de Búsqueda y Filtros -->
+                <!-- Barra de búsqueda y filtros -->
                 <div class="card mb-4">
                     <div class="card-body">
                         <div class="row align-items-center filtros-row">
@@ -1942,7 +1143,7 @@ function getStockPorSucursal($conn, $producto_id)
                     </div>
                 </div>
 
-                <!-- Tabla de Productos - Desktop -->
+                <!-- Tabla - Desktop -->
                 <div class="card producto-grid">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">Lista de Productos</h5>
@@ -2053,17 +1254,10 @@ function getStockPorSucursal($conn, $producto_id)
                                                     $unidad = $producto['unidad_medida'] ?? 'pieza';
                                                     $badge_class = '';
                                                     switch ($unidad) {
-                                                        case 'pieza':
-                                                            $badge_class = 'unidad-pieza';
-                                                            break;
-                                                        case 'kilo':
-                                                            $badge_class = 'unidad-kilo';
-                                                            break;
-                                                        case 'litro':
-                                                            $badge_class = 'unidad-litro';
-                                                            break;
-                                                        default:
-                                                            $badge_class = 'unidad-pieza';
+                                                        case 'pieza': $badge_class = 'unidad-pieza'; break;
+                                                        case 'kilo':  $badge_class = 'unidad-kilo';  break;
+                                                        case 'litro': $badge_class = 'unidad-litro'; break;
+                                                        default:      $badge_class = 'unidad-pieza';
                                                     }
                                                     ?>
                                                     <span class="badge unidad-medida-badge <?php echo $badge_class; ?>">
@@ -2095,9 +1289,7 @@ function getStockPorSucursal($conn, $producto_id)
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <?php
-                                                    $stock_formateado = formatearStockPorUnidad($producto['stock_total'], $producto['unidad_medida'] ?? 'pieza');
-                                                    ?>
+                                                    <?php $stock_formateado = formatearStockPorUnidad($producto['stock_total'], $producto['unidad_medida'] ?? 'pieza'); ?>
                                                     <?php if ($producto['stock_total'] <= 0): ?>
                                                         <span class="badge bg-danger badge-stock"><?php echo $stock_formateado; ?></span>
                                                     <?php elseif ($producto['stock_total'] <= $stock_minimo_global): ?>
@@ -2191,20 +1383,12 @@ function getStockPorSucursal($conn, $producto_id)
                                 <nav>
                                     <ul class="pagination mb-0">
                                         <li class="page-item <?php echo $pagina_actual == 1 ? 'disabled' : ''; ?>">
-                                            <a class="page-link" href="?<?php
-                                                                        $query_params = $_GET;
-                                                                        $query_params['pagina'] = 1;
-                                                                        echo http_build_query($query_params);
-                                                                        ?>" title="Primera página">
+                                            <a class="page-link" href="?<?php $query_params = $_GET; $query_params['pagina'] = 1; echo http_build_query($query_params); ?>" title="Primera página">
                                                 <i class="fas fa-angle-double-left"></i>
                                             </a>
                                         </li>
                                         <li class="page-item <?php echo $pagina_actual == 1 ? 'disabled' : ''; ?>">
-                                            <a class="page-link" href="?<?php
-                                                                        $query_params = $_GET;
-                                                                        $query_params['pagina'] = max(1, $pagina_actual - 1);
-                                                                        echo http_build_query($query_params);
-                                                                        ?>" title="Página anterior">
+                                            <a class="page-link" href="?<?php $query_params = $_GET; $query_params['pagina'] = max(1, $pagina_actual - 1); echo http_build_query($query_params); ?>" title="Página anterior">
                                                 <i class="fas fa-angle-left"></i>
                                             </a>
                                         </li>
@@ -2214,30 +1398,18 @@ function getStockPorSucursal($conn, $producto_id)
                                         for ($i = $inicio; $i <= $fin; $i++):
                                         ?>
                                             <li class="page-item <?php echo $i == $pagina_actual ? 'active' : ''; ?>">
-                                                <a class="page-link" href="?<?php
-                                                                            $query_params = $_GET;
-                                                                            $query_params['pagina'] = $i;
-                                                                            echo http_build_query($query_params);
-                                                                            ?>">
+                                                <a class="page-link" href="?<?php $query_params = $_GET; $query_params['pagina'] = $i; echo http_build_query($query_params); ?>">
                                                     <?php echo $i; ?>
                                                 </a>
                                             </li>
                                         <?php endfor; ?>
                                         <li class="page-item <?php echo $pagina_actual == $total_paginas ? 'disabled' : ''; ?>">
-                                            <a class="page-link" href="?<?php
-                                                                        $query_params = $_GET;
-                                                                        $query_params['pagina'] = min($total_paginas, $pagina_actual + 1);
-                                                                        echo http_build_query($query_params);
-                                                                        ?>" title="Página siguiente">
+                                            <a class="page-link" href="?<?php $query_params = $_GET; $query_params['pagina'] = min($total_paginas, $pagina_actual + 1); echo http_build_query($query_params); ?>" title="Página siguiente">
                                                 <i class="fas fa-angle-right"></i>
                                             </a>
                                         </li>
                                         <li class="page-item <?php echo $pagina_actual == $total_paginas ? 'disabled' : ''; ?>">
-                                            <a class="page-link" href="?<?php
-                                                                        $query_params = $_GET;
-                                                                        $query_params['pagina'] = $total_paginas;
-                                                                        echo http_build_query($query_params);
-                                                                        ?>" title="Última página">
+                                            <a class="page-link" href="?<?php $query_params = $_GET; $query_params['pagina'] = $total_paginas; echo http_build_query($query_params); ?>" title="Última página">
                                                 <i class="fas fa-angle-double-right"></i>
                                             </a>
                                         </li>
@@ -2254,7 +1426,7 @@ function getStockPorSucursal($conn, $producto_id)
                     </div>
                 </div>
 
-                <!-- Cards de Productos - Móvil -->
+                <!-- Cards Móvil -->
                 <div class="producto-cards" id="mobileProductsContainer">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0">Lista de Productos</h5>
@@ -2368,11 +1540,9 @@ function getStockPorSucursal($conn, $producto_id)
                                                                         echo htmlspecialchars(json_encode($stock_data));
                                                                         ?>'>
                                                     </button>
-
                                                 </div>
                                             </div>
                                         </div>
-
                                     </div>
                                 </div>
                                 <div class="producto-card-body">
@@ -2383,17 +1553,10 @@ function getStockPorSucursal($conn, $producto_id)
                                             $unidad = $producto['unidad_medida'] ?? 'pieza';
                                             $badge_class = '';
                                             switch ($unidad) {
-                                                case 'pieza':
-                                                    $badge_class = 'unidad-pieza';
-                                                    break;
-                                                case 'kilo':
-                                                    $badge_class = 'unidad-kilo';
-                                                    break;
-                                                case 'litro':
-                                                    $badge_class = 'unidad-litro';
-                                                    break;
-                                                default:
-                                                    $badge_class = 'unidad-pieza';
+                                                case 'pieza': $badge_class = 'unidad-pieza'; break;
+                                                case 'kilo':  $badge_class = 'unidad-kilo';  break;
+                                                case 'litro': $badge_class = 'unidad-litro'; break;
+                                                default:      $badge_class = 'unidad-pieza';
                                             }
                                             ?>
                                             <span class="badge unidad-medida-badge <?php echo $badge_class; ?>">
@@ -2454,9 +1617,7 @@ function getStockPorSucursal($conn, $producto_id)
                                     <div class="producto-info-row">
                                         <span class="producto-info-label">Stock Total:</span>
                                         <span class="producto-info-value">
-                                            <?php
-                                            $stock_formateado = formatearStockPorUnidad($producto['stock_total'], $producto['unidad_medida'] ?? 'pieza');
-                                            ?>
+                                            <?php $stock_formateado = formatearStockPorUnidad($producto['stock_total'], $producto['unidad_medida'] ?? 'pieza'); ?>
                                             <?php if ($producto['stock_total'] <= 0): ?>
                                                 <span class="badge bg-danger"><?php echo $stock_formateado; ?></span>
                                             <?php elseif ($producto['stock_total'] <= $stock_minimo_global): ?>
@@ -2512,7 +1673,6 @@ function getStockPorSucursal($conn, $producto_id)
                         <?php endforeach; ?>
                     <?php endif; ?>
 
-                    <!-- Paginación Móvil -->
                     <?php if ($total_paginas > 1): ?>
                         <div class="pagination-container" id="mobilePagination">
                             <div class="pagination-info">
@@ -2521,20 +1681,12 @@ function getStockPorSucursal($conn, $producto_id)
                             <nav>
                                 <ul class="pagination pagination-sm mb-0 justify-content-center">
                                     <li class="page-item <?php echo $pagina_actual == 1 ? 'disabled' : ''; ?>">
-                                        <a class="page-link" href="?<?php
-                                                                    $query_params = $_GET;
-                                                                    $query_params['pagina'] = 1;
-                                                                    echo http_build_query($query_params);
-                                                                    ?>" title="Primera página">
+                                        <a class="page-link" href="?<?php $query_params = $_GET; $query_params['pagina'] = 1; echo http_build_query($query_params); ?>" title="Primera página">
                                             <i class="fas fa-angle-double-left"></i>
                                         </a>
                                     </li>
                                     <li class="page-item <?php echo $pagina_actual == 1 ? 'disabled' : ''; ?>">
-                                        <a class="page-link" href="?<?php
-                                                                    $query_params = $_GET;
-                                                                    $query_params['pagina'] = max(1, $pagina_actual - 1);
-                                                                    echo http_build_query($query_params);
-                                                                    ?>" title="Página anterior">
+                                        <a class="page-link" href="?<?php $query_params = $_GET; $query_params['pagina'] = max(1, $pagina_actual - 1); echo http_build_query($query_params); ?>" title="Página anterior">
                                             <i class="fas fa-angle-left"></i>
                                         </a>
                                     </li>
@@ -2544,20 +1696,12 @@ function getStockPorSucursal($conn, $producto_id)
                                         </span>
                                     </li>
                                     <li class="page-item <?php echo $pagina_actual == $total_paginas ? 'disabled' : ''; ?>">
-                                        <a class="page-link" href="?<?php
-                                                                    $query_params = $_GET;
-                                                                    $query_params['pagina'] = min($total_paginas, $pagina_actual + 1);
-                                                                    echo http_build_query($query_params);
-                                                                    ?>" title="Siguiente">
+                                        <a class="page-link" href="?<?php $query_params = $_GET; $query_params['pagina'] = min($total_paginas, $pagina_actual + 1); echo http_build_query($query_params); ?>" title="Siguiente">
                                             <i class="fas fa-angle-right"></i>
                                         </a>
                                     </li>
                                     <li class="page-item <?php echo $pagina_actual == $total_paginas ? 'disabled' : ''; ?>">
-                                        <a class="page-link" href="?<?php
-                                                                    $query_params = $_GET;
-                                                                    $query_params['pagina'] = $total_paginas;
-                                                                    echo http_build_query($query_params);
-                                                                    ?>" title="Última página">
+                                        <a class="page-link" href="?<?php $query_params = $_GET; $query_params['pagina'] = $total_paginas; echo http_build_query($query_params); ?>" title="Última página">
                                             <i class="fas fa-angle-double-right"></i>
                                         </a>
                                     </li>
@@ -2636,7 +1780,7 @@ function getStockPorSucursal($conn, $producto_id)
         </div>
     </div>
 
-    <!-- Modal para Nuevo/Editar Producto -->
+    <!-- Modal Nuevo/Editar Producto -->
     <div class="modal fade" id="productoModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-fullscreen-lg-down">
             <div class="modal-content">
@@ -2661,14 +1805,13 @@ function getStockPorSucursal($conn, $producto_id)
                         <input type="hidden" name="imagen_principal" id="imagen_principal" value="0">
                         <input type="hidden" name="precios_mayoreo" id="precios_mayoreo" value="[]">
 
-                        <!-- Campos ocultos para precios -->
                         <input type="hidden" name="subprecio" id="subprecio_hidden">
                         <input type="hidden" name="descuento" id="descuento_hidden">
                         <input type="hidden" name="precio" id="precio_hidden">
                         <input type="hidden" name="costo" id="costo_hidden">
                         <input type="hidden" name="utilidad" id="utilidad_hidden">
 
-                        <!-- SECCIÓN PARA MÚLTIPLES IMÁGENES -->
+                        <!-- Imágenes -->
                         <div class="row mb-4">
                             <div class="col-md-12">
                                 <div class="card">
@@ -2681,7 +1824,6 @@ function getStockPorSucursal($conn, $producto_id)
                                     <div class="card-body">
                                         <div id="galeriaImagenes" class="row mb-3"></div>
                                         <div id="nuevasImagenesPreview" class="row mb-3"></div>
-                                        <!-- CAMBIO PARA CÁMARA: Inputs duales para móvil y desktop -->
                                         <div class="mb-3 mobile-image-buttons">
                                             <button type="button" class="btn btn-gallery-mobile w-100" id="btnSeleccionarGaleria">
                                                 <i class="fas fa-images me-2"></i>Seleccionar de Galería
@@ -2703,7 +1845,7 @@ function getStockPorSucursal($conn, $producto_id)
                             </div>
                         </div>
 
-                        <!-- CÓDIGO Y NOMBRE -->
+                        <!-- Código y nombre -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -2729,7 +1871,6 @@ function getStockPorSucursal($conn, $producto_id)
                             </div>
                         </div>
 
-                        <!-- MARCA Y DESCRIPCIÓN -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -2745,87 +1886,87 @@ function getStockPorSucursal($conn, $producto_id)
                             </div>
                         </div>
 
-                        <!-- SECCIÓN DE PRECIOS CON DESCUENTO -->
+                        <!-- Precios -->
                         <div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-tags me-2"></i>Información de Precios
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4" <?php echo $hide_precio_compra_style; ?>>
-                        <div class="mb-3">
-                            <label class="form-label">Costo</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="text" class="form-control d-none d-md-block" name="costo_desktop" id="costo_desktop" placeholder="0.00">
-                                <input type="number" class="form-control d-md-none" name="costo_mobile" id="costo_mobile" step="0.01" min="0" placeholder="0.00">
-                            </div>
-                            <small class="form-text text-muted">Precio de compra del producto</small>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label class="form-label">Utilidad (%)</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control d-none d-md-block" name="utilidad_desktop" id="utilidad_desktop" placeholder="0.00">
-                                <input type="number" class="form-control d-md-none" name="utilidad_mobile" id="utilidad_mobile" step="0.01" min="0" max="1000" placeholder="0.00">
-                                <span class="input-group-text">%</span>
-                            </div>
-                            <small class="form-text text-muted" id="utilidad_helper">
-                                Porcentaje de ganancia sobre el costo
-                            </small>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label class="form-label">Descuento (%)</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control d-none d-md-block" name="descuento_desktop" id="descuento_desktop" value="0">
-                                <input type="number" class="form-control d-md-none" name="descuento_mobile" id="descuento_mobile" step="0.01" min="0" max="100" value="0">
-                                <span class="input-group-text">%</span>
-                            </div>
-                            <small class="form-text text-muted" id="utilidad_helper">Descuento sobre el precio de venta</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6" style="display: none;">
-                        <div class="mb-3">
-                            <label class="form-label">Precio Venta (Base) *</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="text" class="form-control" name="subprecio_desktop" id="subprecio_desktop" readonly style="background-color: #e9ecef;">
-                                <input type="number" class="form-control" name="subprecio_mobile" id="subprecio_mobile" step="0.01" min="0" readonly style="background-color: #e9ecef;">
-                            </div>
-                            <small class="form-text text-muted">Calculado automáticamente (Costo + Utilidad)</small>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Precio Venta (Final) *</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="text" class="form-control d-none d-md-block" name="precio_desktop" id="precio_desktop" >
-                                <input type="number" class="form-control d-md-none" name="precio_mobile" id="precio_mobile" step="0.01" min="0" >
-                            </div>
-                            <small class="form-text text-muted">Precio final con descuento aplicado</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-tags me-2"></i>Información de Precios
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-4" <?php echo $hide_precio_compra_style; ?>>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Costo</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">$</span>
+                                                        <input type="text" class="form-control d-none d-md-block" name="costo_desktop" id="costo_desktop" placeholder="0.00">
+                                                        <input type="number" class="form-control d-md-none" name="costo_mobile" id="costo_mobile" step="0.01" min="0" placeholder="0.00">
+                                                    </div>
+                                                    <small class="form-text text-muted">Precio de compra del producto</small>
+                                                </div>
+                                            </div>
 
-                        <!-- SECCIÓN PRECIOS DE MAYOREO -->
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Utilidad (%)</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control d-none d-md-block" name="utilidad_desktop" id="utilidad_desktop" placeholder="0.00">
+                                                        <input type="number" class="form-control d-md-none" name="utilidad_mobile" id="utilidad_mobile" step="0.01" min="0" max="1000" placeholder="0.00">
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                    <small class="form-text text-muted" id="utilidad_helper">
+                                                        Porcentaje de ganancia sobre el costo
+                                                    </small>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Descuento (%)</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control d-none d-md-block" name="descuento_desktop" id="descuento_desktop" value="0">
+                                                        <input type="number" class="form-control d-md-none" name="descuento_mobile" id="descuento_mobile" step="0.01" min="0" max="100" value="0">
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                    <small class="form-text text-muted" id="utilidad_helper">Descuento sobre el precio de venta</small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6" style="display: none;">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Precio Venta (Base) *</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">$</span>
+                                                        <input type="text" class="form-control" name="subprecio_desktop" id="subprecio_desktop" readonly style="background-color: #e9ecef;">
+                                                        <input type="number" class="form-control" name="subprecio_mobile" id="subprecio_mobile" step="0.01" min="0" readonly style="background-color: #e9ecef;">
+                                                    </div>
+                                                    <small class="form-text text-muted">Calculado automáticamente (Costo + Utilidad)</small>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Precio Venta (Final) *</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">$</span>
+                                                        <input type="text" class="form-control d-none d-md-block" name="precio_desktop" id="precio_desktop">
+                                                        <input type="number" class="form-control d-md-none" name="precio_mobile" id="precio_mobile" step="0.01" min="0">
+                                                    </div>
+                                                    <small class="form-text text-muted">Precio final con descuento aplicado</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mayoreo -->
                         <div class="row mb-4">
                             <div class="col-md-12">
                                 <div class="card">
@@ -2856,7 +1997,7 @@ function getStockPorSucursal($conn, $producto_id)
                             </div>
                         </div>
 
-                        <!-- SECCIÓN: CONFIGURACIONES AVANZADAS -->
+                        <!-- Configuraciones avanzadas -->
                         <div class="row mb-4">
                             <div class="col-md-12">
                                 <div class="card">
@@ -2927,7 +2068,7 @@ function getStockPorSucursal($conn, $producto_id)
                             </div>
                         </div>
 
-                        <!-- CATEGORÍA Y PROVEEDOR -->
+                        <!-- Categoría y proveedor -->
                         <div class="row">
                             <div class="col-md-6" <?php echo $hide_categoria_style; ?>>
                                 <div class="mb-3">
@@ -2973,7 +2114,7 @@ function getStockPorSucursal($conn, $producto_id)
                             <?php endif; ?>
                         </div>
 
-                        <!-- Sección de Sucursales y Stock -->
+                        <!-- Sucursales -->
                         <div class="sucursal-stock-section">
                             <h6 class="sucursal-stock-header">
                                 <i class="fas fa-store me-2"></i>Sucursales y Stock
@@ -3015,7 +2156,7 @@ function getStockPorSucursal($conn, $producto_id)
                             </div>
                         </div>
 
-                        <!-- Sección de Transferencia de Stock (solo en modo edición) -->
+                        <!-- Transferencia de stock -->
                         <div id="seccionTransferenciaStock" style="display:none;">
                             <hr class="my-3">
                             <h6 class="sucursal-stock-header">
@@ -3056,7 +2197,7 @@ function getStockPorSucursal($conn, $producto_id)
                             </div>
                         </div>
 
-                        <!-- Campo para nueva categoría (oculto) -->
+                        <!-- Nueva categoría -->
                         <div class="row" id="nuevaCategoriaRow" style="display: none;">
                             <div class="col-md-12">
                                 <div class="mb-3">
@@ -3074,7 +2215,7 @@ function getStockPorSucursal($conn, $producto_id)
                             </div>
                         </div>
 
-                        <!-- Campo para nuevo proveedor (oculto) -->
+                        <!-- Nuevo proveedor -->
                         <div class="row" id="nuevoProveedorRow" style="display: none;">
                             <div class="col-md-12">
                                 <div class="mb-3">
@@ -3114,7 +2255,7 @@ function getStockPorSucursal($conn, $producto_id)
         </div>
     </div>
 
-    <!-- Modal para Vista Ampliada de Imagen con Carrusel -->
+    <!-- Modal imagen ampliada -->
     <div class="modal fade imagen-ampliada-modal" id="imagenAmpliadaModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content" style="background-color: transparent; border: none;">
@@ -3155,7 +2296,7 @@ function getStockPorSucursal($conn, $producto_id)
         </div>
     </div>
 
-    <!-- Modal para Importar Productos -->
+    <!-- Modal Importar -->
     <div class="modal fade" id="importarModal" tabindex="-1" aria-labelledby="importarModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -3211,7 +2352,7 @@ function getStockPorSucursal($conn, $producto_id)
         </div>
     </div>
 
-    <!-- Modal para Reportes -->
+    <!-- Modal Reportes -->
     <div class="modal fade" id="reporteModal" tabindex="-1" aria-labelledby="reporteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -3389,117 +2530,114 @@ function getStockPorSucursal($conn, $producto_id)
         </div>
     </div>
 
-    <!-- Modal para Total de Productos -->
-<div class="modal fade" id="modalTotalProductos" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white;">
-                <h5 class="modal-title">
-                    <i class="fas fa-box me-2"></i>Lista de Productos
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body" id="listaTotalProductos">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Cargando...</span>
-                    </div>
-                    <p class="mt-2 text-muted">Cargando productos...</p>
+    <!-- Modal Total Productos -->
+    <div class="modal fade" id="modalTotalProductos" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-box me-2"></i>Lista de Productos
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-body" id="listaTotalProductos">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando productos...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal para Productos con Stock -->
-<div class="modal fade" id="modalConStock" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
-                <h5 class="modal-title">
-                    <i class="fas fa-check-circle me-2"></i>Productos con Stock
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body" id="listaConStock">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-success" role="status">
-                        <span class="visually-hidden">Cargando...</span>
-                    </div>
-                    <p class="mt-2 text-muted">Cargando productos...</p>
+    <!-- Modal Con Stock -->
+    <div class="modal fade" id="modalConStock" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle me-2"></i>Productos con Stock
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-body" id="listaConStock">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando productos...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal para Productos con Stock Bajo -->
-<div class="modal fade" id="modalStockBajo" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #ffc107, #fd7e14); color: #856404;">
-                <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Productos con Stock Bajo
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body" id="listaStockBajo">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-warning" role="status">
-                        <span class="visually-hidden">Cargando...</span>
-                    </div>
-                    <p class="mt-2 text-muted">Cargando productos...</p>
+    <!-- Modal Stock Bajo -->
+    <div class="modal fade" id="modalStockBajo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #ffc107, #fd7e14); color: #856404;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Productos con Stock Bajo
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-body" id="listaStockBajo">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando productos...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal para Productos Sin Stock -->
-<div class="modal fade" id="modalSinStock" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white;">
-                <h5 class="modal-title">
-                    <i class="fas fa-times-circle me-2"></i>Productos Sin Stock
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body" id="listaSinStock">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-danger" role="status">
-                        <span class="visually-hidden">Cargando...</span>
-                    </div>
-                    <p class="mt-2 text-muted">Cargando productos...</p>
+    <!-- Modal Sin Stock -->
+    <div class="modal fade" id="modalSinStock" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-times-circle me-2"></i>Productos Sin Stock
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-body" id="listaSinStock">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-danger" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando productos...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- SortableJS -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <script>
-        window.LFG_MULTISUCURSAL = <?php echo (count($sucursales) >= 2) ? 'true' : 'false'; ?>;
-        window.LFG_LIMITE_ALCANZADO = <?php echo $limite_alcanzado ? 'true' : 'false'; ?>;
-        window.LFG_LIMITE_PRODUCTOS = <?php echo (int)$limite_productos; ?>;
+        window.LFG_MULTISUCURSAL      = <?php echo (count($sucursales) >= 2) ? 'true' : 'false'; ?>;
+        window.LFG_LIMITE_ALCANZADO   = <?php echo $limite_alcanzado ? 'true' : 'false'; ?>;
+        window.LFG_LIMITE_PRODUCTOS   = <?php echo (int)$limite_productos; ?>;
     </script>
     <script src="js/producto.js"></script>
 </body>

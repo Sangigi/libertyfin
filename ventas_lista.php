@@ -27,24 +27,40 @@ try {
     $conn_main = getDBConnection();
 
     // Valores por defecto
-    $empresa_plan = "prueba";
-    $timbres_totales = 0;
-    $timbres_disponibles = 0;
+// Valores por defecto (para que el sidebar nunca falle)
+$empresa_plan        = "prueba";
+$timbres_totales     = 0;
+$timbres_disponibles = 0;
+$terminal_emida      = null;   // <-- FALTABA
+$notification_status = null;   // <-- FALTABA
 
-    if ($conn_main) {
-        $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?";
-        $stmt_empresa = $conn_main->prepare($sql_empresa);
-        $stmt_empresa->execute([$_SESSION['empresa_id']]);
-        $result_empresa = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
+if ($conn_main) {
+    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida 
+                    FROM empresas WHERE id = ?";
+    $stmt_empresa = $conn_main->prepare($sql_empresa);
+    $stmt_empresa->execute([$_SESSION['empresa_id']]);
+    $result_empresa = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
 
-        if ($result_empresa) {
-            $empresa_plan = $result_empresa['plan'];
-            $timbres_totales = $result_empresa['timbres_totales'] ?? 0;
-            $timbres_disponibles = $result_empresa['timbres_disponibles'] ?? 0;
-        }
-        $stmt_empresa = null;
-        $conn_main = null;
+    if ($result_empresa) {
+        $empresa_plan        = $result_empresa['plan'];
+        $timbres_totales     = $result_empresa['timbres_totales'] ?? 0;
+        $timbres_disponibles = $result_empresa['timbres_disponibles'] ?? 0;
+        $terminal_emida      = $result_empresa['terminal_emida'] ?? null;
     }
+
+    // Notificaciones Emida
+    if (file_exists(__DIR__ . '/../EmidaServicios/config.php')) {
+        require_once __DIR__ . '/../EmidaServicios/config.php';
+        if (function_exists('getNotificationStatus')) {
+            $notification_status = getNotificationStatus($conn_main);
+        }
+    }
+
+    $stmt_empresa = null;
+    $conn_main    = null;
+}
+
+$_SESSION['empresa_plan'] = $empresa_plan;
 
     // Guardar el plan en la sesión
     $_SESSION['empresa_plan'] = $empresa_plan;
@@ -119,6 +135,10 @@ try {
     if (!in_array($filtro_orden, ['asc', 'desc'])) {
         $filtro_orden = 'desc';
     }
+    // Antes el buscador sólo filtraba con JS las filas ya cargadas en la
+    // página actual, así que una venta en otra página nunca aparecía.
+    // Ahora se busca en toda la tabla (folio, cliente, vendedor, descripción).
+    $buscar = trim($_GET['buscar'] ?? '');
 
     // Construir WHERE clause
     $where_conditions = [];
@@ -158,13 +178,26 @@ try {
         $params[] = $filtro_categoria;
     }
 
+    if ($buscar !== '') {
+        $where_conditions[] = "(v.codigo_venta LIKE ? OR c.nombre LIKE ? OR u.nombre LIKE ? OR v.descripcion LIKE ?)";
+        $like = '%' . $buscar . '%';
+        $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
+    }
+
     $where_clause = "";
     if (!empty($where_conditions)) {
         $where_clause = "WHERE " . implode(" AND ", $where_conditions);
     }
 
     // Obtener el total de registros para paginación
-    $sql_count = "SELECT COUNT(*) as total FROM ventas v $where_clause";
+    // (con LEFT JOIN de cliente/usuario porque la búsqueda puede filtrar por esos campos)
+    $sql_count = "
+        SELECT COUNT(DISTINCT v.id) as total
+        FROM ventas v
+        LEFT JOIN clientes c ON v.cliente_id = c.id
+        LEFT JOIN usuarios u ON v.usuario_id = u.id
+        $where_clause
+    ";
     $stmt_count = $conn->prepare($sql_count);
     if (!empty($params)) {
         $stmt_count->execute($params);
@@ -232,18 +265,20 @@ try {
     $stmt = null;
 
     // Obtener estadísticas de ventas (sin paginación para mostrar totales)
-    $sql_stats = "
-        SELECT 
-            COUNT(*) as total_ventas,
-            SUM(total) as monto_total,
-            AVG(total) as promedio_venta,
-            SUM(descuento) as total_descuentos,
-            SUM(CASE WHEN estado = 'completada' THEN 1 ELSE 0 END) as ventas_completadas,
-            SUM(CASE WHEN estado = 'cancelada' THEN 1 ELSE 0 END) as ventas_canceladas,
-            SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as ventas_pendientes
-        FROM ventas v
-        $where_clause
-    ";
+$sql_stats = "
+    SELECT 
+        COUNT(*) as total_ventas,
+        SUM(total) as monto_total,
+        AVG(total) as promedio_venta,
+        SUM(descuento) as total_descuentos,
+        SUM(CASE WHEN estado = 'completada' THEN 1 ELSE 0 END) as ventas_completadas,
+        SUM(CASE WHEN estado = 'cancelada' THEN 1 ELSE 0 END) as ventas_canceladas,
+        SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as ventas_pendientes
+    FROM ventas v
+    LEFT JOIN clientes c ON v.cliente_id = c.id
+    LEFT JOIN usuarios u ON v.usuario_id = u.id
+    $where_clause
+";
 
     $stmt_stats = $conn->prepare($sql_stats);
     if (!empty($params)) {
@@ -315,9 +350,12 @@ try {
                 ? "(v.fecha > ? OR (v.fecha = ? AND v.id > ?))"
                 : "(v.fecha < ? OR (v.fecha = ? AND v.id < ?))";
 
-            $sql_posicion = "SELECT COUNT(*) as posicion FROM ventas v "
-                . ($where_clause !== '' ? $where_clause . " AND " : "WHERE ")
-                . $condicion_posicion;
+            $sql_posicion = "SELECT COUNT(*) as posicion 
+    FROM ventas v 
+    LEFT JOIN clientes c ON v.cliente_id = c.id
+    LEFT JOIN usuarios u ON v.usuario_id = u.id "
+    . ($where_clause !== '' ? $where_clause . " AND " : "WHERE ")
+    . $condicion_posicion;
 
             $params_posicion = array_merge(
                 $params,
@@ -638,7 +676,8 @@ $usos_cfdi = [
                             <div class="col-md-6">
                                 <div class="position-relative">
                                     <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted small"></i>
-                                    <input type="text" class="form-control ps-5" placeholder="Buscar ventas..." id="searchInput">
+                                    <input type="text" class="form-control ps-5" placeholder="Buscar ventas..." id="searchInput"
+                                           value="<?php echo htmlspecialchars($buscar); ?>">
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -1244,9 +1283,9 @@ $usos_cfdi = [
                         </button>
                         <!-- Botón Facturar (solo si la venta está completada y es admin) -->
                         <?php if ($venta_especifica['estado'] === 'completada' && $is_admin): ?>
-                            <!-- <button class="btn btn-success facturar-venta" data-venta-id="<?php echo $venta_especifica['id']; ?>" data-bs-toggle="modal" data-bs-target="#facturarModal">
+                            <button class="btn btn-success facturar-venta" data-venta-id="<?php echo $venta_especifica['id']; ?>" data-bs-toggle="modal" data-bs-target="#facturarModal">
                                 <i class="fas fa-file-invoice me-2"></i>Facturar
-                            </button> -->
+                            </button>
                         <?php endif; ?>
                         <?php if ($is_admin): ?>
                             <button class="btn btn-danger-venta eliminar-venta" data-venta-id="<?php echo $venta_especifica['id']; ?>" data-venta-codigo="<?php echo safe_html($venta_especifica['codigo_venta']); ?>">
@@ -1618,19 +1657,25 @@ $usos_cfdi = [
             // =============================================
             // FUNCIONALIDAD ORIGINAL DE VENTAS_LISTA
             // =============================================
-            // Búsqueda
+            // Búsqueda: se manda al servidor (con debounce) para que
+            // encuentre ventas aunque estén en otra página del listado, no
+            // sólo en las que ya están cargadas en esta pantalla.
             const searchInput = document.getElementById('searchInput');
             if (searchInput) {
+                let searchTimer = null;
                 searchInput.addEventListener('input', function(e) {
-                    const term = e.target.value.toLowerCase();
-                    
-                    document.querySelectorAll('#ventasTable tbody tr').forEach(function(row) {
-                        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-                    });
-                    
-                    document.querySelectorAll('#mobileVentas .mobile-venta-card').forEach(function(card) {
-                        card.style.display = card.textContent.toLowerCase().includes(term) ? '' : 'none';
-                    });
+                    clearTimeout(searchTimer);
+                    const valor = e.target.value;
+                    searchTimer = setTimeout(function() {
+                        const url = new URL(window.location.href);
+                        if (valor.trim() === '') {
+                            url.searchParams.delete('buscar');
+                        } else {
+                            url.searchParams.set('buscar', valor);
+                        }
+                        url.searchParams.set('pagina', '1');
+                        window.location.href = url.toString();
+                    }, 450);
                 });
             }
 
@@ -2493,83 +2538,108 @@ $usos_cfdi = [
             // =============================================
             // FUNCIONALIDAD DE FACTURACIÓN
             // =============================================
-            // Cuando se abre el modal de facturación, cargar los productos
+            // Al abrir el modal de facturación:
+            //  - se cargan los productos de la venta
+            //  - si la venta tiene un cliente registrado (con RFC/email),
+            //    se prellenan los campos fiscales para no capturarlos de nuevo.
+            //  - si es "Cliente General", los campos quedan vacíos.
             document.getElementById('facturarModal').addEventListener('show.bs.modal', function (event) {
                 const button = event.relatedTarget; // Botón que activó el modal
                 const ventaId = button.getAttribute('data-venta-id');
                 document.getElementById('facturarVentaId').value = ventaId;
 
-                // Obtener detalles de la venta vía AJAX
+                // Limpiar campos por si el modal ya se abrió antes con otra venta
+                document.getElementById('cliente_nombre').value  = '';
+                document.getElementById('cliente_rfc').value     = '';
+                document.getElementById('cliente_email').value   = '';
+                document.getElementById('cliente_zip').value     = '';
+                document.getElementById('cliente_estado').value  = '';
+                document.getElementById('cliente_ciudad').value  = '';
+                document.getElementById('cliente_regimen').value = '';
+
+                // Obtener detalles de la venta + datos del cliente vía AJAX
                 fetch('Service/obtener_detalles_venta.php?venta_id=' + ventaId)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.success) {
-                            const tbody = document.querySelector('#productosFacturaTable tbody');
-                            tbody.innerHTML = '';
-                            let total = 0;
-                            data.detalles.forEach(item => {
-                                const tr = document.createElement('tr');
-                                tr.innerHTML = `
-                                    <td>${item.producto_nombre}</td>
-                                    <td>${item.cantidad}</td>
-                                    <td>$${parseFloat(item.precio_unitario).toFixed(2)}</td>
-                                    <td>${parseFloat(item.descuento) > 0 ? '$' + parseFloat(item.descuento).toFixed(2) : '$0.00'}</td>
-                                    <td>$${parseFloat(item.subtotal).toFixed(2)}</td>
-                                `;
-                                tbody.appendChild(tr);
-                                total += parseFloat(item.subtotal);
-                            });
-                            document.getElementById('facturaTotal').textContent = '$' + total.toFixed(2);
-                        } else {
+                        if (!data.success) {
                             alert('No se pudieron cargar los productos de la venta');
+                            return;
                         }
+
+                        // --- Productos ---
+                        const tbody = document.querySelector('#productosFacturaTable tbody');
+                        tbody.innerHTML = '';
+                        let total = 0;
+                        data.detalles.forEach(item => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${item.producto_nombre}</td>
+                                <td>${item.cantidad}</td>
+                                <td>$${parseFloat(item.precio_unitario).toFixed(2)}</td>
+                                <td>${parseFloat(item.descuento) > 0 ? '$' + parseFloat(item.descuento).toFixed(2) : '$0.00'}</td>
+                                <td>$${parseFloat(item.subtotal).toFixed(2)}</td>
+                            `;
+                            tbody.appendChild(tr);
+                            total += parseFloat(item.subtotal);
+                        });
+                        document.getElementById('facturaTotal').textContent = '$' + total.toFixed(2);
+
+                        // --- Datos del cliente (si la venta tiene cliente registrado) ---
+if (data.cliente) {
+    document.getElementById('cliente_nombre').value = data.cliente.nombre || '';
+    document.getElementById('cliente_rfc').value    = data.cliente.rfc    || '';
+    document.getElementById('cliente_email').value  = data.cliente.email  || '';
+}
+
+                        // Si data.cliente es null → Cliente General, quedan vacíos.
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         alert('Error al cargar los productos');
                     });
             });
-// Envío del formulario de facturación (AJAX)
-document.getElementById('facturarForm').addEventListener('submit', function (e) {
-    e.preventDefault();
 
-    const formData = new FormData(this);
-    const btn = document.getElementById('btnGenerarFactura');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando...';
+            // Envío del formulario de facturación (AJAX)
+            document.getElementById('facturarForm').addEventListener('submit', function (e) {
+                e.preventDefault();
 
-    fetch('Service/facturar_venta.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('✅ ' + data.message + 
-                  '\nUUID: ' + (data.uuid || 'N/A') + 
-                  '\nFolio: ' + (data.folio || 'N/A') +
-                  '\nEstado: ' + (data.status || 'N/A'));
-            const modal = bootstrap.Modal.getInstance(document.getElementById('facturarModal'));
-            modal.hide();
-            // Opcional: recargar la lista para mostrar el nuevo estado
-            // location.reload();
-        } else {
-            let msg = '❌ ' + data.message;
-            if (data.details) {
-                msg += '\nDetalles: ' + data.details;
-            }
-            alert(msg);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('❌ Error en la solicitud. Revisa la consola.');
-    })
-    .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-file-invoice me-2"></i>Generar Factura';
-    });
-});
+                const formData = new FormData(this);
+                const btn = document.getElementById('btnGenerarFactura');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando...';
+
+                fetch('Service/facturar_venta.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ ' + data.message + 
+                              '\nUUID: ' + (data.uuid || 'N/A') + 
+                              '\nFolio: ' + (data.folio || 'N/A') +
+                              '\nEstado: ' + (data.status || 'N/A'));
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('facturarModal'));
+                        modal.hide();
+                        // Opcional: recargar la lista para mostrar el nuevo estado
+                        // location.reload();
+                    } else {
+                        let msg = '❌ ' + data.message;
+                        if (data.details) {
+                            msg += '\nDetalles: ' + data.details;
+                        }
+                        alert(msg);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('❌ Error en la solicitud. Revisa la consola.');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-file-invoice me-2"></i>Generar Factura';
+                });
+            });
         });
     </script>
 </body>

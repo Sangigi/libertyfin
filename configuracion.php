@@ -11,25 +11,38 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/env_loader.php';
 
-// OBTENER EL PLAN DE LA EMPRESA DESDE LA BASE DE DATOS PRINCIPAL
+// OBTENER DATOS DE LA EMPRESA DESDE LA BASE DE DATOS PRINCIPAL
 $conn_main = getDBConnection();
 
-// Valores por defecto
-$empresa_plan = "prueba";
-$timbres_totales = 0;
+// Valores por defecto (para que el sidebar nunca falle)
+$empresa_plan        = "prueba";
+$timbres_totales     = 0;
 $timbres_disponibles = 0;
+$terminal_emida      = null;   // <-- FALTABA
+$notification_status = null;   // <-- FALTABA
 
 if ($conn_main) {
-    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?";
+    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida 
+                    FROM empresas WHERE id = ?";
     $stmt_empresa = $conn_main->prepare($sql_empresa);
     $stmt_empresa->execute([$_SESSION['empresa_id']]);
     $result_empresa = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
 
     if ($result_empresa) {
-        $empresa_plan = $result_empresa['plan'];
-        $timbres_totales = $result_empresa['timbres_totales'] ?? 0;
+        $empresa_plan        = $result_empresa['plan'];
+        $timbres_totales     = $result_empresa['timbres_totales'] ?? 0;
         $timbres_disponibles = $result_empresa['timbres_disponibles'] ?? 0;
+        $terminal_emida      = $result_empresa['terminal_emida'] ?? null;
     }
+
+    // Notificaciones Emida
+    if (file_exists(__DIR__ . '/../EmidaServicios/config.php')) {
+        require_once __DIR__ . '/../EmidaServicios/config.php';
+        if (function_exists('getNotificationStatus')) {
+            $notification_status = getNotificationStatus($conn_main);
+        }
+    }
+
     $stmt_empresa = null;
     $conn_main = null;
 }
@@ -204,46 +217,6 @@ try {
             $stmt = null;
         } else {
             $mensaje = "Las columnas de configuración de tickets no están disponibles";
-            $tipo_mensaje = "warning";
-        }
-    }
-
-    // Procesar configuración de apariencia
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_apariencia'])) {
-        if (in_array('color_primario', $existing_columns) && in_array('color_secundario', $existing_columns)) {
-            $color_primario = $_POST['color_primario'];
-            $color_secundario = $_POST['color_secundario'];
-
-            // Validar formato de color
-            if (!preg_match('/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/', $color_primario)) {
-                $color_primario = '#27ae60';
-            }
-            if (!preg_match('/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/', $color_secundario)) {
-                $color_secundario = '#2ecc71';
-            }
-
-            $sql_update = "UPDATE sistema_config SET 
-                          color_primario = ?,
-                          color_secundario = ?";
-            $stmt = $conn->prepare($sql_update);
-            $stmt->execute([$color_primario, $color_secundario]);
-
-            if ($stmt->rowCount() >= 0) {
-                $mensaje = "Configuración de apariencia actualizada";
-                $tipo_mensaje = "success";
-                $config['color_primario'] = $color_primario;
-                $config['color_secundario'] = $color_secundario;
-
-                // Actualizar también en la sesión si es necesario
-                $_SESSION['color_primario'] = $color_primario;
-                $_SESSION['color_secundario'] = $color_secundario;
-            } else {
-                $mensaje = "Error al actualizar la apariencia";
-                $tipo_mensaje = "danger";
-            }
-            $stmt = null;
-        } else {
-            $mensaje = "Las columnas de configuración de apariencia no están disponibles";
             $tipo_mensaje = "warning";
         }
     }
@@ -591,11 +564,6 @@ function crearBackupPHP($conn, $backup_file)
                             <i class="fas fa-receipt me-1"></i>Tickets
                         </button>
                     </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="apariencia-tab" data-bs-toggle="tab" data-bs-target="#apariencia" type="button" role="tab">
-                            <i class="fas fa-palette me-1"></i>Apariencia
-                        </button>
-                    </li>
                 </ul>
 
                 <div class="tab-content" id="configTabsContent">
@@ -763,191 +731,6 @@ function crearBackupPHP($conn, $backup_file)
                         </div>
                     </div>
 
-                    <!-- Pestaña Apariencia - Versión Mejorada -->
-                    <div class="tab-pane fade" id="apariencia" role="tabpanel">
-                        <div class="row">
-                            <div class="col-lg-8">
-                                <div class="card">
-                                    <div class="card-header bg-purple text-white" style="background-color: #6f42c1;">
-                                        <h5 class="card-title text-white mb-0"><i class="fas fa-palette me-2"></i>Personalización de Colores</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <form method="POST" action="">
-                                            <!-- Selección de Colores Personalizados -->
-                                            <div class="row mb-4">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Color Primario</label>
-                                                    <p class="text-muted small">Color principal para botones, encabezados y elementos destacados</p>
-                                                    <div class="input-group mb-2">
-                                                        <span class="input-group-text">
-                                                            <div class="color-preview" id="previewPrimario" style="background-color: <?php echo getConfigValue($config, 'color_primario', '#27ae60'); ?>"></div>
-                                                        </span>
-                                                        <input type="text" class="form-control color-hex" name="color_primario"
-                                                            value="<?php echo getConfigValue($config, 'color_primario', '#27ae60'); ?>"
-                                                            placeholder="#27ae60" pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$">
-                                                        <input type="color" class="form-control form-control-color color-picker"
-                                                            value="<?php echo getConfigValue($config, 'color_primario', '#27ae60'); ?>"
-                                                            title="Elige el color primario">
-                                                    </div>
-                                                    <div class="form-text">
-                                                        Introduce un código hexadecimal o usa el selector de color
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Color Secundario</label>
-                                                    <p class="text-muted small">Color para botones secundarios, hover states y elementos complementarios</p>
-                                                    <div class="input-group mb-2">
-                                                        <span class="input-group-text">
-                                                            <div class="color-preview" id="previewSecundario" style="background-color: <?php echo getConfigValue($config, 'color_secundario', '#2ecc71'); ?>"></div>
-                                                        </span>
-                                                        <input type="text" class="form-control color-hex" name="color_secundario"
-                                                            value="<?php echo getConfigValue($config, 'color_secundario', '#2ecc71'); ?>"
-                                                            placeholder="#2ecc71" pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$">
-                                                        <input type="color" class="form-control form-control-color color-picker"
-                                                            value="<?php echo getConfigValue($config, 'color_secundario', '#2ecc71'); ?>"
-                                                            title="Elige el color secundario">
-                                                    </div>
-                                                    <div class="form-text">
-                                                        Introduce un código hexadecimal o usa el selector de color
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Paletas Predefinidas -->
-                                            <div class="mb-4">
-                                                <label class="form-label fw-bold">Paletas Predefinidas</label>
-                                                <p class="text-muted small">Selecciona una combinación de colores predefinida</p>
-                                                <div class="row g-2" id="paletasPredefinidas">
-                                                    <!-- Paleta Verde (por defecto) -->
-                                                    <div class="col-sm-6 col-md-4 col-lg-3">
-                                                        <div class="paleta-option border rounded p-2" data-primario="#27ae60" data-secundario="#2ecc71">
-                                                            <div class="d-flex align-items-center mb-2">
-                                                                <div class="color-swatch me-2" style="background-color: #27ae60; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                                <div class="color-swatch" style="background-color: #2ecc71; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                            </div>
-                                                            <small class="d-block">Verde Natural</small>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Paleta Azul -->
-                                                    <div class="col-sm-6 col-md-4 col-lg-3">
-                                                        <div class="paleta-option border rounded p-2" data-primario="#3498db" data-secundario="#5dade2">
-                                                            <div class="d-flex align-items-center mb-2">
-                                                                <div class="color-swatch me-2" style="background-color: #3498db; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                                <div class="color-swatch" style="background-color: #5dade2; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                            </div>
-                                                            <small class="d-block">Azul Profesional</small>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Paleta Morado -->
-                                                    <div class="col-sm-6 col-md-4 col-lg-3">
-                                                        <div class="paleta-option border rounded p-2" data-primario="#9b59b6" data-secundario="#bb8fce">
-                                                            <div class="d-flex align-items-center mb-2">
-                                                                <div class="color-swatch me-2" style="background-color: #9b59b6; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                                <div class="color-swatch" style="background-color: #bb8fce; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                            </div>
-                                                            <small class="d-block">Morado Creativo</small>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Paleta Naranja -->
-                                                    <div class="col-sm-6 col-md-4 col-lg-3">
-                                                        <div class="paleta-option border rounded p-2" data-primario="#e67e22" data-secundario="#f39c12">
-                                                            <div class="d-flex align-items-center mb-2">
-                                                                <div class="color-swatch me-2" style="background-color: #e67e22; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                                <div class="color-swatch" style="background-color: #f39c12; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                            </div>
-                                                            <small class="d-block">Naranja Energético</small>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Paleta Rojo -->
-                                                    <div class="col-sm-6 col-md-4 col-lg-3">
-                                                        <div class="paleta-option border rounded p-2" data-primario="#e74c3c" data-secundario="#ec7063">
-                                                            <div class="d-flex align-items-center mb-2">
-                                                                <div class="color-swatch me-2" style="background-color: #e74c3c; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                                <div class="color-swatch" style="background-color: #ec7063; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                            </div>
-                                                            <small class="d-block">Rojo Intenso</small>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Paleta Gris -->
-                                                    <div class="col-sm-6 col-md-4 col-lg-3">
-                                                        <div class="paleta-option border rounded p-2" data-primario="#34495e" data-secundario="#5d6d7e">
-                                                            <div class="d-flex align-items-center mb-2">
-                                                                <div class="color-swatch me-2" style="background-color: #34495e; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                                <div class="color-swatch" style="background-color: #5d6d7e; width: 20px; height: 20px; border-radius: 3px;"></div>
-                                                            </div>
-                                                            <small class="d-block">Gris Elegante</small>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Vista Previa Mejorada -->
-                                            <div class="mb-4">
-                                                <label class="form-label fw-bold">Vista Previa</label>
-                                                <p class="text-muted small">Así se verá tu sistema con los colores seleccionados</p>
-                                                <div class="border rounded p-4 bg-light">
-                                                    <!-- Barra de navegación de vista previa -->
-                                                    <div class="navbar navbar-dark rounded mb-4" id="previewNavbar"
-                                                        style="background: linear-gradient(135deg, var(--preview-primary, #27ae60), var(--preview-secondary, #2ecc71));">
-                                                        <div class="container-fluid">
-                                                            <a class="navbar-brand" href="#">
-                                                                <i class="fas fa-cash-register me-2"></i>
-                                                                Mi Empresa
-                                                            </a>
-                                                            <div class="navbar-nav ms-auto">
-                                                                <span class="nav-link">
-                                                                    <i class="fas fa-user-circle me-1"></i>
-                                                                    Usuario Ejemplo
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Botones de vista previa -->
-                                                    <div class="d-flex gap-2 flex-wrap mb-4">
-                                                        <button class="btn" id="previewBtnPrimary">Botón Primario</button>
-                                                        <button class="btn" id="previewBtnSecondary">Botón Secundario</button>
-                                                        <button class="btn btn-outline-secondary">Botón Outline</button>
-                                                    </div>
-
-                                                    <!-- Tarjeta de vista previa -->
-                                                    <div class="card mb-4">
-                                                        <div class="card-header" id="previewCardHeader">
-                                                            <h5 class="card-title text-white mb-0">Ejemplo de Tarjeta</h5>
-                                                        </div>
-                                                        <div class="card-body">
-                                                            <p class="card-text">Esta es una tarjeta de ejemplo con los colores seleccionados.</p>
-                                                            <div class="progress mb-3">
-                                                                <div class="progress-bar" id="previewProgressBar" role="progressbar" style="width: 65%"></div>
-                                                            </div>
-                                                            <div class="alert" id="previewAlert">
-                                                                <i class="fas fa-info-circle me-2"></i>
-                                                                Este es un mensaje de alerta de ejemplo
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Badges de vista previa -->
-                                                    <div class="d-flex gap-2 flex-wrap">
-                                                        <span class="badge" id="previewBadgePrimary">Etiqueta 1</span>
-                                                        <span class="badge" id="previewBadgeSecondary">Etiqueta 2</span>
-                                                        <span class="badge bg-secondary">Etiqueta 3</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <button type="submit" name="actualizar_apariencia" class="btn btn-primary">
-                                                <i class="fas fa-save me-2"></i>Guardar Colores
-                                            </button>
-                                            <button type="button" id="resetColors" class="btn btn-outline-secondary ms-2">
-                                                <i class="fas fa-undo me-2"></i>Restablecer Valores por Defecto
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                    
 
@@ -987,150 +770,6 @@ function crearBackupPHP($conn, $backup_file)
                 });
             });
 
-            // Funcionalidad mejorada para la personalización de colores
-            // Elementos de entrada de color
-            const colorPrimarioInput = document.querySelector('input[name="color_primario"]');
-            const colorSecundarioInput = document.querySelector('input[name="color_secundario"]');
-            const colorPickers = document.querySelectorAll('.color-picker');
-            const colorHexInputs = document.querySelectorAll('.color-hex');
-
-            // Elementos de vista previa
-            const previewPrimario = document.getElementById('previewPrimario');
-            const previewSecundario = document.getElementById('previewSecundario');
-            const previewNavbar = document.getElementById('previewNavbar');
-            const previewBtnPrimary = document.getElementById('previewBtnPrimary');
-            const previewBtnSecondary = document.getElementById('previewBtnSecondary');
-            const previewCardHeader = document.getElementById('previewCardHeader');
-            const previewProgressBar = document.getElementById('previewProgressBar');
-            const previewAlert = document.getElementById('previewAlert');
-            const previewBadgePrimary = document.getElementById('previewBadgePrimary');
-            const previewBadgeSecondary = document.getElementById('previewBadgeSecondary');
-
-            // Paletas predefinidas
-            const paletas = document.querySelectorAll('.paleta-option');
-
-            // Botón de restablecimiento
-            const resetButton = document.getElementById('resetColors');
-
-            // Función para actualizar todas las vistas previas
-            function actualizarVistaPrevia() {
-                const primario = colorPrimarioInput.value;
-                const secundario = colorSecundarioInput.value;
-
-                // Actualizar variables CSS para la vista previa
-                document.documentElement.style.setProperty('--preview-primary', primario);
-                document.documentElement.style.setProperty('--preview-secondary', secundario);
-
-                // Actualizar elementos de vista previa individuales
-                previewPrimario.style.backgroundColor = primario;
-                previewSecundario.style.backgroundColor = secundario;
-
-                previewBtnPrimary.style.backgroundColor = primario;
-                previewBtnPrimary.style.borderColor = primario;
-                previewBtnPrimary.style.color = getContrastColor(primario);
-
-                previewBtnSecondary.style.backgroundColor = secundario;
-                previewBtnSecondary.style.borderColor = secundario;
-                previewBtnSecondary.style.color = getContrastColor(secundario);
-
-                previewCardHeader.style.backgroundColor = primario;
-                previewCardHeader.style.color = getContrastColor(primario);
-
-                previewProgressBar.style.backgroundColor = primario;
-
-                previewAlert.style.backgroundColor = primario;
-                previewAlert.style.color = getContrastColor(primario);
-
-                previewBadgePrimary.style.backgroundColor = primario;
-                previewBadgePrimary.style.color = getContrastColor(primario);
-
-                previewBadgeSecondary.style.backgroundColor = secundario;
-                previewBadgeSecondary.style.color = getContrastColor(secundario);
-
-                // Actualizar selectores de color
-                document.querySelectorAll('.color-picker').forEach((picker, index) => {
-                    if (index === 0) picker.value = primario;
-                    if (index === 1) picker.value = secundario;
-                });
-            }
-
-            // Función para determinar el color de texto contrastante
-            function getContrastColor(hexcolor) {
-                // Eliminar el # si está presente
-                hexcolor = hexcolor.replace("#", "");
-
-                // Convertir a RGB
-                const r = parseInt(hexcolor.substr(0, 2), 16);
-                const g = parseInt(hexcolor.substr(2, 2), 16);
-                const b = parseInt(hexcolor.substr(4, 2), 16);
-
-                // Calcular luminosidad
-                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-                // Devolver blanco o negro según la luminosidad
-                return luminance > 0.5 ? '#000000' : '#FFFFFF';
-            }
-
-            // Eventos para inputs de texto (hexadecimal)
-            colorHexInputs.forEach(input => {
-                input.addEventListener('input', function() {
-                    // Validar formato hexadecimal
-                    if (this.value.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)) {
-                        actualizarVistaPrevia();
-
-                        // Actualizar el selector de color correspondiente
-                        const pickerIndex = Array.from(colorHexInputs).indexOf(this);
-                        if (pickerIndex !== -1 && colorPickers[pickerIndex]) {
-                            colorPickers[pickerIndex].value = this.value;
-                        }
-                    }
-                });
-            });
-
-            // Eventos para selectores de color
-            colorPickers.forEach((picker, index) => {
-                picker.addEventListener('input', function() {
-                    // Actualizar el input de texto correspondiente
-                    if (colorHexInputs[index]) {
-                        colorHexInputs[index].value = this.value;
-                        actualizarVistaPrevia();
-                    }
-                });
-            });
-
-            // Eventos para paletas predefinidas
-            paletas.forEach(paleta => {
-                paleta.addEventListener('click', function() {
-                    const primario = this.getAttribute('data-primario');
-                    const secundario = this.getAttribute('data-secundario');
-
-                    // Actualizar inputs
-                    colorPrimarioInput.value = primario;
-                    colorSecundarioInput.value = secundario;
-
-                    // Actualizar vista previa
-                    actualizarVistaPrevia();
-
-                    // Resaltar paleta seleccionada
-                    paletas.forEach(p => p.classList.remove('border-primary'));
-                    this.classList.add('border-primary');
-                });
-            });
-
-            // Evento para botón de restablecimiento
-            resetButton.addEventListener('click', function() {
-                if (confirm('¿Estás seguro de que quieres restablecer los colores a los valores por defecto?')) {
-                    colorPrimarioInput.value = '#27ae60';
-                    colorSecundarioInput.value = '#2ecc71';
-                    actualizarVistaPrevia();
-
-                    // Quitar resaltado de paletas
-                    paletas.forEach(p => p.classList.remove('border-primary'));
-                }
-            });
-
-            // Inicializar vista previa
-            actualizarVistaPrevia();
         });
     </script>
 </body>

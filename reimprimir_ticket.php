@@ -38,160 +38,12 @@ $sucursal_telefono = '';
 $usuario_nombre = 'Usuario';
 $cliente_nombre = "Cliente General";
 
-// Variables de descuento
+// Variables de descuento e IVA
 $descuento_total = 0;
 $subtotal_sin_descuento = 0;
 $subtotal_con_descuento = 0;
+$iva_total = 0;
 $productos = array();
-
-// Variables para facturación
-$facturacion_url = '';
-$qr_url = '';
-$qr_base64 = '';
-$debug_info = '';
-
-// Función para generar QR manualmente usando una librería simple
-function generarQRSimple($texto, $size = 150) {
-    // Usar API de QR Code Monkey (más confiable que Google Charts)
-    return "https://api.qrserver.com/v1/create-qr-code/?size={$size}x{$size}&data=" . urlencode($texto);
-    
-    // Alternativa: Usar QR code generator (también confiable)
-    // return "https://quickchart.io/qr?text=" . urlencode($texto) . "&size={$size}";
-}
-
-// Función para crear un QR de respaldo en texto (si las APIs fallan)
-function generarQRTexto($texto) {
-    // Esta función genera una representación en texto del QR
-    // No es un QR real, pero al menos muestra la URL
-    return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' fill='%23f0f0f0'/%3E%3Ctext x='10' y='40' font-family='Arial' font-size='10' fill='%23333'%3ECODIGO QR%3C/text%3E%3Ctext x='10' y='60' font-family='Arial' font-size='8' fill='%23333'%3E" . substr($texto, 0, 30) . "%3C/text%3E%3Ctext x='10' y='80' font-family='Arial' font-size='8' fill='%23333'%3E" . substr($texto, 30, 30) . "%3C/text%3E%3Ctext x='10' y='100' font-family='Arial' font-size='8' fill='%23333'%3E" . substr($texto, 60, 30) . "%3C/text%3E%3C/svg%3E";
-}
-
-// Función para generar el HTML del ticket para WhatsApp
-function generarTicketWhatsApp($venta_data, $productos, $empresa_nombre, $empresa_rfc, $empresa_direccion, $empresa_telefono, $sucursal_nombre, $sucursal_direccion, $sucursal_telefono, $usuario_nombre, $cliente_nombre, $descuento_total, $subtotal_sin_descuento, $total_descuento_productos) {
-    ob_start();
-    ?>
-    <div style="font-family: 'Courier New', Courier, monospace; font-size: 12px; max-width: 400px; margin: 0 auto; padding: 20px; background: white; border: 1px solid #ccc;">
-        <!-- Encabezado -->
-        <div style="text-align: center; margin-bottom: 15px;">
-            <h2 style="margin: 0; font-size: 18px;"><?php echo htmlspecialchars($empresa_nombre); ?></h2>
-            <?php if (!empty($empresa_rfc)): ?>
-                <p style="margin: 2px 0;">RFC: <?php echo htmlspecialchars($empresa_rfc); ?></p>
-            <?php endif; ?>
-            <?php if (!empty($empresa_direccion)): ?>
-                <p style="margin: 2px 0;"><?php echo htmlspecialchars($empresa_direccion); ?></p>
-            <?php endif; ?>
-            <?php if (!empty($empresa_telefono)): ?>
-                <p style="margin: 2px 0;">Tel: <?php echo htmlspecialchars($empresa_telefono); ?></p>
-            <?php endif; ?>
-        </div>
-        
-        <div style="border-top: 2px solid #000; margin: 10px 0;"></div>
-        
-        <!-- Sucursal -->
-        <div style="text-align: center; margin: 10px 0;">
-            <strong><?php echo htmlspecialchars($sucursal_nombre); ?></strong>
-            <?php if (!empty($sucursal_direccion)): ?>
-                <br><?php echo htmlspecialchars($sucursal_direccion); ?>
-            <?php endif; ?>
-            <?php if (!empty($sucursal_telefono)): ?>
-                <br>Tel: <?php echo htmlspecialchars($sucursal_telefono); ?>
-            <?php endif; ?>
-        </div>
-        
-        <div style="border-top: 1px dashed #000; margin: 10px 0;"></div>
-        
-        <!-- Fecha y venta -->
-        <div style="text-align: center; margin: 10px 0;">
-            <p><strong>Fecha:</strong> <?php echo date('d/m/Y H:i:s', strtotime($venta_data['fecha'])); ?></p>
-            <p><strong>Venta:</strong> <?php echo htmlspecialchars($venta_data['codigo_venta']); ?></p>
-        </div>
-        
-        <div style="border-top: 1px dashed #000; margin: 10px 0;"></div>
-        
-        <!-- Cliente y vendedor -->
-        <div style="margin: 10px 0;">
-            <p><strong>Cliente:</strong> <?php echo htmlspecialchars($cliente_nombre); ?></p>
-            <p><strong>Vendedor:</strong> <?php echo htmlspecialchars($usuario_nombre); ?></p>
-        </div>
-        
-        <div style="border-top: 1px dashed #000; margin: 10px 0;"></div>
-        
-        <!-- Productos -->
-        <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
-            <thead>
-                <tr style="border-bottom: 1px solid #000;">
-                    <th style="text-align: left; padding: 5px;">Cant</th>
-                    <th style="text-align: left; padding: 5px;">Descripción</th>
-                    <th style="text-align: right; padding: 5px;">Importe</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($productos as $producto): 
-                    $tiene_descuento = isset($producto['descuento']) && $producto['descuento'] > 0;
-                ?>
-                <tr>
-                    <td style="padding: 3px; vertical-align: top;">
-                        <?php echo $producto['permite_fracciones'] ? number_format($producto['cantidad'], 3) : intval($producto['cantidad']); ?>
-                    </td>
-                    <td style="padding: 3px; vertical-align: top;">
-                        <?php echo htmlspecialchars(substr($producto['nombre'], 0, 25)); ?>
-                        <?php if ($tiene_descuento): ?>
-                            <br><small style="color: #ff0000;">-<?php echo number_format(($producto['descuento'] / ($producto['precio'] * $producto['cantidad']) * 100), 1); ?>%</small>
-                        <?php endif; ?>
-                    </td>
-                    <td style="padding: 3px; text-align: right; vertical-align: top;">
-                        $<?php echo number_format($producto['subtotal_con_descuento'] ?? $producto['subtotal'], 2); ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-        
-        <div style="border-top: 2px solid #000; margin: 10px 0;"></div>
-        
-        <!-- Totales -->
-        <div style="margin: 10px 0;">
-            <p><strong>Subtotal:</strong> $<?php echo number_format($subtotal_sin_descuento, 2); ?></p>
-            <?php if ($descuento_total > 0): ?>
-                <p style="color: #ff0000;"><strong>Descuento:</strong> -$<?php echo number_format($descuento_total, 2); ?></p>
-            <?php endif; ?>
-            <p style="font-size: 16px;"><strong>TOTAL:</strong> $<?php echo number_format($venta_data['total'], 2); ?></p>
-        </div>
-        
-        <div style="border-top: 1px dashed #000; margin: 10px 0;"></div>
-        
-        <!-- Método de pago -->
-        <div style="margin: 10px 0;">
-            <p><strong>Pago:</strong> <?php echo strtoupper($venta_data['metodo_pago']); ?></p>
-            <?php if ($venta_data['metodo_pago'] === 'efectivo'): ?>
-                <p><strong>Efectivo:</strong> $<?php echo number_format($venta_data['efectivo_recibido'], 2); ?></p>
-                <p><strong>Cambio:</strong> $<?php echo number_format($venta_data['cambio'], 2); ?></p>
-            <?php endif; ?>
-        </div>
-        
-        <div style="border-top: 1px solid #000; margin: 10px 0;"></div>
-        
-        <!-- QR de facturación si existe -->
-        <?php if (!empty($venta_data['urlfacturacion'])): ?>
-        <div style="text-align: center; margin: 15px 0;">
-            <p><strong>🌐 FACTURACIÓN ELECTRÓNICA</strong></p>
-            <p style="font-size: 10px;">Link para facturar:</p>
-            <p style="font-size: 9px; word-break: break-all; background: #f5f5f5; padding: 5px;">
-                <?php echo htmlspecialchars($venta_data['urlfacturacion']); ?>
-            </p>
-        </div>
-        <div style="border-top: 1px dashed #000; margin: 10px 0;"></div>
-        <?php endif; ?>
-        
-        <!-- Pie -->
-        <div style="text-align: center; margin: 15px 0;">
-            <p><strong>¡Gracias por su compra!</strong></p>
-            <p style="font-size: 10px;">Ticket comprobante - Conserve para aclaraciones</p>
-        </div>
-    </div>
-    <?php
-    return ob_get_clean();
-}
 
 // Estructura para los datos de la venta
 $venta_data = array();
@@ -199,7 +51,7 @@ $venta_data = array();
 if (!empty($dbname)) {
     try {
         $conn = new mysqli($servername, $username, $password, $dbname);
-        
+
         if (!$conn->connect_error) {
             // Obtener información de la empresa desde sistema_config
             $sql_empresa = "SELECT nombre_empresa, direccion, telefono, rfc, logo FROM sistema_config LIMIT 1";
@@ -221,57 +73,15 @@ if (!empty($dbname)) {
             $stmt_venta->bind_param("i", $venta_id);
             $stmt_venta->execute();
             $result_venta = $stmt_venta->get_result();
-            
+
             if ($venta = $result_venta->fetch_assoc()) {
                 $venta_data = $venta;
                 $descuento_total = $venta['descuento'] ?? 0;
                 $subtotal_sin_descuento = $venta['subtotal'] ?? 0;
                 $subtotal_con_descuento = $subtotal_sin_descuento - $descuento_total;
+                $iva_total = $venta['iva'] ?? 0;
                 $cliente_nombre = $venta['cliente_nombre'] ?? "Cliente General";
-                
-                // Obtener URL de facturación
-                $facturacion_url = $venta['urlfacturacion'] ?? '';
-                
-                // DEPURACIÓN: Guardar información de la URL
-                $debug_info .= "URL facturación obtenida: " . ($facturacion_url ?: 'VACÍA') . "\n";
-                
-                // Generar QR si existe URL
-                if (!empty($facturacion_url)) {
-                    // Intentar con diferentes APIs de QR
-                    $qr_size = 150;
-                    
-                    // Opción 1: QR Server (más confiable)
-                    $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size={$qr_size}x{$qr_size}&data=" . urlencode($facturacion_url);
-                    $debug_info .= "QR URL (QR Server): " . $qr_url . "\n";
-                    
-                    // Opción 2: QuickChart.io (alternativa)
-                    $qr_url_alt = "https://quickchart.io/qr?text=" . urlencode($facturacion_url) . "&size={$qr_size}";
-                    $debug_info .= "QR URL (Alternativa): " . $qr_url_alt . "\n";
-                    
-                    // Opción 3: QR code como texto (respaldo)
-                    $qr_base64 = generarQRTexto($facturacion_url);
-                    
-                    // Verificar si la URL es accesible (timeout corto)
-                    $ctx = stream_context_create(['http' => ['timeout' => 2]]);
-                    $headers = @get_headers($qr_url, 0, $ctx);
-                    if ($headers && strpos($headers[0], '200') !== false) {
-                        $debug_info .= "✅ QR Server responde correctamente\n";
-                    } else {
-                        $debug_info .= "⚠️ QR Server no responde, se usará alternativa\n";
-                        // Si la primera API falla, probar con la segunda
-                        $headers_alt = @get_headers($qr_url_alt, 0, $ctx);
-                        if ($headers_alt && strpos($headers_alt[0], '200') !== false) {
-                            $qr_url = $qr_url_alt;
-                            $debug_info .= "✅ API alternativa responde correctamente\n";
-                        } else {
-                            $debug_info .= "❌ Ninguna API responde, se usará QR de respaldo\n";
-                            $qr_url = $qr_base64;
-                        }
-                    }
-                } else {
-                    $debug_info .= "No se generó QR porque la URL está vacía\n";
-                }
-                
+
                 // Obtener información del usuario
                 $usuario_id = $venta['usuario_id'] ?? 0;
                 if ($usuario_id) {
@@ -285,7 +95,7 @@ if (!empty($dbname)) {
                     }
                     $stmt_usuario->close();
                 }
-                
+
                 // Obtener información de la sucursal
                 $sucursal_id = $venta['sucursal_id'] ?? 0;
                 if ($sucursal_id) {
@@ -301,7 +111,7 @@ if (!empty($dbname)) {
                     }
                     $stmt_sucursal->close();
                 }
-                
+
                 // Obtener los productos de la venta
                 $sql_productos = "SELECT vd.*, p.nombre, p.codigo, p.permite_fracciones, p.precio as precio_regular
                                  FROM venta_detalles vd 
@@ -311,12 +121,12 @@ if (!empty($dbname)) {
                 $stmt_productos->bind_param("i", $venta_id);
                 $stmt_productos->execute();
                 $result_productos = $stmt_productos->get_result();
-                
+
                 while ($producto = $result_productos->fetch_assoc()) {
                     $descuento_producto = $producto['descuento'] ?? 0;
                     $subtotal_original = $producto['precio_unitario'] * $producto['cantidad'];
                     $subtotal_con_descuento_producto = $producto['subtotal'];
-                    
+
                     $productos[] = array(
                         'nombre' => $producto['nombre'],
                         'cantidad' => $producto['cantidad'],
@@ -330,11 +140,10 @@ if (!empty($dbname)) {
                 $stmt_productos->close();
             }
             $stmt_venta->close();
-            
+
             $conn->close();
         }
     } catch (Exception $e) {
-        $debug_info .= "ERROR: " . $e->getMessage() . "\n";
         error_log("Error al obtener datos para el ticket: " . $e->getMessage());
     }
 }
@@ -344,14 +153,14 @@ if (empty($venta_data)) {
     die("Venta no encontrada");
 }
 
-// === NUEVO: MANEJO DE WHATSAPP ===
+// === MANEJO DE WHATSAPP ===
 if ($es_whatsapp) {
     // Calcular total de descuentos por productos
     $total_descuento_productos = 0;
     foreach ($productos as $producto) {
         $total_descuento_productos += $producto['descuento'] ?? 0;
     }
-    
+
     // Crear mensaje para WhatsApp
     $mensaje = "📋 *TICKET DE VENTA* 📋\n\n";
     $mensaje .= "*Empresa:* " . $empresa_nombre . "\n";
@@ -360,44 +169,45 @@ if ($es_whatsapp) {
     $mensaje .= "*Fecha:* " . date('d/m/Y H:i', strtotime($venta_data['fecha'])) . "\n";
     $mensaje .= "*Cliente:* " . $cliente_nombre . "\n";
     $mensaje .= "*Vendedor:* " . $usuario_nombre . "\n";
-    $mensaje .= "*Total:* $" . number_format($venta_data['total'], 2) . "\n";
+
+    // Totales
+    $mensaje .= "\n*Subtotal:* $" . number_format($subtotal_sin_descuento, 2) . "\n";
+    if ($descuento_total > 0) {
+        $mensaje .= "*Descuento:* -$" . number_format($descuento_total, 2) . "\n";
+    }
+    if ($iva_total > 0) {
+        $mensaje .= "*IVA:* $" . number_format($iva_total, 2) . "\n";
+    }
+    $mensaje .= "*TOTAL:* $" . number_format($venta_data['total'], 2) . "\n";
+
     $mensaje .= "*Método de pago:* " . strtoupper($venta_data['metodo_pago']) . "\n";
-    
+
     if ($venta_data['metodo_pago'] === 'efectivo') {
         $mensaje .= "*Efectivo:* $" . number_format($venta_data['efectivo_recibido'], 2) . "\n";
         $mensaje .= "*Cambio:* $" . number_format($venta_data['cambio'], 2) . "\n";
     }
-    
-    if ($descuento_total > 0) {
-        $mensaje .= "*Descuento:* -$" . number_format($descuento_total, 2) . "\n";
-    }
-    
+
     $mensaje .= "\n*PRODUCTOS:*\n";
-    
+
     foreach ($productos as $index => $producto) {
         $num = $index + 1;
         $cantidad = $producto['permite_fracciones'] ? number_format($producto['cantidad'], 3) : intval($producto['cantidad']);
         $nombre = substr($producto['nombre'], 0, 20);
         $precio = $producto['subtotal_con_descuento'] ?? $producto['subtotal'];
         $mensaje .= "{$num}. {$cantidad} x {$nombre} = $" . number_format($precio, 2) . "\n";
-        
+
         if (($producto['descuento'] ?? 0) > 0) {
             $mensaje .= "   (Desc: -$" . number_format($producto['descuento'], 2) . ")\n";
         }
     }
-    
-    if (!empty($facturacion_url)) {
-        $mensaje .= "\n🔗 *FACTURACIÓN:*\n";
-        $mensaje .= $facturacion_url . "\n";
-    }
-    
+
     $mensaje .= "\n🖨️ *Ver ticket completo:*\n";
     $protocolo = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
     $dominio = $_SERVER['HTTP_HOST'];
     $ruta = dirname($_SERVER['SCRIPT_NAME']);
     $ticket_url = $protocolo . $dominio . $ruta . "/reimprimir_ticket.php?venta_id=" . $venta_id;
     $mensaje .= $ticket_url;
-    
+
     // Redirigir a WhatsApp
     $whatsapp_url = "https://wa.me/?text=" . urlencode($mensaje);
     header("Location: " . $whatsapp_url);
@@ -472,31 +282,10 @@ header('Content-Type: text/html; charset=utf-8');
             .texto-descuento {
                 color: #000000 !important;
             }
-            
-            .qr-section-premium {
-                page-break-inside: avoid;
-            }
-        }
 
-        /* ESTILOS PARA DEPURACIÓN */
-        .debug-info {
-            display: block;
-            margin: 20px 0;
-            padding: 10px;
-            background: #f8f9fa;
-            border: 2px solid #dc3545;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            color: #333;
-            font-weight: normal;
-            width: 100%;
-            max-width: 300px;
-        }
-        
-        .debug-info * {
-            font-weight: normal !important;
+            .texto-iva {
+                color: #000000 !important;
+            }
         }
 
         /* CONTENEDOR PRINCIPAL */
@@ -799,6 +588,12 @@ header('Content-Type: text/html; charset=utf-8');
             font-weight: bold;
         }
 
+        /* ESTILO PARA IVA */
+        .texto-iva {
+            color: #000000 !important;
+            font-weight: bold;
+        }
+
         .descuento-producto {
             font-size: 8px !important;
             line-height: 1.1 !important;
@@ -846,68 +641,18 @@ header('Content-Type: text/html; charset=utf-8');
             line-height: 1.2 !important;
             margin-top: 1px;
         }
-        
-        /* ESTILOS PARA LA SECCIÓN QR */
-        .qr-section-premium {
-            text-align: center;
-            margin: 8px 0 5px 0;
-            padding: 5px 2px;
-            border-top: 1px solid #000;
-            border-bottom: 1px solid #000;
-        }
-        
-        .qr-text {
-            font-size: 10px;
+
+        /* DESGLOSE FISCAL */
+        .desglose-fiscal {
+            font-size: 9px;
+            line-height: 1.2;
             font-weight: bold;
-            margin-bottom: 4px;
-            letter-spacing: 0.5px;
+            margin: 3px 0;
         }
-        
-        .qr-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .qr-code {
-            width: 40mm;
-            height: 40mm;
-            max-width: 40mm;
-            max-height: 40mm;
-            margin: 3px auto;
-            border: 1px solid #000;
-            padding: 2px;
-            background: white;
-            object-fit: contain;
-        }
-        
-        .facturacion-nota {
-            font-size: 8px;
-            font-weight: bold;
-            margin: 2px 0;
-            color: #333;
-        }
-        
-        .qr-link {
-            font-size: 6px;
-            font-weight: bold;
-            word-break: break-all;
-            max-width: 45mm;
-            margin: 2px auto;
-            color: #0066cc;
-            text-decoration: none;
-            font-family: 'Courier New', monospace;
-        }
-        
-        @media print {
-            .qr-link {
-                color: #000000 !important;
-            }
-            
-            .facturacion-nota {
-                color: #000000 !important;
-            }
+
+        .desglose-fiscal td {
+            font-size: 9px;
+            padding: 1px 0;
         }
     </style>
 </head>
@@ -1072,18 +817,20 @@ header('Content-Type: text/html; charset=utf-8');
 
         <div class="doble-linea"></div>
 
-        <!-- Totales -->
+        <!-- Totales CON IVA -->
         <table class="seccion">
             <tr>
                 <td class="texto-izquierda">Subtotal:</td>
                 <td class="texto-derecha">$<?php echo number_format($subtotal_sin_descuento, 2); ?></td>
             </tr>
-            <?php if ($descuento_total > 0): ?>
-                <tr class="texto-descuento negrita">
-                    <td class="texto-izquierda">Descuento:</td>
-                    <td class="texto-derecha">-$<?php echo number_format($descuento_total, 2); ?></td>
+
+            <?php if ($iva_total > 0): ?>
+                <tr class="texto-iva negrita">
+                    <td class="texto-izquierda">IVA:</td>
+                    <td class="texto-derecha">$<?php echo number_format($iva_total, 2); ?></td>
                 </tr>
             <?php endif; ?>
+
             <tr class="total-final negrita">
                 <td class="texto-izquierda">TOTAL:</td>
                 <td class="texto-derecha">$<?php echo number_format($venta_data['total'], 2); ?></td>
@@ -1091,6 +838,8 @@ header('Content-Type: text/html; charset=utf-8');
         </table>
 
         <div class="linea-punteada"></div>
+
+       
 
         <!-- Información de pago -->
         <div class="info-empresa negrita seccion">
@@ -1111,28 +860,6 @@ header('Content-Type: text/html; charset=utf-8');
         <?php endif; ?>
 
         <div class="linea-divisoria"></div>
-        
-        <!-- SECCIÓN QR PARA FACTURACIÓN -->
-        <?php if (!empty($facturacion_url) && !empty($qr_url)): ?>
-        <div class="qr-section-premium">
-            <div class="qr-text negrita">
-                🌐 FACTURACIÓN ELECTRÓNICA
-            </div>
-            <div class="qr-container">
-                <img src="<?php echo $qr_url; ?>" alt="Código QR para facturación" class="qr-code" 
-                     onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'150\' height=\'150\' viewBox=\'0 0 150 150\'%3E%3Crect width=\'150\' height=\'150\' fill=\'%23ffffff\'/%3E%3Ctext x=\'10\' y=\'40\' font-family=\'Arial\' font-size=\'10\' fill=\'%23000000\'%3EQR no disponible%3C/text%3E%3Ctext x=\'10\' y=\'60\' font-family=\'Arial\' font-size=\'8\' fill=\'%23000000\'%3EURL directa:%3C/text%3E%3Ctext x=\'10\' y=\'80\' font-family=\'Arial\' font-size=\'6\' fill=\'%23000000\'%3E' + this.getAttribute('data-url').substring(0, 30) + '%3C/text%3E%3C/svg%3E';"
-                     data-url="<?php echo htmlspecialchars($facturacion_url); ?>">
-                
-                <div class="facturacion-nota">
-                    Escanee para factura electrónica
-                </div>
-                <div class="qr-link">
-                    <?php echo htmlspecialchars($facturacion_url); ?>
-                </div>
-            </div>
-        </div>
-        <div class="linea-divisoria"></div>
-        <?php endif; ?>
 
         <!-- Pie del ticket -->
         <div class="texto-centro pie-ticket seccion">
@@ -1147,6 +874,12 @@ header('Content-Type: text/html; charset=utf-8');
             <?php if ($descuento_total > 0): ?>
                 <div class="texto-descuento" style="font-size: 8px;">
                     * Descuento aplicado: $<?php echo number_format($descuento_total, 2); ?> *
+                </div>
+                <div class="espacio-minimo"></div>
+            <?php endif; ?>
+            <?php if ($iva_total > 0): ?>
+                <div class="texto-iva" style="font-size: 8px;">
+                    * IVA incluido: $<?php echo number_format($iva_total, 2); ?> *
                 </div>
                 <div class="espacio-minimo"></div>
             <?php endif; ?>
@@ -1182,7 +915,6 @@ header('Content-Type: text/html; charset=utf-8');
             }
 
             intentosImpresion++;
-           
 
             try {
                 window.print();
@@ -1190,7 +922,6 @@ header('Content-Type: text/html; charset=utf-8');
                 setTimeout(() => {
                     if (!impresionCompletada) {
                         impresionCompletada = true;
-                       
                         document.getElementById('estadoImpresion').innerHTML =
                             '✅ Impresión completada - Cerrando ventana...';
                         setTimeout(cerrarVentana, 1000);
@@ -1198,7 +929,6 @@ header('Content-Type: text/html; charset=utf-8');
                 }, 1000);
 
             } catch (error) {
-               
                 document.getElementById('estadoImpresion').innerHTML =
                     '❌ Error en impresión: ' + error.message;
             }
@@ -1213,7 +943,6 @@ header('Content-Type: text/html; charset=utf-8');
         }
 
         function cerrarVentana() {
-           
             window.close();
 
             setTimeout(() => {
@@ -1225,7 +954,6 @@ header('Content-Type: text/html; charset=utf-8');
         }
 
         function iniciarImpresionAutomatica() {
-          
             setTimeout(imprimirAutomaticamente, 800);
             setTimeout(imprimirAutomaticamente, 1200);
             setTimeout(imprimirAutomaticamente, 2000);
@@ -1236,7 +964,6 @@ header('Content-Type: text/html; charset=utf-8');
         window.addEventListener('focus', iniciarImpresionAutomatica);
 
         window.addEventListener('afterprint', function() {
-          
             impresionCompletada = true;
             document.getElementById('estadoImpresion').innerHTML =
                 '✅ Impresión completada - Cerrando ventana...';
@@ -1245,7 +972,6 @@ header('Content-Type: text/html; charset=utf-8');
 
         setTimeout(function() {
             if (!impresionCompletada && !window.closed) {
-               
                 document.getElementById('estadoImpresion').innerHTML =
                     '⏰ Cierre automático - Si la impresión falló, use el botón Reimprimir';
                 cerrarVentana();

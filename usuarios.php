@@ -421,9 +421,7 @@ function eliminarUsuario($conn)
                             Gestión de Usuarios
                         </h2>
                         <div class="d-flex align-items-center mt-2">
-                            <span class="plan-badge me-2">
-                                <i class="fas fa-crown me-1"></i>Plan <?php echo ucfirst($empresa_plan); ?>
-                            </span>
+                            
                             <span class="text-muted small">
                                 <i class="fas fa-users me-1"></i>
                                 <?php echo $total_usuarios; ?> / <?php echo $limite_usuarios; ?> usuarios utilizados

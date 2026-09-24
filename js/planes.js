@@ -9,13 +9,13 @@
 const PLANES_DATA = {
     basico: {
         nombre: 'Básico',
-        precio_mensual: 10,
-        precio_anual: 10,
+        precio_mensual: 299,
+        precio_anual: 239,
         usuarios: 1,
         cajas: 1,
         productos: 100
     },
-    profesional: {
+    starter: {
         nombre: 'Profesional',
         precio_mensual: 599,
         precio_anual: 479,
@@ -23,7 +23,7 @@ const PLANES_DATA = {
         cajas: 2,
         productos: 500
     },
-    empresarial: {
+    emprendedor: {
         nombre: 'Empresarial',
         precio_mensual: 999,
         precio_anual: 799,
@@ -299,7 +299,7 @@ function iniciarPollingPago({ tipo, identificador, intervaloMs = 6000, maxIntent
                     text: 'Tu suscripción ya quedó activa. Te enviamos un correo de confirmación.',
                     confirmButtonColor: '#27ae60'
                 }).then(() => {
-                    window.location.href = 'suscripciones.php';
+                    window.location.href = 'Inicio';
                 });
             } else if (data.status === 'rechazado') {
                 detenerPollingPago();
@@ -353,7 +353,6 @@ function toggleFacturacion() {
 // GENERAR PAGO CON TARJETA (IFRAME)
 // ============================================
 async function generarPago() {
-    console.log('generarPago() llamada - cargando en iframe');
     try {
         const overlay = document.getElementById('loadingOverlay');
         const loadingTitle = document.getElementById('loadingTitle');
@@ -368,6 +367,10 @@ async function generarPago() {
         const esAnual = esPeriodoAnual();
         const descripcion = `Suscripcion ${nombrePlan} - ${esAnual ? 'Anual' : 'Mensual'}`;
 
+        // 👇 Variables que faltaban
+        const planNombreInterno = planActual;                 // 'basico' | 'starter' | 'emprendedor' | 'premium'
+        const plazo = esAnual ? 'anual' : 'mensual';
+
         document.querySelectorAll('.btn-pay, .btn-primary.btn-sm').forEach(btn => {
             btn.disabled = true;
         });
@@ -380,11 +383,32 @@ async function generarPago() {
             body: JSON.stringify({
                 monto: monto,
                 descripcion: descripcion,
+                empresa_id: empresaId,
+                plan: planNombreInterno,
+                plazo: plazo,
+                tipo_servicio: 'Suscripcion',
                 ...obtenerDatosFacturacion()
             })
         });
 
-        const data = await response.json();
+        // ✅ Parseo blindado (por si PHP devuelve HTML en vez de JSON)
+        const rawText = await response.text();
+        let data;
+        try {
+            data = JSON.parse(rawText);
+        } catch (e) {
+            console.error('[generarPago] Respuesta no-JSON del servidor:', rawText);
+            if (overlay) overlay.classList.remove('active');
+            document.querySelectorAll('.btn-pay, .btn-primary.btn-sm').forEach(btn => btn.disabled = false);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error del servidor',
+                html: `<p>El servidor devolvió una respuesta inválida.</p>
+                       <pre style="text-align:left;font-size:11px;max-height:220px;overflow:auto;background:#f5f5f5;padding:8px;border-radius:4px;">${rawText.slice(0, 800).replace(/</g, '&lt;')}</pre>`,
+                confirmButtonColor: '#27ae60'
+            });
+            return;
+        }
 
         if (overlay) overlay.classList.remove('active');
 
@@ -393,7 +417,6 @@ async function generarPago() {
         });
 
         if (data.success && data.url) {
-            console.log('URL recibida:', data.url);
             const cardInfoView = document.getElementById('cardInfoView');
             const cardResultView = document.getElementById('cardResultView');
             const paymentIframe = document.getElementById('paymentIframe');
@@ -403,7 +426,6 @@ async function generarPago() {
             if (paymentIframe) {
                 paymentIframe.src = data.url;
                 window._paymentUrl = data.url;
-                console.log('Iframe cargado con la URL');
             }
 
             const tabCard = document.getElementById('tab-card');
@@ -412,8 +434,6 @@ async function generarPago() {
                 tab.show();
             }
 
-            // Empezamos a preguntar si ya se acreditó el pago, usando la
-            // reference que acabamos de generar
             if (data.reference) {
                 iniciarPollingPago({ tipo: 'tarjeta', identificador: data.reference });
             }
@@ -1075,13 +1095,15 @@ async function toggleCargoAutomatico() {
  * se obtiene del DOM con obtenerNombrePlanActual(). Funciona igual que
  * generarPago() y generarCLABE(), que sí funcionan con todos los planes.
  */
+// ============================================
+// REFERENCIA EN EFECTIVO (OXXO / Paga de Todo)
+// ============================================
 async function generarReferenciaEfectivo() {
     const btn = document.getElementById('btnGenerarReferencia');
     const overlay = document.getElementById('loadingOverlay');
     const loadingTitle = document.getElementById('loadingTitle');
     const loadingMessage = document.getElementById('loadingMessage');
 
-    // 1) Monto del resumen (igual que tarjeta/SPEI)
     const monto = obtenerMontoActual();
     if (monto <= 0) {
         Swal.fire({
@@ -1093,7 +1115,6 @@ async function generarReferenciaEfectivo() {
         return;
     }
 
-    // 2) Nombre del plan desde el DOM (igual que tarjeta/SPEI)
     const nombrePlan = obtenerNombrePlanActual();
     if (!nombrePlan) {
         Swal.fire({
@@ -1105,14 +1126,10 @@ async function generarReferenciaEfectivo() {
         return;
     }
 
-    // 3) Periodo
     const esAnual = esPeriodoAnual();
     const plazo = esAnual ? 'anual' : 'mensual';
-
-    // 4) Descripción (máx 50 chars, pág. 7 del doc CCT)
     const descripcion = `Suscripcion ${nombrePlan} - ${esAnual ? 'Anual' : 'Mensual'}`.slice(0, 50);
 
-    // 5) Bloquear botón + overlay
     if (btn) {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Generando referencia...';
@@ -1122,12 +1139,11 @@ async function generarReferenciaEfectivo() {
     if (loadingMessage) loadingMessage.textContent = 'Creando tu ficha de pago en efectivo...';
 
     try {
-        // 6) Payload (mismo patrón que tarjeta/SPEI)
         const payload = {
             monto: monto,
             descripcion: descripcion,
             empresa_id: empresaId,
-            plan: planActual,                 // puede ser 'premium' o 'plus'; da igual
+            plan: planActual,
             plazo: plazo,
             tipo_servicio: 'Suscripcion',
             CustomerEmail: document.getElementById('refCustomerEmail')?.value?.trim()
@@ -1137,16 +1153,31 @@ async function generarReferenciaEfectivo() {
             ...obtenerDatosFacturacion()
         };
 
-        console.log('[generarReferenciaEfectivo] Payload:', payload);
-
         const resp = await fetch('Service/generar_referencia.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        const data = await resp.json();
-        console.log('[generarReferenciaEfectivo] Respuesta:', data);
+        const rawText = await resp.text();
+        let data;
+        try {
+            data = JSON.parse(rawText);
+        } catch (e) {
+            console.error('[generarReferenciaEfectivo] Respuesta no-JSON:', rawText);
+            if (overlay) overlay.classList.remove('active');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-barcode me-2"></i> Generar referencia de pago';
+            }
+            Swal.fire({
+                icon: 'error',
+                title: 'Error del servidor',
+                html: `<pre style="text-align:left;font-size:11px;max-height:220px;overflow:auto;background:#f5f5f5;padding:8px;border-radius:4px;">${rawText.slice(0, 800).replace(/</g, '&lt;')}</pre>`,
+                confirmButtonColor: '#27ae60'
+            });
+            return;
+        }
 
         if (overlay) overlay.classList.remove('active');
         if (btn) {
@@ -1154,37 +1185,34 @@ async function generarReferenciaEfectivo() {
             btn.innerHTML = '<i class="fas fa-barcode me-2"></i> Generar referencia de pago';
         }
 
-        // 7) Manejo de error del backend
         if (!data.success) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error al generar la referencia',
-                html: `
-                    <p>${data.error || 'Intenta de nuevo.'}</p>
-                    ${data.codigo_cct
-                        ? `<p class="text-muted" style="font-size:12px;">Código CCT: ${data.codigo_cct}</p>`
-                        : ''}
-                `,
+                html: `<p>${data.error || 'Intenta de nuevo.'}</p>`,
                 confirmButtonColor: '#27ae60'
             });
             return;
         }
 
-        // 8) Pintar resultado
+        // --- Pintar resultado ---
         document.getElementById('refReferenceValue').textContent = data.reference || '—';
         document.getElementById('refFolio').textContent = data.folio || '—';
         document.getElementById('refMonto').textContent =
             `$${Number(data.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN`;
         document.getElementById('refFechaExpiracion').textContent = data.fecha_expiracion || '—';
 
+        // ✅ BOTÓN QUE DESCARGA EL PDF
         const payformatLink = document.getElementById('refPayformatLink');
-        if (payformatLink && data.payformat) {
-            payformatLink.href = data.payformat;
+        if (payformatLink && (data.folio || data.reference)) {
+            payformatLink.href = `generar_pdf_referencia.php?folio=${encodeURIComponent(data.folio || '')}&referencia=${encodeURIComponent(data.reference || '')}`;
+            payformatLink.target = '_blank';
             payformatLink.style.display = 'inline-flex';
         } else if (payformatLink) {
             payformatLink.style.display = 'none';
         }
 
+        // --- Código de barras (si la API lo devolvió) ---
         const barcodeContainer = document.getElementById('refBarcodeContainer');
         const barcodeImg = document.getElementById('refBarcodeImg');
         if (barcodeContainer && barcodeImg && data.barcode) {
@@ -1194,11 +1222,9 @@ async function generarReferenciaEfectivo() {
             barcodeContainer.style.display = 'none';
         }
 
-        // 9) Guardar para polling
         window._refReference = data.reference || null;
         window._refFolio = data.folio || null;
 
-        // 10) Cambiar de vista
         document.getElementById('refInfoView').style.display = 'none';
         document.getElementById('refResultView').style.display = 'block';
 
@@ -1207,7 +1233,6 @@ async function generarReferenciaEfectivo() {
                 ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 100);
 
-        // 11) Polling
         if (data.reference) {
             iniciarPollingPago({
                 tipo: 'tarjeta',
@@ -1229,6 +1254,13 @@ async function generarReferenciaEfectivo() {
             confirmButtonColor: '#27ae60'
         });
     }
+}
+
+function volverDeReferencia() {
+    document.getElementById('refInfoView').style.display = 'block';
+    document.getElementById('refResultView').style.display = 'none';
+    window._refReference = null;
+    window._refFolio = null;
 }
 
 /**

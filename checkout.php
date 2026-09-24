@@ -15,13 +15,13 @@ $periodo = isset($_GET['periodo']) ? $_GET['periodo'] : 'mensual';
 $planes = [
     'basico' => [
         'nombre' => 'Básico',
-        'precio_mensual' => 10,
-        'precio_anual' => 10,
+        'precio_mensual' => 299,
+        'precio_anual' => 239,
         'usuarios' => 1,
         'cajas' => 1,
         'productos' => 100
     ],
-    'profesional' => [
+    'starter' => [
         'nombre' => 'Profesional',
         'precio_mensual' => 599,
         'precio_anual' => 479,
@@ -29,7 +29,7 @@ $planes = [
         'cajas' => 2,
         'productos' => 500
     ],
-    'empresarial' => [
+    'emprendedor' => [
         'nombre' => 'Empresarial',
         'precio_mensual' => 999,
         'precio_anual' => 799,
@@ -796,27 +796,6 @@ $plan_badge_class = match ($empresa_plan) {
                                                     Genera tu ficha y paga en OXXO, 7-Eleven, Farmacias, Walmart y más
                                                     de 10,000 puntos.
                                                 </p>
-                                            </div>
-
-                                            <div class="row g-3 mb-3">
-                                                <div class="col-12 col-md-6">
-                                                    <label class="form-label small fw-semibold">
-                                                        <i class="fas fa-user me-1"
-                                                            style="color:var(--primary-color);"></i>
-                                                        Nombre del cliente
-                                                    </label>
-                                                    <input type="text" class="form-control" id="refCustomerName"
-                                                        placeholder="Ej. Juan Pérez" maxlength="50">
-                                                </div>
-                                                <div class="col-12 col-md-6">
-                                                    <label class="form-label small fw-semibold">
-                                                        <i class="fas fa-envelope me-1"
-                                                            style="color:var(--primary-color);"></i>
-                                                        Correo electrónico
-                                                    </label>
-                                                    <input type="email" class="form-control" id="refCustomerEmail"
-                                                        placeholder="cliente@correo.com" maxlength="50">
-                                                </div>
                                             </div>
 
                                             <div class="alert alert-info d-flex align-items-start gap-2 mb-3"

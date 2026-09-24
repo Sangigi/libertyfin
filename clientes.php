@@ -122,11 +122,24 @@ try {
     // Construir consulta usando fecha_creacion
     $campos_select = "c.id, c.nombre, c.email, c.telefono, c.direccion, c.rfc, c.activo, c.fecha_creacion, c.fecha_actualizacion";
 
+    // Búsqueda: antes sólo filtraba con JS las filas de la página actual, así
+    // que un cliente en otra página nunca aparecía. Ahora se busca en toda
+    // la tabla y se reinicia a la página 1 (ver JS más abajo).
+    $buscar = trim($_GET['buscar'] ?? '');
+    $where_cli = '';
+    $params_cli = [];
+    if ($buscar !== '') {
+        $where_cli = "WHERE (c.nombre LIKE ? OR c.email LIKE ? OR c.telefono LIKE ? OR c.rfc LIKE ?)";
+        $like = '%' . $buscar . '%';
+        $params_cli = [$like, $like, $like, $like];
+    }
+
     // Obtener el total de registros para paginación
-    $sql_count = "SELECT COUNT(*) as total FROM clientes c";
-    $result_count = $conn->query($sql_count);
-    $total_registros = $result_count->fetch(PDO::FETCH_ASSOC)['total'];
-    $result_count = null;
+    $sql_count = "SELECT COUNT(*) as total FROM clientes c $where_cli";
+    $stmt_count = $conn->prepare($sql_count);
+    $stmt_count->execute($params_cli);
+    $total_registros = $stmt_count->fetch(PDO::FETCH_ASSOC)['total'];
+    $stmt_count = null;
 
     // Calcular total de páginas
     $total_paginas = ceil($total_registros / $registros_por_pagina);
@@ -140,11 +153,12 @@ try {
         SELECT 
             $campos_select
         FROM clientes c 
+        $where_cli
         ORDER BY c.fecha_actualizacion DESC, c.fecha_creacion DESC, c.id DESC
         LIMIT ? OFFSET ?
     ";
     $stmt_clientes = $conn->prepare($sql_clientes);
-    $stmt_clientes->execute([$registros_por_pagina, $offset]);
+    $stmt_clientes->execute(array_merge($params_cli, [$registros_por_pagina, $offset]));
     $clientes = $stmt_clientes->fetchAll(PDO::FETCH_ASSOC);
     
     // Asegurar valores por defecto
@@ -594,7 +608,8 @@ function eliminarCliente($conn)
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <div class="search-box">
                                     <i class="fas fa-search"></i>
-                                    <input type="text" class="form-control" placeholder="Buscar clientes..." id="searchInput">
+                                    <input type="text" class="form-control" placeholder="Buscar clientes..." id="searchInput"
+                                           value="<?php echo htmlspecialchars($buscar); ?>">
                                 </div>
                             </div>
                             <div class="col-md-4 mb-3 mb-md-0">
@@ -1414,21 +1429,25 @@ function eliminarCliente($conn)
                 }
             });
 
-            // Búsqueda en tiempo real
+            // Búsqueda: se manda al servidor (con debounce) para que
+            // encuentre clientes aunque estén en otra página del listado,
+            // no sólo los que ya están cargados en esta pantalla.
             const searchInput = document.getElementById('searchInput');
             if (searchInput) {
+                let searchTimer = null;
                 searchInput.addEventListener('input', function(e) {
-                    const searchTerm = e.target.value.toLowerCase();
-                    const rows = document.querySelectorAll('#clientesTable tbody tr');
-                    rows.forEach(row => {
-                        const text = row.textContent.toLowerCase();
-                        row.style.display = text.includes(searchTerm) ? '' : 'none';
-                    });
-                    const cards = document.querySelectorAll('#mobileClientes .col-12');
-                    cards.forEach(card => {
-                        const text = card.textContent.toLowerCase();
-                        card.style.display = text.includes(searchTerm) ? '' : 'none';
-                    });
+                    clearTimeout(searchTimer);
+                    const valor = e.target.value;
+                    searchTimer = setTimeout(function() {
+                        const params = new URLSearchParams(window.location.search);
+                        if (valor.trim() === '') {
+                            params.delete('buscar');
+                        } else {
+                            params.set('buscar', valor);
+                        }
+                        params.set('pagina', '1'); // toda búsqueda nueva arranca en la página 1
+                        window.location.search = params.toString();
+                    }, 450);
                 });
             }
 

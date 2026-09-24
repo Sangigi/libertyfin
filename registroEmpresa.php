@@ -312,7 +312,7 @@ function subirArchivo($archivo, $nombre_empresa, $tipo, $upload_dir)
 function getDatabaseScript()
 {
     return "
-    CREATE TABLE `sucursales` (
+CREATE TABLE `sucursales` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `direccion` text COLLATE utf8_unicode_ci,
@@ -327,7 +327,7 @@ function getDatabaseScript()
   KEY `idx_sucursales_nombre` (`nombre`)
 );
 
-    CREATE TABLE `usuarios` (
+CREATE TABLE `usuarios` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
   `password` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -342,18 +342,19 @@ function getDatabaseScript()
   UNIQUE KEY `username` (`username`),
   KEY `idx_usuarios_sucursal` (`sucursal_id`),
   CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursales` (`id`)
-);
+) ;
 
-    CREATE TABLE `categorias` (
+
+CREATE TABLE `categorias` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `descripcion` text COLLATE utf8_unicode_ci,
   `activo` tinyint(1) DEFAULT '1',
   `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-);
+) ;
 
-    CREATE TABLE `clientes` (
+CREATE TABLE `clientes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `telefono` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -367,7 +368,8 @@ function getDatabaseScript()
   PRIMARY KEY (`id`)
 ) ;
 
-    CREATE TABLE `proveedores` (
+
+CREATE TABLE `proveedores` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `contacto` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -380,9 +382,10 @@ function getDatabaseScript()
   `fecha_actualizacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_proveedores_nombre` (`nombre`)
-);
+) ;
 
-    CREATE TABLE `sistema_config` (
+
+CREATE TABLE `sistema_config` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nombre_empresa` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Mi Empresa',
   `rfc` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -402,10 +405,20 @@ function getDatabaseScript()
   `color_secundario` varchar(7) COLLATE utf8_unicode_ci DEFAULT '#2ecc71',
   `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `fecha_actualizacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `facturapi_test_api_key` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `paypal_client_id` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `paypal_secret` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `paypal_mode` enum('sandbox','live') COLLATE utf8_unicode_ci DEFAULT 'sandbox',
+  `paypal_webhook_id` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `tipo_persona` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'fisica o moral',
+  `razon_social` varchar(200) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `regimen_fiscal` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `cp_fiscal` varchar(5) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `documentacion_estado` varchar(20) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'sin_enviar',
   PRIMARY KEY (`id`)
 );
 
-    CREATE TABLE `tipos_movimiento_caja` (
+CREATE TABLE `tipos_movimiento_caja` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `tipo` enum('ingreso','egreso') COLLATE utf8_unicode_ci NOT NULL,
@@ -415,7 +428,8 @@ function getDatabaseScript()
   PRIMARY KEY (`id`)
 );
 
-    CREATE TABLE `caja` (
+
+CREATE TABLE `caja` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `sucursal_id` int(11) NOT NULL,
   `usuario_id` int(11) NOT NULL,
@@ -438,7 +452,7 @@ function getDatabaseScript()
   KEY `usuario_id` (`usuario_id`),
   CONSTRAINT `caja_ibfk_1` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursales` (`id`),
   CONSTRAINT `caja_ibfk_2` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`)
-);
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 CREATE TABLE `productos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `codigo` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
@@ -478,9 +492,9 @@ CREATE TABLE `productos` (
   KEY `idx_productos_activo` (`activo`),
   CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id`) ON DELETE SET NULL,
   CONSTRAINT `productos_ibfk_2` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id`)
-) ;
+);
 
-    CREATE TABLE `ventas` (
+CREATE TABLE `ventas` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `codigo_venta` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
   `cliente_id` int(11) DEFAULT NULL,
@@ -495,10 +509,20 @@ CREATE TABLE `productos` (
   `estado` enum('pendiente','completada','cancelada') COLLATE utf8_unicode_ci DEFAULT 'completada',
   `observaciones` text COLLATE utf8_unicode_ci,
   `fecha` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `fecha_original` datetime DEFAULT NULL,
+  `fecha_modificada_por` int(11) DEFAULT NULL,
+  `fecha_modificacion` datetime DEFAULT NULL,
+  `motivo_fecha` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `cambio` decimal(10,2) DEFAULT '0.00',
   `efectivo_recibido` decimal(10,2) DEFAULT '0.00',
   `urlfacturacion` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
   `facturapi_receipt_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `factura_uuid`  VARCHAR(36)  NULL,
+  `factura_folio` VARCHAR(50)  NULL,
+  `descripcion` varchar(500) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `paypal_order_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `paypal_payer_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `paypal_status` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `codigo_venta` (`codigo_venta`),
   KEY `cliente_id` (`cliente_id`),
@@ -512,6 +536,8 @@ CREATE TABLE `productos` (
   CONSTRAINT `ventas_ibfk_3` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursales` (`id`),
   CONSTRAINT `ventas_ibfk_4` FOREIGN KEY (`caja_id`) REFERENCES `caja` (`id`)
 );
+
+
 
 CREATE TABLE `compras` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -535,7 +561,7 @@ CREATE TABLE `compras` (
   CONSTRAINT `compras_ibfk_1` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id`) ON DELETE CASCADE,
   CONSTRAINT `compras_ibfk_2` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`),
   CONSTRAINT `compras_ibfk_3` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursales` (`id`)
-) ;
+);
 
 CREATE TABLE `compra_detalles` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -554,7 +580,7 @@ CREATE TABLE `compra_detalles` (
   CONSTRAINT `compra_detalles_ibfk_2` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`)
 );
 
-    CREATE TABLE `producto_sucursal` (
+CREATE TABLE `producto_sucursal` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `producto_id` int(11) NOT NULL,
   `sucursal_id` int(11) NOT NULL,
@@ -570,7 +596,8 @@ CREATE TABLE `compra_detalles` (
   CONSTRAINT `producto_sucursal_ibfk_2` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursales` (`id`) ON DELETE CASCADE
 );
 
-    CREATE TABLE `venta_detalles` (
+
+CREATE TABLE `venta_detalles` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `venta_id` int(11) NOT NULL,
   `producto_id` int(11) NOT NULL,
@@ -587,7 +614,8 @@ CREATE TABLE `compra_detalles` (
   KEY `producto_id` (`producto_id`),
   CONSTRAINT `venta_detalles_ibfk_1` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE,
   CONSTRAINT `venta_detalles_ibfk_2` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`)
-);
+) ;
+
 
 CREATE TABLE `movimientos_caja` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -606,9 +634,9 @@ CREATE TABLE `movimientos_caja` (
   KEY `sucursal_id` (`sucursal_id`),
   CONSTRAINT `movimientos_caja_ibfk_1` FOREIGN KEY (`caja_id`) REFERENCES `caja` (`id`),
   CONSTRAINT `movimientos_caja_ibfk_2` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursales` (`id`)
-);
+) ;
 
-    CREATE TABLE `movimientos_inventario` (
+CREATE TABLE `movimientos_inventario` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `producto_id` int(11) NOT NULL,
   `sucursal_id` int(11) NOT NULL,
@@ -631,6 +659,7 @@ CREATE TABLE `movimientos_caja` (
   CONSTRAINT `movimientos_inventario_ibfk_3` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`)
 );
 
+
 CREATE TABLE `producto_imagenes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `producto_id` int(11) NOT NULL,
@@ -641,18 +670,7 @@ CREATE TABLE `producto_imagenes` (
   PRIMARY KEY (`id`),
   KEY `idx_producto` (`producto_id`),
   CONSTRAINT `producto_imagenes_ibfk_1` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE
-);
-
-CREATE TABLE `producto_precios_mayoreo` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `producto_id` int(11) NOT NULL,
-  `cantidad_minima` decimal(10,2) NOT NULL,
-  `precio_especial` decimal(10,2) NOT NULL,
-  `activo` tinyint(1) DEFAULT '1',
-  PRIMARY KEY (`id`),
-  KEY `producto_id` (`producto_id`),
-  CONSTRAINT `producto_precios_mayoreo_ibfk_1` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE
-);
+) ;
 
 CREATE TABLE `comision_areas` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -661,7 +679,7 @@ CREATE TABLE `comision_areas` (
   `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `nombre` (`nombre`)
-);
+) ;
 
 CREATE TABLE `comision_colaboradores` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -694,7 +712,7 @@ CREATE TABLE `comision_reglas` (
   PRIMARY KEY (`id`),
   KEY `idx_area` (`area_id`),
   CONSTRAINT `comision_reglas_ibfk_1` FOREIGN KEY (`area_id`) REFERENCES `comision_areas` (`id`) ON DELETE CASCADE
-);
+) ;
 
 CREATE TABLE `gastos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -707,6 +725,8 @@ CREATE TABLE `gastos` (
   `usuario_id` int(11) DEFAULT NULL,
   `sucursal_id` int(11) DEFAULT NULL,
   `metodo_pago` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `proveedor` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `numero_referencia` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `comprobante` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `descripcion` text COLLATE utf8mb4_unicode_ci,
   `fecha` datetime NOT NULL,
@@ -718,26 +738,31 @@ CREATE TABLE `gastos` (
   KEY `idx_gastos_tipo` (`tipo`),
   KEY `idx_gastos_venta_id` (`venta_id`),
   KEY `idx_gastos_sucursal_id` (`sucursal_id`)
-);
+) ;
 
 CREATE TABLE `venta_comisiones` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `venta_id` int(11) NOT NULL,
   `venta_detalle_id` int(11) NOT NULL,
   `area_id` int(11) DEFAULT NULL,
-  `area_nombre` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `area_nombre` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `regla_id` int(11) DEFAULT NULL,
-  `concepto` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `concepto` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `colaborador_id` int(11) DEFAULT NULL,
-  `colaborador_nombre` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `colaborador_nombre` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `porcentaje_regla` decimal(5,2) NOT NULL,
   `porcentaje_reparto` decimal(5,2) NOT NULL DEFAULT '100.00',
   `costo_unitario` decimal(10,2) NOT NULL,
+  `gasto_operacion` decimal(12,2) NOT NULL DEFAULT '0.00',
   `precio_unitario` decimal(10,2) NOT NULL,
   `cantidad` decimal(10,3) NOT NULL,
   `monto_base` decimal(10,2) NOT NULL,
   `monto_comision` decimal(10,2) NOT NULL,
   `usuario_id` int(11) DEFAULT NULL,
+  `cancelada` tinyint(1) NOT NULL DEFAULT '0',
+  `cancelada_por` int(11) DEFAULT NULL,
+  `fecha_cancelacion` datetime DEFAULT NULL,
+  `motivo_cancelacion` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_venta` (`venta_id`),
@@ -746,11 +771,183 @@ CREATE TABLE `venta_comisiones` (
   KEY `idx_fecha` (`fecha_creacion`),
   KEY `venta_comisiones_ibfk_4` (`area_id`),
   KEY `venta_comisiones_ibfk_5` (`regla_id`),
+  KEY `idx_vc_cancelada` (`cancelada`),
   CONSTRAINT `venta_comisiones_ibfk_1` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE,
   CONSTRAINT `venta_comisiones_ibfk_2` FOREIGN KEY (`venta_detalle_id`) REFERENCES `venta_detalles` (`id`) ON DELETE CASCADE,
   CONSTRAINT `venta_comisiones_ibfk_3` FOREIGN KEY (`colaborador_id`) REFERENCES `comision_colaboradores` (`id`) ON DELETE SET NULL,
   CONSTRAINT `venta_comisiones_ibfk_4` FOREIGN KEY (`area_id`) REFERENCES `comision_areas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `venta_comisiones_ibfk_5` FOREIGN KEY (`regla_id`) REFERENCES `comision_reglas` (`id`) ON DELETE SET NULL
+);
+
+CREATE TABLE `datos_pago_comercio` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `titular_nombre` varchar(200) DEFAULT NULL COMMENT 'Como aparece en el estado de cuenta',
+  `nombre_comercio` varchar(200) DEFAULT NULL COMMENT 'Nombre comercial / de sucursal',
+  `titular_correo` varchar(160) DEFAULT NULL,
+  `giro` varchar(200) DEFAULT NULL,
+  `calle_numero` varchar(200) DEFAULT NULL,
+  `numero_interior` varchar(50) DEFAULT NULL,
+  `colonia` varchar(150) DEFAULT NULL,
+  `delegacion_municipio` varchar(150) DEFAULT NULL,
+  `ciudad` varchar(100) DEFAULT NULL,
+  `estado_direccion` varchar(100) DEFAULT NULL,
+  `pais` varchar(100) DEFAULT 'México',
+  `telefono_oficina` varchar(20) DEFAULT NULL,
+  `telefono_celular` varchar(20) DEFAULT NULL,
+  `nombre_vendedor` varchar(150) DEFAULT NULL,
+  `rep_legal_nombre` varchar(200) DEFAULT NULL,
+  `rep_legal_escritura` varchar(200) DEFAULT NULL,
+  `rep_legal_notaria_numero` varchar(50) DEFAULT NULL,
+  `rep_legal_notario_nombre` varchar(200) DEFAULT NULL,
+  `rep_legal_ciudad` varchar(100) DEFAULT NULL,
+  `empresa_escritura` varchar(200) DEFAULT NULL COMMENT 'Solo persona moral',
+  `empresa_folio_rpc` varchar(100) DEFAULT NULL,
+  `empresa_ciudad` varchar(100) DEFAULT NULL,
+  `empresa_notario_nombre` varchar(200) DEFAULT NULL,
+  `empresa_notaria_numero` varchar(50) DEFAULT NULL,
+  `id_tipo` varchar(50) DEFAULT NULL,
+  `id_numero` varchar(100) DEFAULT NULL,
+  `id_fecha_expedicion` date DEFAULT NULL,
+  `id_vigencia` date DEFAULT NULL,
+  `banco` varchar(100) DEFAULT NULL,
+  `plaza` varchar(100) DEFAULT NULL,
+  `sucursal_bancaria` varchar(100) DEFAULT NULL,
+  `cuenta_cheques` varchar(30) DEFAULT NULL,
+  `cuenta_clabe` varchar(18) DEFAULT NULL COMMENT 'Dato sensible',
+  `clausulado_aceptado_en` datetime DEFAULT NULL,
+  `actualizado_en` datetime DEFAULT NULL,
+  `actualizado_por` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
+
+
+CREATE TABLE `documentos_comercio` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tipo` varchar(40) NOT NULL,
+  `ruta_archivo` varchar(500) NOT NULL,
+  `nombre_original` varchar(255) DEFAULT NULL,
+  `mime_real` varchar(100) DEFAULT NULL,
+  `tamano_bytes` int(11) DEFAULT NULL,
+  `estado` varchar(20) NOT NULL DEFAULT 'pendiente' COMMENT 'pendiente | aprobado | rechazado',
+  `motivo_rechazo` varchar(300) DEFAULT NULL,
+  `subido_por` int(11) DEFAULT NULL,
+  `subido_en` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `revisado_por` int(11) DEFAULT NULL,
+  `revisado_en` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_documentos_comercio_tipo` (`tipo`)
+);
+
+CREATE TABLE `emida_configuracion` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `config_key` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `config_value` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `descripcion` text COLLATE utf8_unicode_ci,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `config_key` (`config_key`)
+);
+
+CREATE TABLE `emida_transacciones` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sucursal_id` int(11) NOT NULL,
+  `usuario_id` int(11) NOT NULL,
+  `caja_id` int(11) DEFAULT NULL,
+  `tipo_operacion` enum('recarga','pago_servicio','venta_directa') COLLATE utf8_unicode_ci NOT NULL,
+  `product_id` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `product_name` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `account_id` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `invoice_no` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `version` varchar(10) COLLATE utf8_unicode_ci DEFAULT '01',
+  `terminal_id` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `clerk_id` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `response_code` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `h2h_result_code` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `response_message` text COLLATE utf8_unicode_ci,
+  `carrier_control_no` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `transaction_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `pin` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `control_no` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `customer_service_no` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `transaction_datetime` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `is_duplicate` tinyint(1) DEFAULT '0',
+  `estado` enum('exitosa','fallida','duplicada') COLLATE utf8_unicode_ci DEFAULT NULL,
+  `requires_lookup` tinyint(1) DEFAULT '0',
+  `request_data` text COLLATE utf8_unicode_ci,
+  `response_data` text COLLATE utf8_unicode_ci,
+  `fecha` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `sucursal_id` (`sucursal_id`),
+  KEY `usuario_id` (`usuario_id`),
+  KEY `caja_id` (`caja_id`),
+  KEY `idx_emida_fecha` (`fecha`),
+  KEY `idx_emida_account` (`account_id`),
+  KEY `idx_emida_transaction` (`transaction_id`),
+  KEY `idx_requires_lookup` (`requires_lookup`),
+  KEY `idx_invoice_no` (`invoice_no`),
+  KEY `idx_estado` (`estado`),
+  CONSTRAINT `emida_transacciones_ibfk_1` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursales` (`id`),
+  CONSTRAINT `emida_transacciones_ibfk_2` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`),
+  CONSTRAINT `emida_transacciones_ibfk_3` FOREIGN KEY (`caja_id`) REFERENCES `caja` (`id`)
+);
+
+CREATE TABLE `venta_pagos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `venta_id` int(11) NOT NULL,
+  `tipo` enum('anticipo','abono','liquidacion') NOT NULL DEFAULT 'abono',
+  `monto` decimal(12,2) NOT NULL,
+  `fecha_pago` date NOT NULL,
+  `metodo_pago` varchar(30) DEFAULT NULL,
+  `banco` varchar(100) DEFAULT NULL,
+  `referencia` varchar(100) DEFAULT NULL,
+  `notas` varchar(255) DEFAULT NULL,
+  `usuario_id` int(11) DEFAULT NULL,
+  `sucursal_id` int(11) DEFAULT NULL,
+  `cancelado` tinyint(1) NOT NULL DEFAULT '0',
+  `cancelado_por` int(11) DEFAULT NULL,
+  `fecha_cancelacion` datetime DEFAULT NULL,
+  `motivo_cancelacion` varchar(255) DEFAULT NULL,
+  `creado_en` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_vp_venta` (`venta_id`),
+  KEY `idx_vp_fecha` (`fecha_pago`),
+  KEY `idx_vp_cancelado` (`cancelado`),
+  CONSTRAINT `venta_pagos_ibfk_1` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `pago_comisiones` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `pago_id` int(11) NOT NULL,
+  `venta_comision_id` int(11) NOT NULL,
+  `venta_id` int(11) NOT NULL,
+  `colaborador_id` int(11) DEFAULT NULL,
+  `colaborador_nombre` varchar(150) DEFAULT NULL,
+  `area_nombre` varchar(150) DEFAULT NULL,
+  `porcentaje` decimal(6,2) NOT NULL DEFAULT '0.00',
+  `proporcion_cobrada` decimal(9,6) NOT NULL DEFAULT '0.000000',
+  `monto` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `fecha_pago` date NOT NULL,
+  `creado_en` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_pc_pago` (`pago_id`),
+  KEY `idx_pc_venta` (`venta_id`),
+  KEY `idx_pc_colab` (`colaborador_id`),
+  KEY `idx_pc_fecha` (`fecha_pago`),
+  KEY `pago_comisiones_ibfk_2` (`venta_comision_id`),
+  CONSTRAINT `pago_comisiones_ibfk_1` FOREIGN KEY (`pago_id`) REFERENCES `venta_pagos` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `pago_comisiones_ibfk_2` FOREIGN KEY (`venta_comision_id`) REFERENCES `venta_comisiones` (`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `producto_precios_mayoreo` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `producto_id` int(11) NOT NULL,
+  `cantidad_minima` decimal(10,2) NOT NULL,
+  `precio_especial` decimal(10,2) NOT NULL,
+  `activo` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `producto_id` (`producto_id`),
+  CONSTRAINT `producto_precios_mayoreo_ibfk_1` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE
 );
 
 
@@ -797,6 +994,35 @@ CREATE TABLE `venta_comisiones` (
     LEFT JOIN categorias c ON p.categoria_id = c.id
     LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
     WHERE p.stock <= p.stock_minimo AND p.activo = TRUE;
+    ;
+
+CREATE  VIEW v_cuentas_por_cobrar AS
+SELECT 
+    v.id                                        AS venta_id,
+    v.codigo_venta                              AS codigo_venta,
+    CAST(v.fecha AS DATE)                       AS fecha_venta,
+    COALESCE(c.nombre, 'Cliente General')       AS cliente,
+    v.total                                     AS total,
+    COALESCE(p.cobrado, 0)                      AS cobrado,
+    (v.total - COALESCE(p.cobrado, 0))          AS saldo,
+    ROUND((COALESCE(p.cobrado, 0) / NULLIF(v.total, 0)) * 100, 2) AS pct_cobrado,
+    p.ultimo_pago                               AS ultimo_pago,
+    (TO_DAYS(CURDATE()) - TO_DAYS(CAST(v.fecha AS DATE))) AS dias_desde_la_venta
+FROM ventas v
+LEFT JOIN clientes c 
+    ON c.id = v.cliente_id
+LEFT JOIN (
+    SELECT 
+        venta_id,
+        SUM(monto)       AS cobrado,
+        MAX(fecha_pago)  AS ultimo_pago
+    FROM venta_pagos
+    WHERE cancelado = 0
+    GROUP BY venta_id
+) p 
+    ON p.venta_id = v.id
+WHERE v.estado = 'completada'
+  AND (v.total - COALESCE(p.cobrado, 0)) > 0.005;
     ";
 }
 

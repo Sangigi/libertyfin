@@ -16,11 +16,65 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit();
 }
 
+// ============================================================
+// VERIFICAR SI LA SUSCRIPCIÓN ESTÁ EXPIRADA
+// Si la sesión tiene la bandera de suscripción expirada, redirigir.
+// ============================================================
+if (isset($_SESSION['suscripcion_expirada']) && $_SESSION['suscripcion_expirada'] === true) {
+    header("Location: suscripcion_expirada.php");
+    exit();
+}
+
 // Cargar configuraciones
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/env_loader.php';
 
 try {
+    // ============================================================
+    // VERIFICAR ESTADO DE LA EMPRESA EN LA BD PRINCIPAL
+    // (activo y fecha_vencimiento) antes de cargar todo lo demás.
+    // ============================================================
+    $conn_main = getDBConnection();
+    $empresa_plan = "prueba";
+    $timbres_totales = 0;
+    $timbres_disponibles = 0;
+    $terminal_emida = null;
+
+    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida, activo, fecha_vencimiento 
+                    FROM empresas WHERE id = ?";
+    $stmt_empresa = $conn_main->prepare($sql_empresa);
+    $stmt_empresa->execute([$_SESSION['empresa_id']]);
+    $result_empresa = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
+
+    if ($result_empresa) {
+        // Verificar si la empresa está inactiva o su suscripción expiró
+        $empresa_activa = intval($result_empresa['activo']) === 1;
+        $fecha_venc = $result_empresa['fecha_vencimiento'] ?? null;
+        $empresa_no_vencida = true;
+        
+        if (!empty($fecha_venc)) {
+            $hoy = date('Y-m-d');
+            $empresa_no_vencida = ($fecha_venc >= $hoy);
+        }
+
+        if (!$empresa_activa || !$empresa_no_vencida) {
+            // Marcar sesión y redirigir a la página de suscripción expirada
+            $_SESSION['suscripcion_expirada'] = true;
+            $_SESSION['empresa_plan'] = $result_empresa['plan'] ?? 'prueba';
+            
+            error_log("Acceso bloqueado a dashboard - Empresa inactiva/vencida. Empresa ID: {$_SESSION['empresa_id']}, IP: {$_SERVER['REMOTE_ADDR']}");
+            
+            header("Location: suscripcion_expirada.php");
+            exit();
+        }
+
+        $empresa_plan = $result_empresa['plan'];
+        $timbres_totales = $result_empresa['timbres_totales'] ?? 0;
+        $timbres_disponibles = $result_empresa['timbres_disponibles'] ?? 0;
+        $terminal_emida = $result_empresa['terminal_emida'] ?? null;
+    }
+    $_SESSION['empresa_plan'] = $empresa_plan;
+
     // Conexión a la BD de la empresa
     $conn = getEmpresaDBConnection($_SESSION['empresa_db']);
 
@@ -81,25 +135,6 @@ try {
     $result_estadisticas = $conn->query($sql_estadisticas);
     $estadisticas = $result_estadisticas->fetch(PDO::FETCH_ASSOC);
 
-    // Plan y timbres desde BD principal
-    $conn_main = getDBConnection();
-    $empresa_plan = "prueba";
-    $timbres_totales = 0;
-    $timbres_disponibles = 0;
-    $terminal_emida = null;
-
-    $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida FROM empresas WHERE id = ?";
-    $stmt_empresa = $conn_main->prepare($sql_empresa);
-    $stmt_empresa->execute([$_SESSION['empresa_id']]);
-    $result_empresa = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
-    if ($result_empresa) {
-        $empresa_plan = $result_empresa['plan'];
-        $timbres_totales = $result_empresa['timbres_totales'] ?? 0;
-        $timbres_disponibles = $result_empresa['timbres_disponibles'] ?? 0;
-        $terminal_emida = $result_empresa['terminal_emida'] ?? null;
-    }
-    $_SESSION['empresa_plan'] = $empresa_plan;
-
     // Alias: valores legados del enum `plan` en la BD -> claves del catálogo
     // de planes actual (mismo mapeo que ya usa cuenta.php), para que el
     // badge muestre el nombre de plan vigente y no un nombre viejo como
@@ -107,7 +142,7 @@ try {
     $plan_alias_dashboard = [
         'prueba'      => null,
         'basico'      => 'basico',
-        'starter'     => 'basico',
+        'starter'     => 'profesional',
         'emprendedor' => 'profesional',
         'premium'     => 'empresarial',
         'profesional' => 'profesional',

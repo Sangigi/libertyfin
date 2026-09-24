@@ -211,7 +211,7 @@ try {
             </div>
 
             <!-- Detalle -->
-            <div class="card">
+            <div class="card d-none d-lg-block">
                 <div class="card-header"><i class="fas fa-list me-2"></i>Detalle</div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -278,6 +278,62 @@ try {
                         </table>
                     </div>
                 </div>
+            </div>
+
+            <!-- Detalle (Móvil) -->
+            <div class="d-lg-none">
+                <?php if (empty($cuentas)): ?>
+                    <div class="card">
+                        <div class="card-body text-center text-success py-4">
+                            <i class="fas fa-check-circle fa-2x d-block mb-2"></i>
+                            No hay saldos pendientes
+                        </div>
+                    </div>
+                <?php else: foreach ($cuentas as $c):
+                    $d = (int)$c['dias_desde_la_venta'];
+                    $cls = $d > 90 ? 'danger' : ($d > 60 ? 'warning' : ($d > 30 ? 'info' : 'success'));
+                ?>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <code class="d-block"><?php echo safe_html($c['codigo_venta']); ?></code>
+                                    <span class="fw-bold"><?php echo safe_html($c['cliente']); ?></span>
+                                </div>
+                                <span class="badge bg-<?php echo $cls; ?>"><?php echo $d; ?> días</span>
+                            </div>
+                            <div class="text-muted small mb-2">
+                                <i class="fas fa-calendar me-1"></i>Venta: <?php echo date('d/m/Y', strtotime($c['fecha_venta'])); ?>
+                                <?php if ($c['ultimo_pago']): ?>
+                                    &nbsp;·&nbsp;<i class="fas fa-clock me-1"></i>Último pago: <?php echo date('d/m/Y', strtotime($c['ultimo_pago'])); ?>
+                                <?php endif; ?>
+                            </div>
+                            <div class="row text-center g-2 mb-2">
+                                <div class="col-4">
+                                    <div class="text-muted small">Total</div>
+                                    <div class="fw-bold"><?php echo money($c['total']); ?></div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-muted small">Cobrado</div>
+                                    <div class="fw-bold text-success"><?php echo money($c['cobrado']); ?></div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-muted small">Saldo</div>
+                                    <div class="fw-bold text-danger"><?php echo money($c['saldo']); ?></div>
+                                </div>
+                            </div>
+                            <div class="progress mb-3" style="height:14px;">
+                                <div class="progress-bar bg-success" style="width: <?php echo (float)$c['pct_cobrado']; ?>%">
+                                    <?php echo round((float)$c['pct_cobrado']); ?>%
+                                </div>
+                            </div>
+                            <a href="ventas_lista.php?ver_venta=<?php echo (int)$c['venta_id']; ?>"
+                               class="btn btn-primary w-100">
+                                <i class="fas fa-hand-holding-dollar me-1"></i>Abonar
+                            </a>
+                        </div>
+                    </div>
+                <?php endforeach; endif; ?>
             </div>
         </main>
     </div>

@@ -24,7 +24,6 @@ class Config
             // Facturapi Configuration
             'facturapi' => [
                 'api_key' => getenv('FACTURAPI_API_KEY') ?: ''
-
             ],
 
             // cPanel API Configuration
@@ -56,8 +55,8 @@ class Config
             'spei' => [
                 'user' => getenv('SPEI_USER') ?: '',
                 'password' => getenv('SPEI_PASSWORD') ?: '',
-                'user_sanbox' => getenv('SPEI_USER_SAND') ?: '',    // ✓ Ahora es USER
-                'password_sanbox' => getenv('SPEI_PASSWORD_SAND') ?: '', // ✓ Ahora es PASSWORD
+                'user_sanbox' => getenv('SPEI_USER_SAND') ?: '',
+                'password_sanbox' => getenv('SPEI_PASSWORD_SAND') ?: '',
                 'integration_id' => getenv('SPEI_INTEGRATION_ID') ?: '',
                 'business_id' => getenv('SPEI_BUSINESS_ID') ?: '',
                 'url_generar' => getenv('SPEI_URL_GENERAR') ?: 'https://pagadetodo.mx/Pagadetodo/Service/GenerarLigaIndi',
@@ -80,33 +79,37 @@ class Config
                 'dias_vigencia_dom' => (int) (getenv('DOMICILIACION_DIAS_VIGENCIA') ?: 2)
             ],
             'referencia' => [
-                // Credenciales dedicadas (no reutilizar las de SPEI sandbox)
                 'user_ref' => getenv('REFERENCIA_USER') ?: '',
                 'password_ref' => getenv('REFERENCIA_PASSWORD') ?: '',
                 'integration_id_ref' => getenv('REFERENCIA_INTEGRATION_ID') ?: '',
                 'business_id_ref' => getenv('REFERENCIA_INTEGRATION_BUSINESS_ID') ?: '',
-
-                // Endpoint del generador de referencias de CCT / Paga de Todo
                 'url_general_ref' => getenv('REFERENCIA_GENERAR') ?: '',
-
-                // Vigencia por defecto de la referencia
                 'dias_vigencia_ref' => (int) (getenv('REFERENCIA_DIAS_VIGENCIA') ?: 3),
-
-                // Límites de monto (pág. 8 del documento: $50 – $15,000)
                 'monto_min_ref' => (float) (getenv('REFERENCIA_MONTO_MIN') ?: 50),
                 'monto_max_ref' => (float) (getenv('REFERENCIA_MONTO_MAX') ?: 15000),
-
-                // Timeout en segundos para cURL
                 'timeout_ref' => (int) (getenv('REFERENCIA_TIMEOUT') ?: 20),
             ],
 
             // ==========================================
-            // FACTURAPI - Facturación de suscripciones LibertyFin (emisor = LibertyFin)
+            // FACTURAPI - Suscripciones LibertyFin
             // ==========================================
             'facturapi_suscripciones' => [
                 'api_key' => getenv('FACTURAPI_SUSCRIPCIONES_API_KEY') ?: 'sk_user_LV9Sw1JcA15AUyxSfD53ntQH6sCMiYmRRMP6tpJCi2',
                 'organization_id' => getenv('FACTURAPI_SUSCRIPCIONES_ORG_ID') ?: '696ffda4c95bb2e1eee22e4c',
-            ]
+            ],
+
+            // ==========================================
+            // PAYPAL - Credenciales globales (Emprendedor y Premium)
+            // ==========================================
+            'paypal' => [
+                'client_id'         => getenv('PAYPAL_CLIENT_ID') ?: '',
+                'secret'            => getenv('PAYPAL_SECRET') ?: '',
+                'mode'              => getenv('PAYPAL_MODE') ?: 'sandbox',
+                'currency'          => getenv('PAYPAL_CURRENCY') ?: 'MXN',
+                'enabled'           => filter_var(getenv('PAYPAL_ENABLED') ?: 'true', FILTER_VALIDATE_BOOLEAN),
+                'webhook_id'        => getenv('PAYPAL_WEBHOOK_ID') ?: '',
+                'reconcile_minutes' => (int) (getenv('PAYPAL_RECONCILE_MINUTES') ?: 30),
+            ],
         ];
 
         // Establecer zona horaria
@@ -136,96 +139,109 @@ class Config
         return $value;
     }
 
-    public function getDBConfig()
-    {
-        return $this->config['db'];
-    }
-
-    public function getFacturapiConfig()
-    {
-        return $this->config['facturapi'];
-    }
-
-    public function getCpanelConfig()
-    {
-        return $this->config['cpanel'];
-    }
-
-    public function getSmtpConfig()
-    {
-        return $this->config['smtp'];
-    }
-
-    public function getAppConfig()
-    {
-        return $this->config['app'];
-    }
-
-    // ==========================================
-    // NUEVO: Obtener configuración SPEI
-    // ==========================================
-    public function getSpeiConfig()
-    {
-        return $this->config['spei'];
-    }
-
-    public function getDomiciliacionDonfig()
-    {
-        return $this->config['domicilacion'];
-    }
-
-    public function getFacturapiSuscripcionesConfig()
-    {
-        return $this->config['facturapi_suscripciones'];
-    }
-
-    public function getReferencia()
-    {
-        return $this->config['referencia'];
-    }
-
+    public function getDBConfig()                     { return $this->config['db']; }
+    public function getFacturapiConfig()              { return $this->config['facturapi']; }
+    public function getCpanelConfig()                 { return $this->config['cpanel']; }
+    public function getSmtpConfig()                   { return $this->config['smtp']; }
+    public function getAppConfig()                    { return $this->config['app']; }
+    public function getSpeiConfig()                   { return $this->config['spei']; }
+    public function getDomiciliacionDonfig()          { return $this->config['domicilacion']; }
+    public function getFacturapiSuscripcionesConfig() { return $this->config['facturapi_suscripciones']; }
+    public function getReferencia()                   { return $this->config['referencia']; }
+    public function getPaypalConfig()                 { return $this->config['paypal']; }
 }
 
-// Función helper para acceder a la configuración fácilmente
+// ==========================================
+// HELPERS
+// ==========================================
 function config($key, $default = null)
 {
     return Config::getInstance()->get($key, $default);
 }
 
-// Función helper para obtener configuración SPEI
 function speiConfig($key = null, $default = null)
 {
     $config = Config::getInstance()->getSpeiConfig();
-    if ($key === null) {
-        return $config;
-    }
+    if ($key === null) return $config;
     return $config[$key] ?? $default;
 }
 
 function domiciliacionConfig($key = null, $default = null)
 {
     $config = Config::getInstance()->getDomiciliacionDonfig();
-    if ($key === null) {
-        return $config;
-    }
+    if ($key === null) return $config;
     return $config[$key] ?? $default;
 }
 
 function facturapiSuscripcionesConfig($key = null, $default = null)
 {
     $config = Config::getInstance()->getFacturapiSuscripcionesConfig();
-    if ($key === null) {
-        return $config;
-    }
+    if ($key === null) return $config;
     return $config[$key] ?? $default;
 }
 
 function referenciaConfig($key = null, $default = null)
 {
     $config = Config::getInstance()->getReferencia();
-    if ($key === null) {
-        return $config;
-    }
+    if ($key === null) return $config;
     return $config[$key] ?? $default;
+}
+
+// ==========================================
+// PAYPAL - Helpers
+// ==========================================
+function paypalConfig($key = null, $default = null)
+{
+    $config = Config::getInstance()->getPaypalConfig();
+    if ($key === null) return $config;
+    return $config[$key] ?? $default;
+}
+
+/**
+ * Obtiene un access token de PayPal usando las credenciales globales.
+ * Lanza Exception si no se puede autenticar.
+ */
+function paypalGetAccessToken()
+{
+    $cfg = paypalConfig();
+    if (empty($cfg['client_id']) || empty($cfg['secret'])) {
+        throw new Exception('PayPal no configurado');
+    }
+
+    $base = ($cfg['mode'] === 'live')
+        ? 'https://api-m.paypal.com'
+        : 'https://api-m.sandbox.paypal.com';
+
+    $ch = curl_init("$base/v1/oauth2/token");
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_USERPWD        => $cfg['client_id'] . ':' . $cfg['secret'],
+        CURLOPT_POSTFIELDS     => 'grant_type=client_credentials',
+        CURLOPT_HTTPHEADER     => ['Accept: application/json'],
+        CURLOPT_TIMEOUT        => 30,
+    ]);
+    $resp = curl_exec($ch);
+    $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($http !== 200) {
+        throw new Exception('No se pudo autenticar con PayPal (HTTP ' . $http . ')');
+    }
+
+    $token = json_decode($resp, true)['access_token'] ?? null;
+    if (!$token) throw new Exception('Token PayPal inválido');
+    return $token;
+}
+
+/**
+ * Devuelve la URL base de la API de PayPal según el modo.
+ */
+function paypalApiBase()
+{
+    $cfg = paypalConfig();
+    return ($cfg['mode'] === 'live')
+        ? 'https://api-m.paypal.com'
+        : 'https://api-m.sandbox.paypal.com';
 }
 ?>

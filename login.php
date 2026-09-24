@@ -12,26 +12,25 @@ session_start();
 
 // VERIFICAR SI EL USUARIO YA ESTÁ LOGUEADO
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-    // Verificar integridad de la sesión (opcional pero recomendado)
     if (isset($_SESSION['ip_address']) && $_SESSION['ip_address'] !== $_SERVER['REMOTE_ADDR']) {
-        // IP cambió - posible secuestro de sesión
         session_destroy();
         error_log("Posible secuestro de sesión - IP cambio de {$_SESSION['ip_address']} a {$_SERVER['REMOTE_ADDR']}");
     } elseif (isset($_SESSION['user_agent']) && $_SESSION['user_agent'] !== $_SERVER['HTTP_USER_AGENT']) {
-        // User Agent cambió - posible secuestro de sesión
         session_destroy();
         error_log("Posible secuestro de sesión - User Agent cambio");
     } elseif (isset($_SESSION['login_time']) && (time() - $_SESSION['login_time']) > 28800) {
-        // Sesión expirada (8 horas)
         session_destroy();
         error_log("Sesión expirada por tiempo");
     } else {
-        // Sesión válida - redirigir al dashboard
+        // Si la sesión es de suscripción expirada, mantener en esa página
+        if (isset($_SESSION['suscripcion_expirada']) && $_SESSION['suscripcion_expirada'] === true) {
+            header("Location: suscripcion_expirada.php");
+            exit();
+        }
         header("Location: Inicio");
         exit();
     }
 }
-
 
 // Regenerar ID de sesión para prevenir fijación
 if (!isset($_SESSION['initialized'])) {
@@ -49,30 +48,25 @@ if (!isset($_SESSION['login_attempts'])) {
     $_SESSION['last_attempt_time'] = time();
 }
 
-// Verificar si hay demasiados intentos
 if ($_SESSION['login_attempts'] >= 5) {
     $time_diff = time() - $_SESSION['last_attempt_time'];
-    if ($time_diff < 900) { // 15 minutos de bloqueo
+    if ($time_diff < 900) {
         $mensaje = "Demasiados intentos fallidos. Por favor, espere " . ceil((900 - $time_diff) / 60) . " minutos.";
         $tipo_mensaje = "danger";
-        // No procesar el formulario
         $_POST = [];
     } else {
-        // Reiniciar contador después del tiempo de bloqueo
         $_SESSION['login_attempts'] = 0;
     }
 }
 
 // Procesar formulario de login
 if ($_SERVER["REQUEST_METHOD"] == "POST" && empty($mensaje)) {
-    // Validar token CSRF
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         $mensaje = "Error de seguridad. Por favor, recargue la página.";
         $tipo_mensaje = "danger";
     } else {
-        // Sanitizar entradas
         $usuario = trim(htmlspecialchars($_POST['usuario'], ENT_QUOTES, 'UTF-8'));
-        $password = $_POST['password']; // No sanitizar contraseña
+        $password = $_POST['password'];
 
         if (empty($usuario) || empty($password)) {
             $mensaje = "Usuario/Email y contraseña son obligatorios.";
@@ -81,13 +75,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && empty($mensaje)) {
             $_SESSION['last_attempt_time'] = time();
         } else {
             try {
-                // Configuración de conexión segura
                 $servername = "libertyfin.com.mx";
                 $username = "juanc141_alexis";
                 $password_db = "Alexis1997";
                 $db_main = "juanc141_ventas";
 
-                // Usar SSL para conexión a BD
                 $conn_main = new mysqli();
                 $conn_main->ssl_set(null, null, null, null, null);
                 $conn_main->real_connect($servername, $username, $password_db, $db_main, 3306, null, MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT);
@@ -96,11 +88,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && empty($mensaje)) {
                     throw new Exception("Error de conexión temporal. Intente más tarde.");
                 }
 
-                // Configurar charset a UTF-8
                 $conn_main->set_charset("utf8mb4");
 
-                // Usar prepared statements para evitar inyección SQL
-                $sql_empresas = "SELECT id, nombre_empresa, nombre_base_datos FROM empresas WHERE activo = TRUE";
+                // ⚠️ IMPORTANTE: Quitamos "WHERE activo = TRUE" para poder detectar
+                // empresas inactivas/expiradas y redirigir a suscripcion_expirada.php
+                $sql_empresas = "SELECT id, nombre_empresa, nombre_base_datos, activo, 
+                                        fecha_vencimiento, plan 
+                                 FROM empresas";
                 $result_empresas = $conn_main->query($sql_empresas);
 
                 if (!$result_empresas) {
@@ -110,12 +104,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && empty($mensaje)) {
                 $usuario_encontrado = false;
                 $empresa_db = "";
                 $empresa_nombre = "";
+                $empresa_id_principal = 0;
+                $empresa_plan = 'prueba';
                 $usuario_data = null;
                 $sucursal_data = null;
+                $suscripcion_vencida = false;
+                $datos_empresa_vencida = null;
 
                 // Buscar el usuario en cada base de datos de empresa
                 while ($empresa = $result_empresas->fetch_assoc()) {
-                    // Validar nombre de base de datos (solo caracteres permitidos)
                     if (!preg_match('/^[a-zA-Z0-9_]+$/', $empresa['nombre_base_datos'])) {
                         error_log("Nombre de BD inválido: " . $empresa['nombre_base_datos']);
                         continue;
@@ -132,13 +129,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && empty($mensaje)) {
 
                     $conn_empresa->set_charset("utf8mb4");
 
-                    // Verificar credenciales usando prepared statement - SIN campo 'eliminado'
+                    // ⚠️ Ya NO incluimos "activo" porque esa columna NO existe en usuarios
                     $sql_usuario = "SELECT id, username, password, nombre, rol, sucursal_id, email 
                                     FROM usuarios 
                                     WHERE (username = ? OR email = ?) 
-                                    AND activo = TRUE 
-                                    LIMIT 1"; // Limitar a un resultado
-                    
+                                    LIMIT 1";
+
                     $stmt_usuario = $conn_empresa->prepare($sql_usuario);
 
                     if (!$stmt_usuario) {
@@ -154,9 +150,48 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && empty($mensaje)) {
                     if ($result_usuario->num_rows > 0) {
                         $usuario_temp = $result_usuario->fetch_assoc();
 
-                        // Verificar contraseña con password_verify
                         if (password_verify($password, $usuario_temp['password'])) {
-                            // Verificar si la contraseña necesita ser re-hasheada
+
+                            // ============================================================
+                            // VERIFICAR SI LA EMPRESA ESTÁ ACTIVA Y NO EXPIRADA
+                            // ============================================================
+                            $empresa_activa = intval($empresa['activo']) === 1;
+                            $fecha_venc = $empresa['fecha_vencimiento'] ?? null;
+                            $empresa_no_vencida = true;
+                            
+                            if (!empty($fecha_venc)) {
+                                // Comparar con fecha actual (la fecha_vencimiento es tipo DATE)
+                                $hoy = date('Y-m-d');
+                                $empresa_no_vencida = ($fecha_venc >= $hoy);
+                            }
+
+                            error_log("LOGIN DEBUG - Empresa: {$empresa['nombre_empresa']} | activo: " . var_export($empresa['activo'], true) . " | fecha_venc: " . var_export($fecha_venc, true) . " | no_vencida: " . var_export($empresa_no_vencida, true));
+
+                            if (!$empresa_activa || !$empresa_no_vencida) {
+                                // --------------------------------------------------------
+                                // EMPRESA INACTIVA O SUSCRIPCIÓN VENCIDA
+                                // --------------------------------------------------------
+                                $suscripcion_vencida = true;
+                                $datos_empresa_vencida = [
+                                    'empresa_id' => intval($empresa['id']),
+                                    'empresa_db' => $empresa['nombre_base_datos'],
+                                    'empresa_nombre' => $empresa['nombre_empresa'],
+                                    'empresa_plan' => $empresa['plan'] ?? 'prueba',
+                                    'usuario_id' => intval($usuario_temp['id']),
+                                    'usuario_nombre' => $usuario_temp['nombre'],
+                                    'usuario_rol' => $usuario_temp['rol'],
+                                    'usuario_email' => $usuario_temp['email'] ?? ''
+                                ];
+
+                                $stmt_usuario->close();
+                                $conn_empresa->close();
+                                break; // Salir del while, ya encontramos al usuario
+                            }
+                            // ============================================================
+                            // FIN VERIFICACIÓN - Empresa activa, continuar
+                            // ============================================================
+
+                            // Rehash si es necesario
                             if (password_needs_rehash($usuario_temp['password'], PASSWORD_DEFAULT)) {
                                 $new_hash = password_hash($password, PASSWORD_DEFAULT);
                                 $update_stmt = $conn_empresa->prepare("UPDATE usuarios SET password = ? WHERE id = ?");
@@ -165,7 +200,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && empty($mensaje)) {
                                 $update_stmt->close();
                             }
 
-                            // Obtener información de la sucursal con prepared statement
+                            // Obtener sucursal
                             $sql_sucursal = "SELECT s.id, s.nombre, s.es_matriz, s.activo 
                                             FROM sucursales s 
                                             WHERE s.id = ? AND s.activo = TRUE";
@@ -182,6 +217,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && empty($mensaje)) {
                                     $usuario_encontrado = true;
                                     $empresa_db = $empresa['nombre_base_datos'];
                                     $empresa_nombre = $empresa['nombre_empresa'];
+                                    $empresa_id_principal = intval($empresa['id']);
+                                    $empresa_plan = $empresa['plan'] ?? 'prueba';
                                     $usuario_data = $usuario_temp;
                                     $sucursal_data = $sucursal_temp;
 
@@ -201,35 +238,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && empty($mensaje)) {
 
                 $conn_main->close();
 
-                if ($usuario_encontrado && $usuario_data && $sucursal_data) {
-                    // Obtener el ID de la empresa con prepared statement
-                    $conn_main_temp = new mysqli();
-                    $conn_main_temp->ssl_set(null, null, null, null, null);
-                    $conn_main_temp->real_connect($servername, $username, $password_db, $db_main, 3306, null, MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT);
-                    
-                    $sql_empresa_id = "SELECT id FROM empresas WHERE nombre_base_datos = ? AND activo = TRUE LIMIT 1";
-                    $stmt_empresa_id = $conn_main_temp->prepare($sql_empresa_id);
-                    $stmt_empresa_id->bind_param("s", $empresa_db);
-                    $stmt_empresa_id->execute();
-                    $result_empresa_id = $stmt_empresa_id->get_result();
-                    $empresa_id_data = $result_empresa_id->fetch_assoc();
-                    $stmt_empresa_id->close();
-                    $conn_main_temp->close();
-
-                    // Limpiar intentos de login
-                    $_SESSION['login_attempts'] = 0;
-                    
-                    // Regenerar ID de sesión por seguridad
+                // --------------------------------------------------------
+                // REDIRIGIR A SUSCRIPCIÓN EXPIRADA SI APLICA
+                // --------------------------------------------------------
+                if ($suscripcion_vencida && $datos_empresa_vencida) {
                     session_regenerate_id(true);
-                    
-                    // Login exitoso - Establecer variables de sesión
+
                     $_SESSION['logged_in'] = true;
                     $_SESSION['login_time'] = time();
                     $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'];
                     $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
-                    $_SESSION['empresa_id'] = intval($empresa_id_data['id'] ?? 0);
+                    $_SESSION['empresa_id'] = $datos_empresa_vencida['empresa_id'];
+                    $_SESSION['empresa_db'] = $datos_empresa_vencida['empresa_db'];
+                    $_SESSION['empresa_nombre'] = htmlspecialchars($datos_empresa_vencida['empresa_nombre']);
+                    $_SESSION['empresa_plan'] = $datos_empresa_vencida['empresa_plan'];
+                    $_SESSION['usuario_id'] = $datos_empresa_vencida['usuario_id'];
+                    $_SESSION['usuario_nombre'] = htmlspecialchars($datos_empresa_vencida['usuario_nombre']);
+                    $_SESSION['usuario_rol'] = htmlspecialchars($datos_empresa_vencida['usuario_rol']);
+                    $_SESSION['usuario_email'] = htmlspecialchars($datos_empresa_vencida['usuario_email']);
+                    $_SESSION['suscripcion_expirada'] = true;
+
+                    error_log("Login con suscripción expirada - Empresa: {$datos_empresa_vencida['empresa_nombre']}, IP: {$_SERVER['REMOTE_ADDR']}");
+
+                    header("Location: suscripcion_expirada.php");
+                    exit();
+                }
+
+                // --------------------------------------------------------
+                // LOGIN EXITOSO NORMAL
+                // --------------------------------------------------------
+                if ($usuario_encontrado && $usuario_data && $sucursal_data) {
+                    $_SESSION['login_attempts'] = 0;
+                    session_regenerate_id(true);
+
+                    $_SESSION['logged_in'] = true;
+                    $_SESSION['login_time'] = time();
+                    $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'];
+                    $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+                    $_SESSION['empresa_id'] = $empresa_id_principal;
                     $_SESSION['empresa_db'] = $empresa_db;
                     $_SESSION['empresa_nombre'] = htmlspecialchars($empresa_nombre);
+                    $_SESSION['empresa_plan'] = $empresa_plan;
                     $_SESSION['usuario_id'] = intval($usuario_data['id']);
                     $_SESSION['usuario_nombre'] = htmlspecialchars($usuario_data['nombre']);
                     $_SESSION['usuario_rol'] = htmlspecialchars($usuario_data['rol']);
@@ -238,10 +287,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && empty($mensaje)) {
                     $_SESSION['sucursal_es_matriz'] = intval($sucursal_data['es_matriz']);
                     $_SESSION['usuario_email'] = htmlspecialchars($usuario_data['email'] ?? '');
 
-                    // Registrar login exitoso en log
+                    // Limpiar bandera por si acaso
+                    unset($_SESSION['suscripcion_expirada']);
+
                     error_log("Login exitoso - Usuario: {$usuario_data['username']}, Empresa: $empresa_nombre, IP: {$_SERVER['REMOTE_ADDR']}");
 
-                    // Redirigir al dashboard
                     header("Location: Inicio");
                     exit();
                 } else {
@@ -272,9 +322,7 @@ if (empty($_SESSION['csrf_token'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Sistema Caja</title>
     <link rel="icon" href="images/favicon.ico" type="image/x-icon">
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -508,10 +556,8 @@ if (empty($_SESSION['csrf_token'])) {
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Focus en el campo usuario
             document.getElementById('usuario').focus();
 
-            // Funcionalidad del ojo
             const togglePasswordBtn = document.getElementById('togglePasswordBtn');
             const passwordInput = document.getElementById('password');
             const eyeIcon = togglePasswordBtn.querySelector('i');
@@ -529,7 +575,6 @@ if (empty($_SESSION['csrf_token'])) {
                 }
             });
 
-            // Prevenir envío duplicado
             const form = document.getElementById('loginForm');
             const submitBtn = document.getElementById('submitBtn');
 
@@ -539,7 +584,6 @@ if (empty($_SESSION['csrf_token'])) {
                     return;
                 }
                 
-                // Validación adicional del lado del cliente
                 const usuario = document.getElementById('usuario').value.trim();
                 const password = document.getElementById('password').value;
                 
