@@ -2,23 +2,158 @@
 /**
  * facturapi_suscripcion.php
  *
- * Timbra el CFDI de LibertyFin (emisor) hacia la empresa que paga su
- * suscripción (receptor), usando la organización maestra de Facturapi
- * de LibertyFin (NO la organización individual de cada empresa cliente,
- * esa es para que ELLAS facturen a SUS clientes en facturar_venta.php).
+ * Helpers de Facturapi para suscripciones de LibertyFin:
+ *   1. asegurarOrganizacionFacturapi() -> crea la organización del cliente (empresa)
+ *                                         SOLO si es premium y no existe.
+ *   2. timbrarFacturaSuscripcion()     -> timbra el CFDI de LibertyFin (emisor)
+ *                                         hacia la empresa que paga (receptor),
+ *                                         usando la organización MAESTRA de LibertyFin.
  */
 
+/* =============================================================================
+ * LOG
+ * ========================================================================== */
+if (!function_exists('facturapiSuscripcionLog')) {
+    function facturapiSuscripcionLog($mensaje, $tipo = 'INFO') {
+        $logDir = __DIR__ . '/../logs';
+        if (!is_dir($logDir)) mkdir($logDir, 0755, true);
+        $archivo = $logDir . "/facturapi_" . date('Y-m-d') . ".log";
+        $timestamp = date('Y-m-d H:i:s');
+        file_put_contents($archivo, "[$timestamp] [$tipo] $mensaje" . PHP_EOL, FILE_APPEND | LOCK_EX);
+    }
+}
+
+/* =============================================================================
+ * LIMPIAR RFC
+ * ========================================================================== */
 function limpiarRFCSuscripcion($rfc) {
     return strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', (string) $rfc));
 }
 
-/**
- * @param array  $datosFiscales ['razon_social','rfc','email_factura','regimen_fiscal','cp','metodo_pago_sat','uso_cfdi']
- * @param float  $monto         Monto total cobrado (MXN, con IVA incluido si aplica)
- * @param string $descripcionPlan Ej: "Suscripción LibertyFin - Plan Profesional - Mensual"
+/* =============================================================================
+ * ASEGURAR ORGANIZACIÓN EN FACTURAPI
+ * -----------------------------------------------------------------------------
+ * Crea la organización del cliente (empresa) en Facturapi SOLO si:
+ *   - El plan es 'premium'
+ *   - La empresa aún no tiene facturapi_organization_id
  *
- * @return array ['success' => bool, 'uuid' => ?string, 'folio' => ?string, 'error' => ?string]
- */
+ * IMPORTANTE: esta organización es la que usará la EMPRESA CLIENTE para
+ * facturar a SUS propios clientes (facturar_venta.php). NO confundir con
+ * la organización MAESTRA de LibertyFin que usa timbrarFacturaSuscripcion().
+ *
+ * @param PDO    $pdo
+ * @param int    $empresa_id
+ * @param string $plan             Plan contratado ('premium', etc.)
+ * @param string $nombre_empresa   Nombre comercial de la empresa
+ *
+ * @return array ['success' => bool, 'id' => ?string, 'creada' => bool, 'message' => string]
+ * ========================================================================== */
+function asegurarOrganizacionFacturapi($pdo, $empresa_id, $plan, $nombre_empresa) {
+    $resultado = [
+        'success' => false,
+        'id'      => null,
+        'creada'  => false,
+        'message' => '',
+    ];
+
+    // Solo aplica para premium
+    if (strtolower((string) $plan) !== 'premium') {
+        $resultado['message'] = "Plan no es premium, no se crea organización.";
+        return $resultado;
+    }
+
+    if ($empresa_id <= 0) {
+        $resultado['message'] = "empresa_id inválido.";
+        return $resultado;
+    }
+
+    if (!$pdo) {
+        $resultado['message'] = "Sin conexión a BD.";
+        return $resultado;
+    }
+
+    try {
+        // 1. ¿Ya existe?
+        $stmt = $pdo->prepare("SELECT facturapi_organization_id FROM empresas WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $empresa_id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row && !empty($row['facturapi_organization_id'])) {
+            $resultado['success'] = true;
+            $resultado['id']      = $row['facturapi_organization_id'];
+            $resultado['creada']  = false;
+            $resultado['message'] = "La empresa ya tiene organización Facturapi.";
+            facturapiSuscripcionLog("ℹ️ Empresa $empresa_id ya tiene organización Facturapi: {$row['facturapi_organization_id']}", 'INFO');
+            return $resultado;
+        }
+
+        // 2. Verificar API key MAESTRA
+        $apiKey = function_exists('facturapiSuscripcionesConfig')
+            ? facturapiSuscripcionesConfig('api_key')
+            : (getenv('FACTURAPI_API_KEY') ?: '');
+
+        if (empty($apiKey)) {
+            throw new Exception("Clave API de Facturapi no configurada.");
+        }
+
+        // 3. Cargar SDK
+        $autoload_path = __DIR__ . '/../vendor/autoload.php';
+        if (!file_exists($autoload_path)) {
+            throw new Exception("SDK Facturapi no instalado. Ejecuta 'composer require facturapi/facturapi-php'");
+        }
+        require_once $autoload_path;
+
+        // 4. Instanciar SDK con llave MAESTRA
+        $facturapi = new \Facturapi\Facturapi($apiKey);
+
+        // 5. Nombre por defecto si viene vacío
+        if (empty($nombre_empresa)) {
+            $nombre_empresa = "Empresa $empresa_id";
+        }
+
+        facturapiSuscripcionLog("=== CREANDO ORGANIZACIÓN EN FACTURAPI ===", 'INFO');
+        facturapiSuscripcionLog("Plan: $plan | Nombre: $nombre_empresa | Empresa ID: $empresa_id", 'INFO');
+
+        // 6. Crear organización (solo nombre, compatible v1 y v2)
+        $organizacion = $facturapi->Organizations->create(['name' => $nombre_empresa]);
+
+        if (!$organizacion || !isset($organizacion->id)) {
+            throw new Exception("Facturapi respondió sin ID de organización.");
+        }
+
+        $facturapi_id = $organizacion->id;
+
+        // 7. Guardar ID en BD
+        $stmtUpd = $pdo->prepare("UPDATE empresas SET facturapi_organization_id = :id WHERE id = :empresa");
+        $stmtUpd->execute([':id' => $facturapi_id, ':empresa' => $empresa_id]);
+
+        $resultado['success'] = true;
+        $resultado['id']      = $facturapi_id;
+        $resultado['creada']  = true;
+
+        if ($stmtUpd->rowCount() > 0) {
+            $resultado['message'] = "Organización creada y guardada.";
+            facturapiSuscripcionLog("✓ Organización creada y guardada. ID: $facturapi_id (empresa $empresa_id)", 'INFO');
+        } else {
+            $resultado['message'] = "Organización creada, pero no se actualizó la BD (rowCount=0).";
+            facturapiSuscripcionLog("⚠️ Organización creada pero no guardada (rowCount=0) para empresa $empresa_id", 'WARNING');
+        }
+
+        return $resultado;
+
+    } catch (Exception $e) {
+        $resultado['success'] = false;
+        $resultado['message'] = $e->getMessage();
+        facturapiSuscripcionLog("✗ Error al crear organización Facturapi: " . $e->getMessage() . " (empresa $empresa_id)", 'ERROR');
+        return $resultado;
+    }
+}
+
+/* =============================================================================
+ * TIMBRAR FACTURA DE SUSCRIPCIÓN
+ * -----------------------------------------------------------------------------
+ * (Tu función original, sin cambios)
+ * ========================================================================== */
 function timbrarFacturaSuscripcion($datosFiscales, $monto, $descripcionPlan) {
     try {
         $autoload = __DIR__ . '/../vendor/autoload.php';

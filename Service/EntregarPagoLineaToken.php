@@ -87,12 +87,14 @@ try {
 $empresa_id = 0;
 $plan_encontrado = null;
 $periodo_encontrado = null;
+$tipo_servicio = null;
+$liga = null;
 
 try {
     // ============================================================
     // BUSCAR POR LA REFERENCIA EXACTA
     // ============================================================
-    $stmt = $pdo->prepare("SELECT empresa_id, plan, periodo, requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp, metodo_pago_sat, uso_cfdi FROM domiciliacion_ligas WHERE reference = :reference LIMIT 1");
+    $stmt = $pdo->prepare("SELECT empresa_id, plan, periodo, requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp, metodo_pago_sat, uso_cfdi, tipo_servicio FROM domiciliacion_ligas WHERE reference = :reference LIMIT 1");
     $stmt->execute([':reference' => $reference]);
     $liga = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -100,7 +102,8 @@ try {
         $empresa_id = $liga['empresa_id'];
         $plan_encontrado = $liga['plan'];
         $periodo_encontrado = $liga['periodo'];
-        escribirLog("LIGA ENCONTRADA! empresa_id: $empresa_id, plan: $plan_encontrado, periodo: $periodo_encontrado", 'INFO');
+        $tipo_servicio = $liga['tipo_servicio'] ?? null;
+        escribirLog("LIGA ENCONTRADA! empresa_id: $empresa_id, plan: $plan_encontrado, periodo: $periodo_encontrado, tipo_servicio: $tipo_servicio", 'INFO');
     } else {
         escribirLog("NO se encontró liga con reference: $reference", 'WARNING');
         
@@ -117,6 +120,40 @@ try {
             if ($emp) {
                 $empresa_id = $emp['id'];
                 escribirLog("Empresa por email: $empresa_id", 'INFO');
+            }
+        }
+        
+        // ============================================================
+        // REFUERZO: Si no se encontró la liga por reference, buscar
+        // el tipo_servicio de la liga más reciente de esa empresa
+        // para detectar correctamente si es "pago en caja"
+        // ============================================================
+        if ($empresa_id > 0) {
+            try {
+                $stmtAlt = $pdo->prepare("
+                    SELECT plan, periodo, requiere_factura, razon_social, rfc, 
+                           email_factura, regimen_fiscal, cp, metodo_pago_sat, uso_cfdi, 
+                           tipo_servicio 
+                    FROM domiciliacion_ligas 
+                    WHERE empresa_id = :empresa_id 
+                      AND tipo_servicio LIKE '%pago en caja%'
+                    ORDER BY created_at DESC 
+                    LIMIT 1
+                ");
+                $stmtAlt->execute([':empresa_id' => $empresa_id]);
+                $ligaAlt = $stmtAlt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($ligaAlt) {
+                    $liga = $ligaAlt;
+                    $tipo_servicio = $ligaAlt['tipo_servicio'];
+                    if (!$plan_encontrado) $plan_encontrado = $ligaAlt['plan'];
+                    if (!$periodo_encontrado) $periodo_encontrado = $ligaAlt['periodo'];
+                    escribirLog("Liga de PAGO EN CAJA encontrada por empresa_id: $empresa_id, tipo_servicio: $tipo_servicio", 'INFO');
+                } else {
+                    escribirLog("No se encontró liga de pago en caja para empresa_id: $empresa_id", 'INFO');
+                }
+            } catch (PDOException $e) {
+                escribirLog("Error buscando liga alternativa por empresa: " . $e->getMessage(), 'ERROR');
             }
         }
     }
@@ -147,10 +184,21 @@ try {
     exit;
 }
 
+// ============================================================
+// DETERMINAR SI ES PAGO EN CAJA
+// ============================================================
+$esPagoEnCaja = ($tipo_servicio !== null && stripos($tipo_servicio, 'pago en caja') !== false);
+
+if ($esPagoEnCaja) {
+    escribirLog("TIPO DE SERVICIO: PAGO EN CAJA detectado. Solo se registrará el pago (sin pagos_suscripciones, sin correos, sin notificaciones, sin factura).", 'INFO');
+} else {
+    escribirLog("TIPO DE SERVICIO: FLUJO NORMAL (no es pago en caja). tipo_servicio=" . ($tipo_servicio ?? 'NULL'), 'INFO');
+}
+
 try {
     $pdo->beginTransaction();
 
-    // 1. Registrar pago
+    // 1. Registrar pago (SIEMPRE se ejecuta)
     $fecha_pago = null;
     if ($date !== '') {
         $d = DateTime::createFromFormat('d/m/Y', $date);
@@ -196,6 +244,33 @@ try {
     $pagoId = $pdo->lastInsertId();
     escribirLog("Pago registrado ID: $pagoId", 'INFO');
 
+    // ============================================================
+    // SI ES PAGO EN CAJA: SOLO REGISTRAR PAGO Y ACTUALIZAR LIGA
+    // (NO pagos_suscripciones, NO correos, NO notificaciones, NO factura)
+    // ============================================================
+    if ($esPagoEnCaja) {
+        // Actualizar status de la liga
+        $status = 'error';
+        if ($response === 'approved') $status = 'approved';
+        elseif ($response === 'denied') $status = 'denied';
+        
+        $stmtLiga = $pdo->prepare("UPDATE domiciliacion_ligas SET status = :status, updated_at = NOW() WHERE reference = :reference");
+        $stmtLiga->execute([':status' => $status, ':reference' => $reference]);
+        $filas = $stmtLiga->rowCount();
+        escribirLog("Liga actualizada status: $status (Filas: $filas)", 'INFO');
+        
+        $pdo->commit();
+        escribirLog("Transacción OK (PAGO EN CAJA - solo registro de pago, sin pagos_suscripciones ni correos)", 'INFO');
+        
+        http_response_code(200);
+        echo json_encode(['code' => '00', 'message' => 'Recibido correctamente.']);
+        exit;
+    }
+
+    // ============================================================
+    // FLUJO NORMAL (NO ES PAGO EN CAJA)
+    // ============================================================
+
     // 2. Si aprobado y token, guardar
     if ($response === 'approved' && !empty($numberTkn)) {
         escribirLog("Guardando token para empresa $empresa_id", 'INFO');
@@ -227,12 +302,8 @@ try {
         escribirLog("Token guardado", 'INFO');
 
         // 3. Actualizar plan de empresa con la duración correcta
-        // ============================================================
-        // NUEVA LÓGICA: Calcular vigencia a partir de fecha_vencimiento
-        // ============================================================
         $plan_a_usar = $plan_encontrado ?? 'empresarial';
         
-        // Determinar la duración según el PERIODO
         if ($periodo_encontrado && strpos(strtolower($periodo_encontrado), 'anual') !== false) {
             $intervalo = "INTERVAL 1 YEAR";
             $tipo_periodo = "ANUAL";
@@ -243,7 +314,6 @@ try {
             escribirLog("Periodo MENSUAL detectado: duración 1 mes", 'INFO');
         }
         
-        // Obtener la fecha_vencimiento actual para calcular la nueva
         $stmtFecha = $pdo->prepare("SELECT fecha_vencimiento FROM empresas WHERE id = :empresa_id");
         $stmtFecha->execute([':empresa_id' => $empresa_id]);
         $empresaActual = $stmtFecha->fetch(PDO::FETCH_ASSOC);
@@ -255,14 +325,11 @@ try {
             $fechaVencimiento = new DateTime($empresaActual['fecha_vencimiento']);
             $hoy = new DateTime();
             
-            // Verificar si la fecha de vencimiento es futura
             if ($fechaVencimiento > $hoy) {
-                // Si es futura, sumamos el período a la fecha de vencimiento actual
                 $fechaBase = $fechaVencimiento->format('Y-m-d H:i:s');
                 $fechaBaseStr = $fechaVencimiento->format('Y-m-d H:i:s');
                 escribirLog("Renovación: sumando período ($tipo_periodo) a fecha_vencimiento actual: $fechaBaseStr", 'INFO');
             } else {
-                // Si ya expiró, usar fecha actual
                 $fechaBase = 'NOW()';
                 $fechaBaseStr = 'NOW()';
                 escribirLog("Servicio expirado (fecha_vencimiento: {$empresaActual['fecha_vencimiento']}), usando fecha actual para nueva vigencia", 'INFO');
@@ -271,7 +338,6 @@ try {
             escribirLog("Sin fecha de vencimiento previa, usando NOW()", 'INFO');
         }
         
-        // Construir y ejecutar la consulta de actualización
         if ($fechaBase === 'NOW()') {
             $sqlUpdate = "UPDATE empresas SET 
                             plan = :plan, 
@@ -301,7 +367,6 @@ try {
             escribirLog("Empresa $empresa_id actualizada con plan: $plan_a_usar, nueva fecha de vencimiento calculada desde: $fechaBaseStr ($tipo_periodo)", 'INFO');
         }
         
-        // Verificar la nueva fecha de vencimiento
         $stmtVerificar = $pdo->prepare("SELECT fecha_vencimiento FROM empresas WHERE id = :empresa_id");
         $stmtVerificar->execute([':empresa_id' => $empresa_id]);
         $nuevaFecha = $stmtVerificar->fetch(PDO::FETCH_ASSOC);
@@ -320,6 +385,114 @@ try {
     $filas = $stmtLiga->rowCount();
     escribirLog("Liga actualizada status: $status (Filas: $filas)", 'INFO');
 
+    // ============================================================
+    // 5. GUARDAR EN pagos_suscripciones
+    // ============================================================
+    if ($status === 'approved') {
+        try {
+            $tipoPago = 'tdc';
+
+            $periodoEnum = null;
+            if ($periodo_encontrado) {
+                $periodoLower = strtolower($periodo_encontrado);
+                if (strpos($periodoLower, 'anual') !== false) {
+                    $periodoEnum = 'anual';
+                } else {
+                    $periodoEnum = 'mensual';
+                }
+            }
+
+            $montoPesos = ((float) $amount);
+
+            $fechaPagoDatetime = date('Y-m-d H:i:s');
+            if ($fecha_pago && $time) {
+                $fechaPagoDatetime = $fecha_pago . ' ' . $time;
+            } elseif ($fecha_pago) {
+                $fechaPagoDatetime = $fecha_pago . ' ' . date('H:i:s');
+            }
+
+            $sqlPagoSusc = "INSERT INTO pagos_suscripciones 
+                (empresa_id, monto, fecha_pago, referencia, tipo_pago, plan, periodo, status, 
+                 foliocpagos, auth, cc_mask, raw_response, created_at, correo_enviado)
+                VALUES 
+                (:empresa_id, :monto, :fecha_pago, :referencia, :tipo_pago, :plan, :periodo, :status,
+                 :foliocpagos, :auth, :cc_mask, :raw_response, NOW(), 0)";
+            
+            $stmtPagoSusc = $pdo->prepare($sqlPagoSusc);
+            $stmtPagoSusc->execute([
+                ':empresa_id' => $empresa_id,
+                ':monto' => $montoPesos,
+                ':fecha_pago' => $fechaPagoDatetime,
+                ':referencia' => $reference,
+                ':tipo_pago' => $tipoPago,
+                ':plan' => $plan_encontrado ?? 'empresarial',
+                ':periodo' => $periodoEnum,
+                ':status' => $status,
+                ':foliocpagos' => $foliocpagos,
+                ':auth' => $auth,
+                ':cc_mask' => $ccMask,
+                ':raw_response' => $raw,
+            ]);
+            $pagoSuscId = $pdo->lastInsertId();
+            escribirLog("Pago suscripción registrado ID: $pagoSuscId en pagos_suscripciones (tipo_pago=tdc)", 'INFO');
+        } catch (PDOException $e) {
+            escribirLog("Error al guardar en pagos_suscripciones: " . $e->getMessage(), 'ERROR');
+        }
+    }
+
+    // ============================================================
+    // 6. NOTIFICAR A TODOS LOS ADMINISTRADORES
+    // ============================================================
+    if ($status === 'approved') {
+        try {
+            $stmtAdmins = $pdo->prepare("
+                SELECT id 
+                FROM usuarios 
+                WHERE rol_usuario = 'administrador' 
+                  AND activo = 1
+            ");
+            $stmtAdmins->execute();
+            $admins = $stmtAdmins->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($admins) {
+                $tituloNotif  = "Nuevo pago recibido";
+                $montoPesos   = ((float) $amount);
+                $mensajeNotif = sprintf(
+                    "Se recibió un pago aprobado de $%s MXN para la empresa \"%s\" (ID %d). " .
+                    "Plan: %s | Periodo: %s | Referencia: %s | Folio: %s",
+                    number_format($montoPesos, 2),
+                    $empresa['nombre_empresa'] ?? 'N/A',
+                    $empresa_id,
+                    $plan_encontrado ?? 'N/A',
+                    $periodo_encontrado ?? 'N/A',
+                    $reference,
+                    $foliocpagos ?? 'N/A'
+                );
+
+                $sqlNotif = "INSERT INTO notificaciones 
+                    (usuario_id, titulo, mensaje, tipo, leida, created_at)
+                    VALUES 
+                    (:usuario_id, :titulo, :mensaje, :tipo, 0, NOW())";
+                $stmtNotif = $pdo->prepare($sqlNotif);
+
+                foreach ($admins as $adm) {
+                    $stmtNotif->execute([
+                        ':usuario_id' => $adm['id'],
+                        ':titulo'     => $tituloNotif,
+                        ':mensaje'    => $mensajeNotif,
+                        ':tipo'       => 'success',
+                    ]);
+                }
+
+                escribirLog("Notificaciones enviadas a " . count($admins) . " administrador(es)", 'INFO');
+            } else {
+                escribirLog("No hay usuarios administradores activos para notificar", 'WARNING');
+            }
+        } catch (PDOException $e) {
+            escribirLog("Error al registrar notificaciones a administradores: " . $e->getMessage(), 'ERROR');
+        }
+    }
+    
     $pdo->commit();
     escribirLog("Transacción OK", 'INFO');
 
@@ -334,11 +507,48 @@ try {
             $empresa['nombre_empresa'],
             $plan_encontrado ?? 'N/A',
             $periodo_encontrado ?? 'N/A',
-            ((float) $amount) / 100,
+            ((float) $amount),
             'Tarjeta',
             $vig['fecha_vencimiento'] ?? null
         );
         escribirLog("Correo de confirmación " . ($enviado ? "enviado" : "NO enviado") . " a: $emailDestino", 'INFO');
+
+        if (isset($pagoSuscId) && $pagoSuscId > 0) {
+            try {
+                $stmtUpdCorreo = $pdo->prepare("UPDATE pagos_suscripciones SET correo_enviado = :enviado WHERE id = :id");
+                $stmtUpdCorreo->execute([
+                    ':enviado' => $enviado ? 1 : 0,
+                    ':id' => $pagoSuscId
+                ]);
+                escribirLog("Campo correo_enviado actualizado en pagos_suscripciones ID: $pagoSuscId", 'INFO');
+            } catch (PDOException $e) {
+                escribirLog("Error actualizando correo_enviado: " . $e->getMessage(), 'ERROR');
+            }
+        }
+
+        // ============================================================
+        // CREAR ORGANIZACIÓN EN FACTURAPI (solo si es premium)
+        // ============================================================
+        try {
+            $resOrg = asegurarOrganizacionFacturapi(
+                $pdo,
+                $empresa_id,
+                $plan_encontrado ?? '',
+                $empresa['nombre_empresa'] ?? ''
+            );
+
+            if ($resOrg['success']) {
+                if ($resOrg['creada']) {
+                    escribirLog("Organización Facturapi creada para empresa $empresa_id. ID: {$resOrg['id']}", 'INFO');
+                } else {
+                    escribirLog("Empresa $empresa_id ya tenía organización Facturapi: {$resOrg['id']}", 'INFO');
+                }
+            } else {
+                escribirLog("No se pudo asegurar organización Facturapi: {$resOrg['message']}", 'WARNING');
+            }
+        } catch (Exception $e) {
+            escribirLog("Error inesperado asegurando organización Facturapi: " . $e->getMessage(), 'ERROR');
+        }
 
         // Timbrar factura si el cliente la solicitó al pagar
         if (!empty($liga['requiere_factura'])) {
@@ -353,7 +563,7 @@ try {
                     'metodo_pago_sat' => $liga['metodo_pago_sat'] ?? null,
                     'uso_cfdi'        => $liga['uso_cfdi'] ?? null,
                 ],
-                ((float) $amount) / 100,
+                ((float) $amount),
                 $descripcionFactura
             );
             escribirLog("Timbrado de factura: " . json_encode($resultadoFactura), $resultadoFactura['success'] ? 'INFO' : 'ERROR');

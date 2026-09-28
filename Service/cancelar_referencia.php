@@ -10,7 +10,7 @@
  * Flujo:
  *   CCT → DELETE|POST https://tu-dominio.com/Service/cancela_pago.php
  *   Body JSON: { referencia, fecha, monto, transaccion, autorizacion }
- *   Tu sistema → responde JSON { codigo, mensaje }
+ *   Tu sistema → responde JSON { codigo, mensaje, ...datos del pago }
  *
  * Códigos de respuesta (pág. 17):
  *   0   → Cancelación exitosa (incluso si ya estaba cancelada antes)
@@ -39,9 +39,10 @@ require_once __DIR__ . '/../config/database.php';
  * ========================================================================== */
 
 /**
- * Responde SIEMPRE con los 2 campos requeridos por CCT (pág. 16).
+ * Responde SIEMPRE con los campos requeridos por CCT (pág. 16) más los
+ * campos extra que se le pasen (datos del pago original).
  */
-function cct_responder(int $codigo, string $mensaje): void
+function cct_responder(int $codigo, string $mensaje, array $extra = []): void
 {
     if (ob_get_length()) {
         ob_clean();
@@ -51,10 +52,10 @@ function cct_responder(int $codigo, string $mensaje): void
     header('Cache-Control: no-cache, no-store, must-revalidate');
     header('X-Content-Type-Options: nosniff');
 
-    $payload = [
+    $payload = array_merge([
         'codigo'  => (int)    $codigo,
         'mensaje' => (string) $mensaje,
-    ];
+    ], $extra);
 
     error_log('[CCT CancelaPago] RESPONDIENDO: ' .
               json_encode($payload, JSON_UNESCAPED_UNICODE));
@@ -83,6 +84,32 @@ function extraer_fecha(string $fecha): string
     $ts = strtotime($fecha);
     return $ts ? date('Y-m-d', $ts) : '';
 }
+
+/**
+ * Construye el array de datos del pago para incluirlo en la respuesta.
+ */
+function datos_pago(array $ref, string $transaccion, string $autorizacion): array
+{
+    return [
+        'referencia'   => (string) ($ref['reference_cct'] ?? $ref['reference_emisor'] ?? ''),
+        'fecha'        => (string) ($ref['fecha_pago'] ?? ''),
+        'monto'        => (string) ($ref['monto'] ?? ''),
+        'transaccion'  => (string) ($ref['transaccion_cct'] ?? $transaccion),
+        'autorizacion' => (string) ($ref['autorizacion_cct'] ?? $autorizacion),
+    ];
+}
+
+/* =============================================================================
+ * 0) LOG DE DEBUG (para rastrear qué recibe CCT)
+ * ========================================================================== */
+$debugLog = sys_get_temp_dir() . '/cct_cancela_debug.log';
+@file_put_contents(
+    $debugLog,
+    date('c') . ' | METHOD=' . ($_SERVER['REQUEST_METHOD'] ?? '') .
+    ' | URI=' . ($_SERVER['REQUEST_URI'] ?? '') .
+    ' | BODY=' . (file_get_contents('php://input') ?: '') . PHP_EOL,
+    FILE_APPEND
+);
 
 /* =============================================================================
  * 1) LEER BODY (acepta JSON, form-urlencoded y $_POST)
@@ -121,7 +148,8 @@ $transaccion   = (string) ($input['transaccion']  ?? '');
 $autorizacion  = (string) ($input['autorizacion'] ?? '');
 
 if ($referenciaRaw === '') {
-    cct_responder(0, 'Cancelación exitosa.'); // Ser tolerantes: si no hay referencia, devolvemos 0
+    // Ser tolerantes: si no hay referencia, devolvemos 0
+    cct_responder(0, 'Cancelación exitosa.');
 }
 
 $referencia = normalizar_referencia((string) $referenciaRaw);
@@ -171,17 +199,17 @@ try {
 
     // 4.2) Ya cancelada previamente → código 0 (pág. 17)
     if ($ref['estado'] === 'cancelada') {
-        cct_responder(0, 'Cancelación exitosa.');
+        cct_responder(0, 'Cancelación exitosa.', datos_pago($ref, $transaccion, $autorizacion));
     }
 
     // 4.3) Nunca estuvo pagada (estado pendiente): nada que cancelar
     if ($ref['estado'] === 'pendiente') {
-        cct_responder(0, 'Cancelación exitosa.');
+        cct_responder(0, 'Cancelación exitosa.', datos_pago($ref, $transaccion, $autorizacion));
     }
 
     // 4.4) Expirada: no hay pago que cancelar
     if ($ref['estado'] === 'expirada') {
-        cct_responder(0, 'Cancelación exitosa.');
+        cct_responder(0, 'Cancelación exitosa.', datos_pago($ref, $transaccion, $autorizacion));
     }
 
     // 4.5) Está pagada: validar que sea el mismo día
@@ -194,7 +222,8 @@ try {
             error_log("[CCT CancelaPago] Fuera de periodo: fecha_pago={$fechaPago}, hoy={$hoy}");
             cct_responder(
                 60,
-                'Cancelación fuera de periodo: solo se permite el mismo día del pago.'
+                'Cancelación fuera de periodo: solo se permite el mismo día del pago.',
+                datos_pago($ref, $transaccion, $autorizacion)
             );
         }
 
@@ -203,7 +232,8 @@ try {
             && $autorizacion !== $ref['autorizacion_cct']) {
             error_log("[CCT CancelaPago] Autorización no coincide: recibida={$autorizacion}, en BD={$ref['autorizacion_cct']}");
             // No bloqueamos por esto, solo lo dejamos en log.
-            // Si quieres ser más estricto, cambia esto por cct_responder(60, '...');
+            // Si quieres ser más estricto, cambia esto por:
+            // cct_responder(60, 'Autorización no coincide.', datos_pago($ref, $transaccion, $autorizacion));
         }
 
         // --- 4.6) Cancelar el pago ---
@@ -226,12 +256,12 @@ try {
                       ' autorizacion=' . $autorizacion);
         }
 
-        // 4.7) Respuesta exitosa
-        cct_responder(0, 'Cancelación exitosa.');
+        // 4.7) Respuesta exitosa CON datos del pago
+        cct_responder(0, 'Cancelación exitosa.', datos_pago($ref, $transaccion, $autorizacion));
     }
 
     // Fallback (estado desconocido)
-    cct_responder(0, 'Cancelación exitosa.');
+    cct_responder(0, 'Cancelación exitosa.', datos_pago($ref, $transaccion, $autorizacion));
 
 } catch (Throwable $e) {
     error_log('[CCT CancelaPago] EXCEPCION: ' . $e->getMessage() .

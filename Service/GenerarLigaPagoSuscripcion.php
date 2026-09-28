@@ -23,18 +23,18 @@ function escribirLog($mensaje, $tipo = 'INFO') {
 // Función para guardar log en BD
 function guardarLogEnBD($pdo, $datos) {
     if (!$pdo) return false;
-    
+
     try {
         $sql = "INSERT INTO pagos_generadas (
-                    fecha, monto, descripcion, request_data, response_data, 
-                    status, url_generada, reference, id_generado, http_code, 
+                    fecha, monto, descripcion, request_data, response_data,
+                    status, url_generada, reference, id_generado, http_code,
                     error_message, ip_usuario, user_agent
                 ) VALUES (
                     NOW(), :monto, :descripcion, :request_data, :response_data,
                     :status, :url_generada, :reference, :id_generado, :http_code,
                     :error_message, :ip_usuario, :user_agent
                 )";
-        
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':monto' => $datos['monto'] ?? null,
@@ -50,7 +50,7 @@ function guardarLogEnBD($pdo, $datos) {
             ':ip_usuario' => $datos['ip_usuario'] ?? null,
             ':user_agent' => $datos['user_agent'] ?? null
         ]);
-        
+
         return $pdo->lastInsertId();
     } catch (PDOException $e) {
         escribirLog("Error en guardarLogEnBD: " . $e->getMessage(), 'ERROR');
@@ -58,29 +58,13 @@ function guardarLogEnBD($pdo, $datos) {
     }
 }
 
-// Asegura que domiciliacion_ligas tenga las columnas de facturación
-// (se auto-crean la primera vez que se necesitan, igual que en generar_clabe.php)
+/**
+ * La tabla `domiciliacion_ligas` YA contiene las columnas necesarias:
+ *   tipo_servicio, descripcion
+ * Se conserva por compatibilidad.
+ */
 function asegurarColumnasFacturacion($pdo) {
-    $columnas = [
-        'requiere_factura' => "ALTER TABLE domiciliacion_ligas ADD COLUMN requiere_factura TINYINT(1) DEFAULT 0",
-        'razon_social'     => "ALTER TABLE domiciliacion_ligas ADD COLUMN razon_social VARCHAR(255) DEFAULT NULL",
-        'rfc'              => "ALTER TABLE domiciliacion_ligas ADD COLUMN rfc VARCHAR(20) DEFAULT NULL",
-        'email_factura'    => "ALTER TABLE domiciliacion_ligas ADD COLUMN email_factura VARCHAR(150) DEFAULT NULL",
-        'regimen_fiscal'   => "ALTER TABLE domiciliacion_ligas ADD COLUMN regimen_fiscal VARCHAR(10) DEFAULT NULL",
-        'cp'               => "ALTER TABLE domiciliacion_ligas ADD COLUMN cp VARCHAR(10) DEFAULT NULL",
-        'metodo_pago_sat'  => "ALTER TABLE domiciliacion_ligas ADD COLUMN metodo_pago_sat VARCHAR(10) DEFAULT NULL",
-        'uso_cfdi'         => "ALTER TABLE domiciliacion_ligas ADD COLUMN uso_cfdi VARCHAR(10) DEFAULT NULL",
-    ];
-    foreach ($columnas as $col => $sql) {
-        try {
-            $chk = $pdo->query("SHOW COLUMNS FROM domiciliacion_ligas LIKE " . $pdo->quote($col));
-            if ($chk->rowCount() === 0) {
-                $pdo->exec($sql);
-            }
-        } catch (PDOException $e) {
-            error_log("No se pudo verificar/crear columna $col en domiciliacion_ligas: " . $e->getMessage());
-        }
-    }
+    return;
 }
 
 // Conectar a la base de datos
@@ -94,31 +78,113 @@ try {
 
 // Obtener datos del POST
 $input = json_decode(file_get_contents('php://input'), true);
-$monto = $input['monto'] ?? 0;
-$descripcion = $input['descripcion'] ?? 'Pago en caja';
+if (!is_array($input)) {
+    $input = [];
+}
 
-// Datos de facturación (opcionales, solo si el cliente marcó "Sí, requiero factura")
+// Log del body crudo para diagnóstico
+escribirLog("Body JSON recibido: " . json_encode($input), 'DEBUG');
+
+$monto       = $input['monto']        ?? $input['MontoTotal'] ?? 0;
+$descripcion = $input['descripcion']  ?? $input['Description'] ?? 'Pago en caja';
+
+/* =============================================================================
+ * PLAN Y PERIODO
+ * ========================================================================== */
+$plan = trim((string) ($input['plan'] ?? $_GET['plan'] ?? ''));
+
+// Si no vino el plan, intentamos inferirlo de la descripción
+if ($plan === '' && preg_match('/suscripcion\s+([a-z0-9áéíóúñ_ ]+?)\s*-/iu', $descripcion, $m)) {
+    $plan = strtolower(trim($m[1]));
+}
+
+// El front envía "plazo" ('mensual'|'anual'). Se guarda en la columna "periodo".
+$plazo = trim((string) ($input['plazo'] ?? $_GET['periodo'] ?? ''));
+if ($plazo === '') {
+    $plazo = (stripos($descripcion, 'anual') !== false) ? 'anual' : 'mensual';
+}
+
+// Normalizar contra el enum('mensual','anual')
+$plazo = strtolower($plazo);
+if (!in_array($plazo, ['mensual', 'anual'], true)) {
+    $plazo = 'mensual';
+}
+
+/* =============================================================================
+ * TIPO DE SERVICIO
+ * ========================================================================== */
+$tipoServicio = trim((string) ($input['tipo_servicio'] ?? 'Suscripcion'));
+if ($tipoServicio === '') {
+    $tipoServicio = 'Suscripcion';
+}
+if (mb_strlen($tipoServicio) > 50) {
+    $tipoServicio = mb_substr($tipoServicio, 0, 50);
+}
+
+/* =============================================================================
+ * DESCRIPCIÓN — normalización para BD (VARCHAR 255)
+ * ========================================================================== */
+if (mb_strlen($descripcion) > 255) {
+    $descripcion = mb_substr($descripcion, 0, 255);
+}
+if ($descripcion === '') {
+    $descripcion = 'Pago en caja';
+}
+
+/* =============================================================================
+ * DATOS DE FACTURACIÓN
+ * ========================================================================== */
 $requiereFactura = !empty($input['requiere_factura']) ? 1 : 0;
+$facturar        = $requiereFactura ? 'si' : 'no';
+
+$razonSocial   = trim((string) ($input['razon_social']    ?? ''));
+$rfc           = strtoupper(trim((string) ($input['rfc']  ?? '')));
+$emailFactura  = trim((string) ($input['email_factura']   ?? ''));
+$regimenFiscal = trim((string) ($input['regimen_fiscal']  ?? ''));
+$cpFiscal      = trim((string) ($input['cp']              ?? ''));
+$metodoPagoSat = trim((string) ($input['metodo_pago_sat'] ?? ''));
+$usoCfdi       = trim((string) ($input['uso_cfdi']        ?? ''));
+
+// Si NO requiere factura, limpiamos todo
+if (!$requiereFactura) {
+    $razonSocial = $rfc = $emailFactura = $regimenFiscal = '';
+    $cpFiscal = $metodoPagoSat = $usoCfdi = '';
+}
+
+// Ajuste a longitudes del esquema
+if (mb_strlen($razonSocial)   > 150) $razonSocial   = mb_substr($razonSocial, 0, 150);
+if (mb_strlen($rfc)           > 20)  $rfc           = mb_substr($rfc, 0, 20);
+if (mb_strlen($emailFactura)  > 150) $emailFactura  = mb_substr($emailFactura, 0, 150);
+if (mb_strlen($regimenFiscal) > 10)  $regimenFiscal = mb_substr($regimenFiscal, 0, 10);
+if (mb_strlen($cpFiscal)      > 10)  $cpFiscal      = mb_substr($cpFiscal, 0, 10);
+if (mb_strlen($metodoPagoSat) > 10)  $metodoPagoSat = mb_substr($metodoPagoSat, 0, 10);
+if (mb_strlen($usoCfdi)       > 5)   $usoCfdi       = mb_substr($usoCfdi, 0, 5);
+
+if ($emailFactura !== '' && !filter_var($emailFactura, FILTER_VALIDATE_EMAIL)) {
+    $emailFactura = '';
+}
+
 $facturacion = [
-    'razon_social'    => $input['razon_social'] ?? null,
-    'rfc'             => $input['rfc'] ?? null,
-    'email_factura'   => $input['email_factura'] ?? null,
-    'regimen_fiscal'  => $input['regimen_fiscal'] ?? null,
-    'cp'              => $input['cp'] ?? null,
-    'metodo_pago_sat' => $input['metodo_pago_sat'] ?? null,
-    'uso_cfdi'        => $input['uso_cfdi'] ?? null,
+    'razon_social'    => $razonSocial   !== '' ? $razonSocial   : null,
+    'rfc'             => $rfc           !== '' ? $rfc           : null,
+    'email_factura'   => $emailFactura  !== '' ? $emailFactura  : null,
+    'regimen_fiscal'  => $regimenFiscal !== '' ? $regimenFiscal : null,
+    'cp'              => $cpFiscal      !== '' ? $cpFiscal      : null,
+    'metodo_pago_sat' => $metodoPagoSat !== '' ? $metodoPagoSat : null,
+    'uso_cfdi'        => $usoCfdi       !== '' ? $usoCfdi       : null,
 ];
 
-// Convertir a float
+// Convertir monto a float
 $monto = floatval($monto);
 
-// Obtener datos del cliente
 $ip_usuario = $_SERVER['REMOTE_ADDR'] ?? null;
 $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? null;
 
 escribirLog("=== NUEVA PETICIÓN DE PAGO ===", 'INFO');
 escribirLog("Monto recibido: " . $monto, 'INFO');
 escribirLog("Descripción: " . $descripcion, 'INFO');
+escribirLog("Plan: '" . $plan . "' | Periodo: " . $plazo . " | Tipo: " . $tipoServicio, 'INFO');
+escribirLog("Requiere factura: " . $requiereFactura . " (" . $facturar . ")", 'INFO');
 
 // Validar monto
 if ($monto <= 0) {
@@ -139,7 +205,7 @@ if ($monto <= 0) {
 
 if ($monto < 50 || $monto > 15000) {
     $response = [
-        'success' => false, 
+        'success' => false,
         'error' => 'El monto debe estar entre $50.00 y $15,000.00 MXN'
     ];
     guardarLogEnBD($pdo, [
@@ -156,11 +222,14 @@ if ($monto < 50 || $monto > 15000) {
     exit();
 }
 
-// OBTENER EL ID DE LA EMPRESA DE LA SESIÓN
-$empresa_id = $_SESSION['empresa_id'] ?? 0;
+/* =============================================================================
+ * EMPRESA_ID
+ * ========================================================================== */
+$empresa_id = (int) ($input['empresa_id'] ?? $_SESSION['empresa_id'] ?? 0);
 
 if ($empresa_id <= 0) {
     $response = ['success' => false, 'error' => 'ID de empresa no válido'];
+    escribirLog("empresa_id inválido. Body: " . json_encode($input), 'ERROR');
     echo json_encode($response);
     exit();
 }
@@ -170,25 +239,22 @@ escribirLog("ID de empresa: $empresa_id", 'INFO');
 // Obtener configuración
 $domiciliacionConfig = domiciliacionConfig();
 
-$url = $domiciliacionConfig['url_generar_liga_dom'] ?? 'https://pagadetodo.mx/Pagadetodo/Service/GenerarLigaDomiciliacionIndi';
-$user = $domiciliacionConfig['user_dom'] ?? '';
-$password = $domiciliacionConfig['password_dom'] ?? '';
+$url            = $domiciliacionConfig['url_generar_liga_dom'] ?? 'https://pagadetodo.mx/Pagadetodo/Service/GenerarLigaDomiciliacionIndi';
+$user           = $domiciliacionConfig['user_dom'] ?? '';
+$password       = $domiciliacionConfig['password_dom'] ?? '';
 $integration_id = $domiciliacionConfig['integration_id_dom'] ?? '124';
-$business_id = $domiciliacionConfig['business_id_dom'] ?? '000002';
-$dias_vigencia = $domiciliacionConfig['dias_vigencia_dom'] ?? 7;
+$business_id    = $domiciliacionConfig['business_id_dom'] ?? '000002';
+$dias_vigencia  = $domiciliacionConfig['dias_vigencia_dom'] ?? 7;
 
 // ============================================================
 // GENERAR REFERENCIA: 9 dígitos de empresa + 6 dígitos de sufijo (TOTAL 15)
 // ============================================================
-$empresa_id_padded = str_pad($empresa_id, 9, '0', STR_PAD_LEFT);
+$empresa_id_padded = str_pad((string) $empresa_id, 9, '0', STR_PAD_LEFT);
 
-// Función para generar un sufijo de 6 dígitos único
 function generarSufijo6Digitos() {
-    // Usamos microtime para obtener parte fraccionaria + random
     $micro = explode(' ', microtime());
-    $frac = (int)($micro[0] * 1000000); // 6 dígitos de la fracción
-    $sufijo = str_pad($frac, 6, '0', STR_PAD_LEFT);
-    // Si por casualidad queda < 100000, complementamos con random
+    $frac = (int)($micro[0] * 1000000);
+    $sufijo = str_pad((string) $frac, 6, '0', STR_PAD_LEFT);
     if (strlen($sufijo) < 6) {
         $sufijo = str_pad($sufijo . rand(0, 9), 6, '0', STR_PAD_LEFT);
     }
@@ -202,19 +268,17 @@ $max_intentos = 5;
 while ($intentos < $max_intentos) {
     $sufijo = generarSufijo6Digitos();
     $reference_envio = $empresa_id_padded . $sufijo; // 15 dígitos
-    // Verificar que no exista en la tabla domiciliacion_ligas
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM domiciliacion_ligas WHERE reference = ?");
     $stmt->execute([$reference_envio]);
     if ($stmt->fetchColumn() == 0) {
-        break; // única, salimos del bucle
+        break;
     }
     $intentos++;
     escribirLog("Referencia $reference_envio ya existe, reintentando ($intentos/$max_intentos)", 'WARNING');
 }
 
 if ($intentos >= $max_intentos) {
-    // Si fallamos todos los intentos, forzamos con timestamp + random (muy improbable colisión)
-    $sufijo = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+    $sufijo = str_pad((string) rand(0, 999999), 6, '0', STR_PAD_LEFT);
     $reference_envio = $empresa_id_padded . $sufijo;
     escribirLog("Se forzó referencia: $reference_envio después de $max_intentos intentos", 'WARNING');
 }
@@ -222,22 +286,22 @@ if ($intentos >= $max_intentos) {
 // ID para la transacción (hasta 10 dígitos, usamos los primeros 9)
 $id_formateado = str_pad(substr($reference_envio, 0, 9), 9, '0', STR_PAD_LEFT);
 
-$monto_centavos = intval($monto * 100);
+$monto_centavos   = intval($monto * 100);
 $fecha_expiracion = date('Y-m-d', strtotime("+{$dias_vigencia} day"));
 
 escribirLog("Referencia a enviar: $reference_envio (15 dígitos)", 'INFO');
 
 // Construir datos para Pagadetodo
 $data = [
-    "User" => $user,
-    "Password" => $password,
-    "IntegrationID" => $integration_id,
-    "BusinessID" => $business_id,
-    "PaymentTypes" => "401",
-    "Id" => $id_formateado,
-    "Description" => substr($descripcion, 0, 40),
-    "Amount" => (string)$monto_centavos,
-    "Reference" => $reference_envio,
+    "User"           => $user,
+    "Password"       => $password,
+    "IntegrationID"  => $integration_id,
+    "BusinessID"     => $business_id,
+    "PaymentTypes"   => "41",
+    "Id"             => $id_formateado,
+    "Description"    => substr($descripcion, 0, 40),
+    "Amount"         => (string)$monto_centavos,
+    "Reference"      => $reference_envio,
     "ExpirationDate" => $fecha_expiracion
 ];
 
@@ -289,7 +353,7 @@ $result = json_decode($response, true);
 
 if ($result === null) {
     $response_array = [
-        'success' => false, 
+        'success' => false,
         'error' => 'Respuesta no válida del servidor',
         'raw_response' => $response
     ];
@@ -316,60 +380,70 @@ foreach ($result as $key => $value) {
 }
 
 // ============================================================
-// CASO 1: ÉXITO - Guardar la referencia EXACTA que devuelve Pagadetodo
+// CASO 1: ÉXITO
 // ============================================================
 if (isset($clean['url']) && !empty($clean['url'])) {
     escribirLog("ÉXITO: URL generada: " . $clean['url'], 'INFO');
-    
-    // Guardar la referencia que devuelve Pagadetodo (puede tener más dígitos, pero es la que ellos asignan)
+
     $reference_devuelta = $clean['reference'] ?? $reference_envio;
-    $reference_emisor = $clean['referenceEmisor'] ?? $reference_envio;
-    
+    $reference_emisor   = $clean['referenceEmisor'] ?? $reference_envio;
+
     escribirLog("Referencia devuelta por pagalaescuela: $reference_devuelta", 'INFO');
     escribirLog("ReferenceEmisor: $reference_emisor", 'INFO');
-    
-    try {
-        // Extraer plan de la descripción
-        $plan = 'empresarial';
-        if (strpos($descripcion, 'Básico') !== false) $plan = 'basico';
-        elseif (strpos($descripcion, 'Profesional') !== false) $plan = 'profesional';
-        elseif (strpos($descripcion, 'Plus') !== false) $plan = 'plus';
-        
-        $periodo = (strpos($descripcion, 'Anual') !== false) ? 'anual' : 'mensual';
 
+    // Log antes del INSERT para confirmar qué se va a guardar
+    escribirLog(
+        "INSERT domiciliacion_ligas → plan='$plan', periodo='$plazo', tipo_servicio='$tipoServicio', "
+        . "descripcion='$descripcion', empresa_id=$empresa_id, facturar='$facturar'",
+        'DEBUG'
+    );
+
+    try {
         asegurarColumnasFacturacion($pdo);
 
         $stmt = $pdo->prepare(
-            "INSERT INTO domiciliacion_ligas 
-                (reference, reference_emisor, empresa_id, plan, periodo, monto, url_pago, status,
-                 requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp, metodo_pago_sat, uso_cfdi,
+            "INSERT INTO domiciliacion_ligas
+                (reference, reference_emisor, empresa_id, plan, periodo, tipo_servicio, descripcion,
+                 monto, url_pago, status,
+                 requiere_factura, facturar,
+                 razon_social, rfc, email_factura, regimen_fiscal, cp, metodo_pago_sat, uso_cfdi,
                  created_at)
-             VALUES 
-                (:reference, :reference_emisor, :empresa_id, :plan, :periodo, :monto, :url_pago, 'pendiente',
-                 :requiere_factura, :razon_social, :rfc, :email_factura, :regimen_fiscal, :cp, :metodo_pago_sat, :uso_cfdi,
+             VALUES
+                (:reference, :reference_emisor, :empresa_id, :plan, :periodo, :tipo_servicio, :descripcion,
+                 :monto, :url_pago, 'pendiente',
+                 :requiere_factura, :facturar,
+                 :razon_social, :rfc, :email_factura, :regimen_fiscal, :cp, :metodo_pago_sat, :uso_cfdi,
                  NOW())
              ON DUPLICATE KEY UPDATE
-                url_pago = VALUES(url_pago),
+                url_pago         = VALUES(url_pago),
                 reference_emisor = VALUES(reference_emisor),
+                plan             = VALUES(plan),
+                periodo          = VALUES(periodo),
+                tipo_servicio    = VALUES(tipo_servicio),
+                descripcion      = VALUES(descripcion),
                 requiere_factura = VALUES(requiere_factura),
-                razon_social = VALUES(razon_social),
-                rfc = VALUES(rfc),
-                email_factura = VALUES(email_factura),
-                regimen_fiscal = VALUES(regimen_fiscal),
-                cp = VALUES(cp),
-                metodo_pago_sat = VALUES(metodo_pago_sat),
-                uso_cfdi = VALUES(uso_cfdi),
-                updated_at = NOW()"
+                facturar         = VALUES(facturar),
+                razon_social     = VALUES(razon_social),
+                rfc              = VALUES(rfc),
+                email_factura    = VALUES(email_factura),
+                regimen_fiscal   = VALUES(regimen_fiscal),
+                cp               = VALUES(cp),
+                metodo_pago_sat  = VALUES(metodo_pago_sat),
+                uso_cfdi         = VALUES(uso_cfdi),
+                updated_at       = NOW()"
         );
         $stmt->execute([
             ':reference'        => $reference_devuelta,
             ':reference_emisor' => $reference_emisor,
             ':empresa_id'       => $empresa_id,
-            ':plan'             => $plan,
-            ':periodo'          => $periodo,
+            ':plan'             => $plan !== '' ? $plan : null,
+            ':periodo'          => $plazo,
+            ':tipo_servicio'    => $tipoServicio,
+            ':descripcion'      => $descripcion,
             ':monto'            => $monto,
             ':url_pago'         => $clean['url'] ?? '',
             ':requiere_factura' => $requiereFactura,
+            ':facturar'         => $facturar,
             ':razon_social'     => $facturacion['razon_social'],
             ':rfc'              => $facturacion['rfc'],
             ':email_factura'    => $facturacion['email_factura'],
@@ -378,22 +452,35 @@ if (isset($clean['url']) && !empty($clean['url'])) {
             ':metodo_pago_sat'  => $facturacion['metodo_pago_sat'],
             ':uso_cfdi'         => $facturacion['uso_cfdi'],
         ]);
-        escribirLog("Liga guardada en BD con referencia: $reference_devuelta", 'INFO');
+
+        // Log de filas afectadas para saber si el INSERT realmente tocó la BD
+        escribirLog(
+            "Liga guardada en BD. Filas afectadas: " . $stmt->rowCount()
+            . " (plan=$plan, periodo=$plazo, tipo_servicio=$tipoServicio, descripcion='$descripcion', facturar=$facturar)",
+            'INFO'
+        );
+
     } catch (PDOException $e) {
-        escribirLog("Error guardando liga: " . $e->getMessage(), 'ERROR');
+        // Log enriquecido con el SQLSTATE y el mensaje real de MySQL
+        escribirLog("Error guardando liga: SQLSTATE=" . $e->getCode()
+            . " | " . $e->getMessage(), 'ERROR');
     }
-    
+
     $response_array = [
-        'success' => true,
-        'url' => $clean['url'],
-        'reference' => $reference_devuelta,
+        'success'          => true,
+        'url'              => $clean['url'],
+        'reference'        => $reference_devuelta,
         'reference_emisor' => $reference_emisor,
-        'id' => $id_formateado,
-        'amount' => $monto,
-        'description' => $descripcion,
-        'empresa_id' => $empresa_id
+        'id'               => $id_formateado,
+        'amount'           => $monto,
+        'description'      => $descripcion,
+        'empresa_id'       => $empresa_id,
+        'plan'             => $plan,
+        'periodo'          => $plazo,
+        'tipo_servicio'    => $tipoServicio,
+        'requiere_factura' => (bool) $requiereFactura,
     ];
-    
+
     guardarLogEnBD($pdo, [
         'monto' => $monto,
         'descripcion' => $descripcion,
@@ -407,24 +494,26 @@ if (isset($clean['url']) && !empty($clean['url'])) {
         'ip_usuario' => $ip_usuario,
         'user_agent' => $user_agent
     ]);
-    
+
     echo json_encode($response_array);
     exit();
 }
 
+// ============================================================
 // CASO 2: ERROR CON MENSAJE
+// ============================================================
 if (isset($clean['Message']) && !empty($clean['Message'])) {
     $mensaje_error = $clean['Message'];
     $codigo_error = $clean['Error'] ?? 'Desconocido';
     escribirLog("Error de pagalaescuela: " . $mensaje_error . " (Código: " . $codigo_error . ")", 'ERROR');
-    
+
     $response_array = [
         'success' => false,
         'error' => $mensaje_error,
         'code' => $codigo_error,
         'response' => $clean
     ];
-    
+
     guardarLogEnBD($pdo, [
         'monto' => $monto,
         'descripcion' => $descripcion,
@@ -438,23 +527,25 @@ if (isset($clean['Message']) && !empty($clean['Message'])) {
         'ip_usuario' => $ip_usuario,
         'user_agent' => $user_agent
     ]);
-    
+
     echo json_encode($response_array);
     exit();
 }
 
+// ============================================================
 // CASO 3: ERROR CON CÓDIGO NUMÉRICO
+// ============================================================
 if (isset($clean['Error']) && !empty($clean['Error'])) {
     $mensaje_error = $clean['Message'] ?? 'Error código ' . $clean['Error'];
     escribirLog("Error de pagalaescuela: " . $mensaje_error, 'ERROR');
-    
+
     $response_array = [
         'success' => false,
         'error' => $mensaje_error,
         'code' => $clean['Error'] ?? null,
         'response' => $clean
     ];
-    
+
     guardarLogEnBD($pdo, [
         'monto' => $monto,
         'descripcion' => $descripcion,
@@ -468,12 +559,14 @@ if (isset($clean['Error']) && !empty($clean['Error'])) {
         'ip_usuario' => $ip_usuario,
         'user_agent' => $user_agent
     ]);
-    
+
     echo json_encode($response_array);
     exit();
 }
 
+// ============================================================
 // CASO 4: NO CONTEMPLADO
+// ============================================================
 escribirLog("Caso no contemplado: " . json_encode($clean), 'ERROR');
 
 $response_array = [

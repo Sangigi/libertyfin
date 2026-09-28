@@ -7,6 +7,15 @@
  *
  * Doc base: IntegracionesReferencias V1.4 — pág. 12-14
  * -----------------------------------------------------------------------------
+ *
+ * IMPORTANTE: requiere que la tabla pagos_suscripciones tenga 'efectivo'
+ * en el ENUM de tipo_pago:
+ *
+ *   ALTER TABLE `pagos_suscripciones`
+ *   MODIFY COLUMN `tipo_pago`
+ *   ENUM('tdc','domiciliacion','transferencia','efectivo')
+ *   COLLATE utf8_unicode_ci DEFAULT NULL;
+ * -----------------------------------------------------------------------------
  */
 
 ob_start();
@@ -103,13 +112,104 @@ function pick_first(...$vals)
 {
     foreach ($vals as $v) {
         if ($v !== null && $v !== '' && $v !== '0') return $v;
-        // OJO: '0' es válido para algunos campos (ej. régimen '605' no, pero
-        // por seguridad no descartamos '0' para campos que no lo usan)
     }
     foreach ($vals as $v) {
         if ($v !== null && $v !== '') return $v;
     }
     return null;
+}
+
+/**
+ * Guarda un registro en la tabla pagos_suscripciones.
+ * tipo_pago = 'efectivo' (pago en tienda vía CCT).
+ * Retorna el ID insertado o null si falla.
+ */
+function guardar_pago_suscripcion(
+    PDO    $conn,
+    int    $empresaId,
+    float  $monto,
+    string $referencia,
+    string $plan,
+    string $periodo,
+    string $autorizacion,
+    string $transaccion,
+    array  $rawInput
+): ?int {
+    try {
+        $sql = "INSERT INTO pagos_suscripciones
+                    (empresa_id, monto, fecha_pago, referencia, tipo_pago, plan,
+                     periodo, status, foliocpagos, auth, cc_mask, raw_response, correo_enviado)
+                VALUES
+                    (:empresa_id, :monto, NOW(), :referencia, 'efectivo', :plan,
+                     :periodo, 'completado', :foliocpagos, :auth, NULL, :raw_response, 0)";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            ':empresa_id'   => $empresaId,
+            ':monto'        => $monto,
+            ':referencia'   => $referencia,
+            ':plan'         => $plan,
+            ':periodo'      => $periodo,
+            ':foliocpagos'  => $transaccion,
+            ':auth'         => $autorizacion,
+            ':raw_response' => json_encode($rawInput, JSON_UNESCAPED_UNICODE),
+        ]);
+
+        $nuevoId = (int) $conn->lastInsertId();
+        error_log("[CCT PagoReferencia] Pago guardado en pagos_suscripciones id=$nuevoId (efectivo)");
+        return $nuevoId;
+
+    } catch (Throwable $e) {
+        error_log('[CCT PagoReferencia] Error guardando en pagos_suscripciones: ' . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Registra una notificación en la tabla notificaciones para cada
+ * administrador activo. NO usa el campo `url`.
+ */
+function notificar_administradores_pago(
+    PDO    $conn,
+    string $titulo,
+    string $mensaje,
+    string $tipo = 'success'
+): void {
+    try {
+        $stmtAdmins = $conn->prepare("
+            SELECT id 
+            FROM usuarios 
+            WHERE rol_usuario = 'administrador' 
+              AND activo = 1
+        ");
+        $stmtAdmins->execute();
+        $admins = $stmtAdmins->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!$admins) {
+            error_log('[CCT PagoReferencia] No hay usuarios administradores activos para notificar');
+            return;
+        }
+
+        $sqlNotif = "INSERT INTO notificaciones 
+            (usuario_id, titulo, mensaje, tipo, leida, created_at)
+            VALUES 
+            (:usuario_id, :titulo, :mensaje, :tipo, 0, NOW())";
+        $stmtNotif = $conn->prepare($sqlNotif);
+
+        foreach ($admins as $adm) {
+            $stmtNotif->execute([
+                ':usuario_id' => $adm['id'],
+                ':titulo'     => $titulo,
+                ':mensaje'    => $mensaje,
+                ':tipo'       => $tipo,
+            ]);
+        }
+
+        error_log('[CCT PagoReferencia] Notificaciones enviadas a ' . count($admins) . ' administrador(es)');
+    } catch (Throwable $e) {
+        // No abortamos el flujo principal si falla la notificación
+        error_log('[CCT PagoReferencia] Error al registrar notificaciones: ' . $e->getMessage());
+    }
 }
 
 /* =============================================================================
@@ -171,8 +271,6 @@ try {
         throw new RuntimeException('getDBConnection() no devolvió un PDO válido.');
     }
 
-    // SELECT que cubre TODOS los posibles campos de CP y de datos fiscales
-    // que existen en referencias_pago según el schema.
     $stmt = $conn->prepare(
         'SELECT id, empresa_id, plan, plazo, tipo_servicio,
                 reference_cct, reference_emisor, folio_cct,
@@ -302,6 +400,57 @@ try {
     }
 
     /* =====================================================================
+     * 5.1) GUARDAR EN pagos_suscripciones (tipo_pago = 'efectivo')
+     * ===================================================================== */
+    $planParaPago = $ref['plan'] ?: detectar_plan_desde_descripcion((string) ($ref['descripcion'] ?? ''));
+    if ($planParaPago === 'plus') {
+        $planParaPago = 'premium';
+    }
+
+    $plazoParaPago = $ref['plazo'] ?: detectar_plazo_desde_descripcion((string) ($ref['descripcion'] ?? ''));
+
+    if (!empty($ref['empresa_id'])) {
+        guardar_pago_suscripcion(
+            $conn,
+            (int) $ref['empresa_id'],
+            (float) $ref['monto'],
+            $referencia,
+            (string) $planParaPago,
+            (string) $plazoParaPago,
+            $autorizacion,
+            $transaccion,
+            [
+                'referencia'     => $referencia,
+                'monto'          => $montoRaw,
+                'fecha'          => $fechaRaw,
+                'transaccion'    => $transaccion,
+                'autorizacion'   => $autorizacion,
+                'referencia_id'  => $ref['id'],
+                'raw_body'       => $rawBody,
+            ]
+        );
+    } else {
+        error_log('[CCT PagoReferencia] Referencia sin empresa_id — no se guarda en pagos_suscripciones');
+    }
+
+    /* =====================================================================
+     * 5.2) NOTIFICAR A TODOS LOS ADMINISTRADORES (sin campo url)
+     * ===================================================================== */
+    if (!empty($ref['empresa_id'])) {
+        $tituloNotif  = "Nuevo pago recibido (Efectivo/CCT)";
+        $mensajeNotif = sprintf(
+            "Se recibió un pago en efectivo aprobado de $%s MXN para la empresa ID %d. Referencia: %s | Autorización: %s | Transacción: %s",
+            number_format((float) $ref['monto'], 2),
+            (int) $ref['empresa_id'],
+            $referencia,
+            $autorizacion,
+            $transaccion
+        );
+
+        notificar_administradores_pago($conn, $tituloNotif, $mensajeNotif, 'success');
+    }
+
+    /* =====================================================================
      * 6) ACTIVAR SUSCRIPCIÓN
      * ===================================================================== */
     if (!empty($ref['empresa_id'])) {
@@ -367,8 +516,6 @@ try {
 
             /* =================================================================
              * 6.4) EMPRESA + CORREO
-             *      NOTA: empresas NO tiene columnas fiscales en este schema.
-             *      Solo traemos nombre, email y vencimiento.
              * ================================================================= */
             $emp = null;
             $stmtEmp = $pdoMain->prepare(
@@ -394,6 +541,21 @@ try {
                         $emp['fecha_vencimiento'] ?? null
                     );
                     error_log("[CCT PagoReferencia] Correo enviado a $destinoCorreo");
+
+                    try {
+                        $conn->prepare(
+                            "UPDATE pagos_suscripciones
+                                SET correo_enviado = 1
+                              WHERE empresa_id = :empresa_id
+                                AND foliocpagos = :transaccion
+                              ORDER BY id DESC LIMIT 1"
+                        )->execute([
+                            ':empresa_id'  => $ref['empresa_id'],
+                            ':transaccion' => $transaccion,
+                        ]);
+                    } catch (Throwable $e) {
+                        error_log('[CCT PagoReferencia] No se pudo marcar correo_enviado: ' . $e->getMessage());
+                    }
                 } else {
                     error_log('[CCT PagoReferencia] Sin correo destino — no se envía notificación');
                 }
@@ -402,8 +564,31 @@ try {
             }
 
             /* =================================================================
+             * 6.4.1) CREAR ORGANIZACIÓN EN FACTURAPI (solo si es premium)
+             * ================================================================= */
+            try {
+                $resOrg = asegurarOrganizacionFacturapi(
+                    $pdoMain,
+                    (int) $ref['empresa_id'],
+                    $plan_a_usar,
+                    $emp['nombre_empresa'] ?? ($ref['customer_name'] ?? '')
+                );
+
+                if ($resOrg['success']) {
+                    if ($resOrg['creada']) {
+                        error_log("[CCT PagoReferencia] Organización Facturapi creada para empresa {$ref['empresa_id']}. ID: {$resOrg['id']}");
+                    } else {
+                        error_log("[CCT PagoReferencia] Empresa {$ref['empresa_id']} ya tenía organización Facturapi: {$resOrg['id']}");
+                    }
+                } else {
+                    error_log("[CCT PagoReferencia] No se pudo asegurar organización Facturapi (empresa {$ref['empresa_id']}): {$resOrg['message']}");
+                }
+            } catch (Throwable $e) {
+                error_log('[CCT PagoReferencia] Error inesperado asegurando organización Facturapi: ' . $e->getMessage());
+            }
+
+            /* =================================================================
              * 6.5) TIMBRAR FACTURA
-             *      Fallback de CP entre las 3 columnas de referencias_pago.
              * ================================================================= */
             error_log('[CCT PagoReferencia] >>> ENTRA A 6.5 (facturación). requiere_factura=' .
                       var_export($ref['requiere_factura'] ?? null, true));
@@ -413,8 +598,6 @@ try {
                     if (!function_exists('timbrarFacturaSuscripcion')) {
                         error_log('[CCT PagoReferencia] timbrarFacturaSuscripcion() no disponible — se omite factura');
                     } else {
-                        // Fallback múltiple: primero bloque sin prefijo,
-                        // luego bloque factura_*, ambos en referencias_pago.
                         $datosFiscales = [
                             'razon_social'    => pick_first($ref['razon_social'] ?? null, $ref['factura_razon_social'] ?? null),
                             'rfc'             => pick_first($ref['rfc'] ?? null, $ref['factura_rfc'] ?? null),
@@ -458,8 +641,6 @@ try {
                                 ':id'    => $ref['id'],
                             ]);
 
-                            // Auto-reparación: si timbró OK pero cp_factura estaba NULL,
-                            // lo persistimos desde donde lo hayamos tomado.
                             if (!empty($resultadoFactura['uuid']) && empty($ref['cp_factura']) && !empty($datosFiscales['cp'])) {
                                 try {
                                     $pdoMain->prepare(

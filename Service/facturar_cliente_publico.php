@@ -1,9 +1,14 @@
 <?php
-// facturar_venta.php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Service/facturar_cliente_publico.php
+// Facturación pública vía token QR (sin login)
 
-session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../php_errors.log');
+
+header('Content-Type: application/json; charset=utf-8');
+
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../env_loader.php';
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -22,19 +27,13 @@ function esClaveSATValida($clave) {
     return preg_match('/^[0-9]{8}$/', $clave);
 }
 
-/**
- * Extrae el mensaje legible del error de Facturapi.
- * Si el mensaje trae JSON crudo dentro, saca solo los `message` internos.
- */
 function extraerMensajeLegibleFacturapi($mensaje) {
     if (empty($mensaje)) {
         return 'Error desconocido al facturar.';
     }
 
-    // Busca un JSON dentro del string
     $inicio = strpos($mensaje, '{');
     if ($inicio === false) {
-        // No hay JSON, devolver el mensaje limpio quitando prefijos técnicos
         $limpio = preg_replace('/^Error de Facturapi:\s*/i', '', $mensaje);
         $limpio = preg_replace('/^Error:\s*/i', '', $limpio);
         return trim($limpio);
@@ -47,7 +46,6 @@ function extraerMensajeLegibleFacturapi($mensaje) {
         return trim($mensaje);
     }
 
-    // Si trae un arreglo de errors, juntamos todos los mensajes
     $mensajes = [];
     if (!empty($data['errors']) && is_array($data['errors'])) {
         foreach ($data['errors'] as $err) {
@@ -57,7 +55,6 @@ function extraerMensajeLegibleFacturapi($mensaje) {
         }
     }
 
-    // Si no hay errors[], usamos el message principal
     if (empty($mensajes) && !empty($data['message'])) {
         $mensajes[] = $data['message'];
     }
@@ -66,36 +63,94 @@ function extraerMensajeLegibleFacturapi($mensaje) {
         return trim($mensaje);
     }
 
-    // Eliminar duplicados (Facturapi suele repetir el mensaje en 'message' y en 'errors[].message')
     $mensajes = array_values(array_unique($mensajes));
-
     return implode("\n\n", $mensajes);
 }
 
 // ------------------------------------------------------------
-// VERIFICAR AUTENTICACIÓN
+// VALIDAR TOKEN (en lugar de sesión)
 // ------------------------------------------------------------
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['usuario_rol'] !== 'admin') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'No autorizado']);
+$token    = $_POST['token'] ?? '';
+$venta_id = (int)($_POST['venta_id'] ?? 0);
+
+if (empty($token) || !preg_match('/^[a-f0-9]{64}$/', $token)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Token inválido']);
+    exit;
+}
+
+if ($venta_id <= 0) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Venta inválida']);
+    exit;
+}
+
+$empresa_id = (int)($_POST['empresa_id'] ?? 0);
+$empresa_db = trim($_POST['empresa_db'] ?? '');
+
+if ($empresa_id <= 0 || empty($empresa_db)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Datos de empresa faltantes']);
     exit;
 }
 
 // ------------------------------------------------------------
-// RECIBIR DATOS
+// VALIDAR QUE EL TOKEN PERTENECE A LA VENTA
 // ------------------------------------------------------------
-$venta_id = $_POST['venta_id'] ?? 0;
-$cliente_nombre = trim($_POST['cliente_nombre'] ?? '');
-$cliente_rfc = trim($_POST['cliente_rfc'] ?? '');
-$cliente_email = trim($_POST['cliente_email'] ?? '');
-$cliente_regimen = trim($_POST['cliente_regimen'] ?? '');
-$cliente_zip = trim($_POST['cliente_zip'] ?? '');
-$cliente_estado = trim($_POST['cliente_estado'] ?? '');
-$cliente_ciudad = trim($_POST['cliente_ciudad'] ?? '');
-$metodo_pago = $_POST['metodo_pago'] ?? 'PUE';
-$uso_cfdi = $_POST['uso_cfdi'] ?? 'G01';
+try {
+    $conn = getEmpresaDBConnection($empresa_db);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Error de conexión a la base de datos']);
+    exit;
+}
 
-if (!$venta_id || !$cliente_nombre || !$cliente_rfc || !$cliente_email || !$cliente_regimen || !$cliente_zip) {
+$stmt_v = $conn->prepare("
+    SELECT id, factura_token, factura_token_expira, factura_uuid
+    FROM ventas
+    WHERE id = :venta_id AND factura_token = :token
+    LIMIT 1
+");
+$stmt_v->execute([':venta_id' => $venta_id, ':token' => $token]);
+$venta_token = $stmt_v->fetch(PDO::FETCH_ASSOC);
+
+if (!$venta_token) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Token no válido para esta venta']);
+    exit;
+}
+
+if (!empty($venta_token['factura_token_expira'])
+    && strtotime($venta_token['factura_token_expira']) < time()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'El token ha expirado']);
+    exit;
+}
+
+if (!empty($venta_token['factura_uuid'])) {
+    http_response_code(409);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Esta venta ya fue facturada previamente',
+        'uuid'    => $venta_token['factura_uuid']
+    ]);
+    exit;
+}
+
+// ------------------------------------------------------------
+// RECIBIR DATOS DEL FORMULARIO PÚBLICO
+// ------------------------------------------------------------
+$cliente_nombre  = trim($_POST['cliente_nombre'] ?? '');
+$cliente_rfc     = trim($_POST['cliente_rfc'] ?? '');
+$cliente_email   = trim($_POST['cliente_email'] ?? '');
+$cliente_regimen = trim($_POST['cliente_regimen'] ?? '');
+$cliente_zip     = trim($_POST['cliente_zip'] ?? '');
+$cliente_estado  = trim($_POST['cliente_estado'] ?? '');
+$cliente_ciudad  = trim($_POST['cliente_ciudad'] ?? '');
+$metodo_pago     = $_POST['metodo_pago'] ?? 'PUE';
+$uso_cfdi        = $_POST['uso_cfdi'] ?? 'G01';
+
+if (!$cliente_nombre || !$cliente_rfc || !$cliente_email || !$cliente_regimen || !$cliente_zip) {
     echo json_encode(['success' => false, 'message' => 'Faltan datos obligatorios']);
     exit;
 }
@@ -107,7 +162,7 @@ if (strlen($cliente_rfc_limpio) < 12) {
 }
 
 // ------------------------------------------------------------
-// BLOQUE PRINCIPAL
+// BLOQUE PRINCIPAL (misma lógica que facturar_venta.php)
 // ------------------------------------------------------------
 try {
     // 1. Conexión a base de datos principal
@@ -116,7 +171,7 @@ try {
     $sql_empresa = "SELECT plan, facturapi_organization_id, timbres_totales, timbres_disponibles 
                     FROM empresas WHERE id = :empresa_id";
     $stmt_empresa = $conn_main->prepare($sql_empresa);
-    $stmt_empresa->execute([':empresa_id' => $_SESSION['empresa_id']]);
+    $stmt_empresa->execute([':empresa_id' => $empresa_id]);
     $empresa_data = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
     $stmt_empresa->closeCursor();
     $conn_main = null;
@@ -129,14 +184,13 @@ try {
     // 2. Obtener API Key de prueba
     $api_key = env('FACTURAPI_API_KEY');
     if (empty($api_key)) {
-        throw new Exception('No se encontró la API Key maestra de Facturapi en las variables de entorno');
+        throw new Exception('No se encontró la API Key maestra de Facturapi');
     }
 
     $facturapi_org = new Facturapi($api_key);
     try {
         $test_api_key_obj = $facturapi_org->Organizations->getTestApiKey($organization_id);
-        error_log('Estructura de test_api_key_obj: ' . print_r($test_api_key_obj, true));
-        
+
         if (is_object($test_api_key_obj)) {
             if (isset($test_api_key_obj->key)) {
                 $test_api_key = $test_api_key_obj->key;
@@ -145,13 +199,12 @@ try {
             } elseif (isset($test_api_key_obj->secret)) {
                 $test_api_key = $test_api_key_obj->secret;
             } else {
-                $json = json_encode($test_api_key_obj);
-                throw new Exception('No se encontró una propiedad "key", "api_key" o "secret" en el objeto. Contenido: ' . $json);
+                throw new Exception('No se encontró "key", "api_key" o "secret" en el objeto');
             }
         } else {
             $test_api_key = $test_api_key_obj;
         }
-        
+
         if (empty($test_api_key)) {
             throw new Exception('La API Key de prueba extraída está vacía');
         }
@@ -159,9 +212,7 @@ try {
         throw new Exception('No se pudo obtener la API Key de prueba: ' . $e->getMessage());
     }
 
-    // 3. Conexión a base de datos de la empresa
-    $conn = getEmpresaDBConnection($_SESSION['empresa_db']);
-
+    // 3. RFC del emisor
     $sql_empresa = "SELECT rfc FROM sistema_config LIMIT 1";
     $stmt_empresa = $conn->query($sql_empresa);
     $empresa = $stmt_empresa->fetch(PDO::FETCH_ASSOC);
@@ -170,7 +221,7 @@ try {
         throw new Exception('RFC de la empresa no configurado o inválido');
     }
 
-    // Obtener productos
+    // 4. Productos
     $sql = "SELECT vd.cantidad, vd.precio_unitario, vd.descuento,
                    p.nombre as producto_nombre, p.codigo as producto_codigo
             FROM venta_detalles vd
@@ -184,27 +235,27 @@ try {
         throw new Exception('La venta no tiene productos');
     }
 
-    // 4. Construir items
+    // 5. Construir items
     $items = [];
     $claves_por_descripcion = [
         'computadora' => '43211503',
-        'laptop' => '43211503',
-        'monitor' => '43211702',
-        'mouse' => '43211901',
-        'teclado' => '43211901',
-        'servicio' => '81141501',
-        'soporte' => '81141501',
-        'accesorio' => '43211800',
-        'impresora' => '43211903',
-        'disco' => '43211904',
-        'memoria' => '43211905'
+        'laptop'      => '43211503',
+        'monitor'     => '43211702',
+        'mouse'       => '43211901',
+        'teclado'     => '43211901',
+        'servicio'    => '81141501',
+        'soporte'     => '81141501',
+        'accesorio'   => '43211800',
+        'impresora'   => '43211903',
+        'disco'       => '43211904',
+        'memoria'     => '43211905'
     ];
 
     foreach ($detalles as $row) {
-        $codigo = $row['producto_codigo'] ?? '';
-        $nombre = $row['producto_nombre'];
-        $precio = (float)$row['precio_unitario'];
-        $cantidad = (int)$row['cantidad'];
+        $codigo    = $row['producto_codigo'] ?? '';
+        $nombre    = $row['producto_nombre'];
+        $precio    = (float)$row['precio_unitario'];
+        $cantidad  = (int)$row['cantidad'];
         $descuento = (float)$row['descuento'];
 
         if (esClaveSATValida($codigo)) {
@@ -222,10 +273,10 @@ try {
 
         $item = [
             'quantity' => $cantidad,
-            'product' => [
+            'product'  => [
                 'description' => $nombre,
                 'product_key' => $product_key,
-                'price' => $precio
+                'price'       => $precio
             ]
         ];
         if ($descuento > 0) {
@@ -234,86 +285,79 @@ try {
         $items[] = $item;
     }
 
-    // 5. Crear factura usando la librería
+    // 6. Crear factura
     $facturapi = new Facturapi($test_api_key);
 
     $invoiceData = [
         'customer' => [
             'legal_name' => $cliente_nombre,
-            'email' => $cliente_email,
-            'tax_id' => $cliente_rfc_limpio,
+            'email'      => $cliente_email,
+            'tax_id'     => $cliente_rfc_limpio,
             'tax_system' => $cliente_regimen,
-            'address' => [
-                'zip' => $cliente_zip,
+            'address'    => [
+                'zip'   => $cliente_zip,
                 'state' => $cliente_estado,
-                'city' => $cliente_ciudad
+                'city'  => $cliente_ciudad
             ]
         ],
-        'items' => $items,
+        'items'        => $items,
         'payment_form' => ($metodo_pago === 'PPD') ? '31' : '28',
-        'use' => $uso_cfdi
+        'use'          => $uso_cfdi
     ];
 
-    error_log("Facturapi request for venta $venta_id: " . json_encode($invoiceData));
+    error_log("Facturapi PUBLIC request for venta $venta_id: " . json_encode($invoiceData));
 
-    // Llamada a la API
     $invoice = $facturapi->Invoices->create($invoiceData);
 
-    // El objeto $invoice usa 'id', no '_id'
-    $uuid = $invoice->uuid ?? $invoice->id ?? null;
-    $folio = $invoice->folio_number ?? $invoice->folio ?? null;
+    $uuid   = $invoice->uuid ?? $invoice->id ?? null;
+    $folio  = $invoice->folio_number ?? $invoice->folio ?? null;
     $status = $invoice->status ?? null;
-    $total = $invoice->total ?? 0;
-
-    $esExito = ($uuid && ($status === 'valid' || $status === 'active' || $status === 'draft'));
+    $total  = $invoice->total ?? 0;
 
     if (!$uuid) {
         throw new Exception('No se obtuvo UUID de la factura. Respuesta: ' . json_encode($invoice));
     }
 
-    // Guardar UUID y folio en la venta
-    $updateSql = "UPDATE ventas SET factura_uuid = :uuid, factura_folio = :folio WHERE id = :venta_id";
+    // 7. Guardar UUID/folio y anular token
+    $updateSql = "UPDATE ventas 
+                  SET factura_uuid = :uuid, 
+                      factura_folio = :folio,
+                      factura_token = NULL,
+                      factura_token_expira = NULL
+                  WHERE id = :venta_id";
     $updateStmt = $conn->prepare($updateSql);
     $updateStmt->execute([
-        ':uuid' => $uuid,
-        ':folio' => $folio,
+        ':uuid'     => $uuid,
+        ':folio'    => $folio,
         ':venta_id' => $venta_id
     ]);
 
-    // ================================================================
-    // 6. ENVIAR FACTURA POR CORREO usando el método de la librería
-    // ================================================================
-    $emailSent = false;
+    // 8. Enviar factura por correo
+    $emailSent  = false;
     $emailError = null;
     if (!empty($cliente_email)) {
         try {
-            // Usamos el método send_by_email de la librería
-            // El segundo parámetro puede ser un string o un array de emails
             $emailResponse = $facturapi->Invoices->send_by_email($invoice->id, $cliente_email);
 
-            // Verificar si la respuesta indica éxito
             if (isset($emailResponse->ok) && $emailResponse->ok === true) {
                 $emailSent = true;
             } else {
-                $errorMsg = $emailResponse->message ?? 'Error desconocido al enviar el correo';
-                throw new Exception($errorMsg);
+                throw new Exception($emailResponse->message ?? 'Error desconocido al enviar el correo');
             }
         } catch (Facturapi_Exception $e) {
             $emailError = 'Facturapi Exception: ' . $e->getMessage();
-            error_log("Error al enviar factura por email: " . $emailError);
+            error_log("Error al enviar factura por email (público): " . $emailError);
         } catch (Exception $e) {
             $emailError = $e->getMessage();
-            error_log("Error al enviar factura por email: " . $emailError);
+            error_log("Error al enviar factura por email (público): " . $emailError);
         }
-    } else {
-        $emailError = "El cliente no tiene correo electrónico registrado.";
     }
 
-    // Mensaje final
+    $esExito = ($uuid && ($status === 'valid' || $status === 'active' || $status === 'draft'));
     if ($esExito) {
         $mensaje = "Factura creada y timbrada exitosamente. Estado: " . $status;
     } else {
-        $mensaje = "Factura creada en estado: " . ($status ?? 'desconocido') . ". No se timbró automáticamente.";
+        $mensaje = "Factura creada en estado: " . ($status ?? 'desconocido');
     }
 
     if ($emailSent) {
@@ -323,12 +367,12 @@ try {
     }
 
     echo json_encode([
-        'success' => true,
-        'uuid' => $uuid,
-        'folio' => $folio,
-        'status' => $status,
-        'total' => $total,
-        'message' => $mensaje,
+        'success'    => true,
+        'uuid'       => $uuid,
+        'folio'      => $folio,
+        'status'     => $status,
+        'total'      => $total,
+        'message'    => $mensaje,
         'email_sent' => $emailSent
     ]);
 
@@ -337,15 +381,15 @@ try {
     echo json_encode([
         'success' => false,
         'message' => extraerMensajeLegibleFacturapi($e->getMessage()),
-        'file' => $e->getFile(),
-        'line' => $e->getLine()
+        'file'    => $e->getFile(),
+        'line'    => $e->getLine()
     ]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => extraerMensajeLegibleFacturapi($e->getMessage()),
-        'file' => $e->getFile(),
-        'line' => $e->getLine()
+        'file'    => $e->getFile(),
+        'line'    => $e->getLine()
     ]);
 }

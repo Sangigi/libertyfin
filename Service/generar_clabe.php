@@ -53,8 +53,8 @@ try {
     $descripcion = $data['Description'] ?? 'Pago Libertyfin';
     $montoTotal = isset($data['MontoTotal']) ? (float) $data['MontoTotal'] : 0;
     $plan = $data['plan'] ?? null;
-$plazo = $data['plazo'] ?? null;
-$tipoServicio = $data['tipo_servicio'] ?? 'Suscripcion';
+    $plazo = $data['plazo'] ?? null;
+    $tipoServicio = $data['tipo_servicio'] ?? 'Suscripcion';
     
     // ========== OBTENER EMPRESA_ID ==========
     // Opción 1: Desde la sesión (si la API es llamada desde el sistema)
@@ -200,6 +200,23 @@ $tipoServicio = $data['tipo_servicio'] ?? 'Suscripcion';
         }
     }
 
+    // Asegurar columnas plan, plazo y tipo_servicio (auto-creación)
+    $columnasPlan = [
+        'plan'          => "ALTER TABLE clabes_spei ADD COLUMN plan VARCHAR(50) DEFAULT NULL",
+        'plazo'         => "ALTER TABLE clabes_spei ADD COLUMN plazo VARCHAR(20) DEFAULT NULL",
+        'tipo_servicio' => "ALTER TABLE clabes_spei ADD COLUMN tipo_servicio VARCHAR(50) DEFAULT NULL",
+    ];
+    foreach ($columnasPlan as $col => $sqlAlter) {
+        try {
+            $chk = $pdo->query("SHOW COLUMNS FROM clabes_spei LIKE " . $pdo->quote($col));
+            if ($chk->rowCount() === 0) {
+                $pdo->exec($sqlAlter);
+            }
+        } catch (PDOException $e) {
+            error_log("No se pudo verificar/crear columna $col en clabes_spei: " . $e->getMessage());
+        }
+    }
+
     $requiereFactura = !empty($data['requiere_factura']) ? 1 : 0;
     $facturacion = [
         'razon_social'    => $data['razon_social'] ?? null,
@@ -220,56 +237,60 @@ $tipoServicio = $data['tipo_servicio'] ?? 'Suscripcion';
     $stmt->execute([$clienteEmail]);
     
     // Construir la consulta INSERT con o sin empresa_id
-// Construir la consulta INSERT con o sin empresa_id
-if ($col_exists) {
-    $sql = "
-        INSERT INTO clabes_spei (
-            empresa_id, account, clabe, cliente_email, cliente_nombre, descripcion,
-            monto_total, monto_pendiente, fecha_expiracion, estado, 
-            folio, productos_json,
-            requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp_factura, metodo_pago_sat, uso_cfdi,
-            facturar, factura_razon_social, factura_rfc, factura_email, factura_regimen_fiscal, factura_cp, factura_metodo_pago, factura_uso_cfdi
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'vigente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ";
-    $params = [
-        $empresaId,
-        $account,
-        $apiResponse['Clabe'],
-        $clienteEmail,
-        $clienteNombre,
-        $descripcionFinal,
-        $montoTotalCentavos,
-        $montoTotalCentavos,
-        date('Y-m-d H:i:s', strtotime('+1 day')),
-        $apiResponse['Folio'] ?? null,
-        $productos ? json_encode($productos, JSON_UNESCAPED_UNICODE) : null,
-        $requiereFactura,
-        $facturacion['razon_social'],
-        $facturacion['rfc'],
-        $facturacion['email_factura'],
-        $facturacion['regimen_fiscal'],
-        $facturacion['cp_factura'],
-        $facturacion['metodo_pago_sat'],
-        $facturacion['uso_cfdi'],
-        // Duplicado en las columnas "factura_*" legacy para que quien las lea
-        // también vea el dato correcto
-        $requiereFactura ? 'si' : 'no',
-        $facturacion['razon_social'],
-        $facturacion['rfc'],
-        $facturacion['email_factura'],
-        $facturacion['regimen_fiscal'],
-        $facturacion['cp_factura'],
-        $facturacion['metodo_pago_sat'],
-        $facturacion['uso_cfdi'],
-    ];
-} else {
+    if ($col_exists) {
+        $sql = "
+            INSERT INTO clabes_spei (
+                empresa_id, account, clabe, cliente_email, cliente_nombre, descripcion,
+                plan, plazo, tipo_servicio,
+                monto_total, monto_pendiente, fecha_expiracion, estado, 
+                folio, productos_json,
+                requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp_factura, metodo_pago_sat, uso_cfdi,
+                facturar, factura_razon_social, factura_rfc, factura_email, factura_regimen_fiscal, factura_cp, factura_metodo_pago, factura_uso_cfdi
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'vigente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ";
+        $params = [
+            $empresaId,
+            $account,
+            $apiResponse['Clabe'],
+            $clienteEmail,
+            $clienteNombre,
+            $descripcionFinal,
+            $plan,          // <-- NUEVO
+            $plazo,         // <-- NUEVO
+            $tipoServicio,  // <-- NUEVO
+            $montoTotalCentavos,
+            $montoTotalCentavos,
+            date('Y-m-d H:i:s', strtotime('+1 day')),
+            $apiResponse['Folio'] ?? null,
+            $productos ? json_encode($productos, JSON_UNESCAPED_UNICODE) : null,
+            $requiereFactura,
+            $facturacion['razon_social'],
+            $facturacion['rfc'],
+            $facturacion['email_factura'],
+            $facturacion['regimen_fiscal'],
+            $facturacion['cp_factura'],
+            $facturacion['metodo_pago_sat'],
+            $facturacion['uso_cfdi'],
+            // Duplicado en las columnas "factura_*" legacy para que quien las lea
+            // también vea el dato correcto
+            $requiereFactura ? 'si' : 'no',
+            $facturacion['razon_social'],
+            $facturacion['rfc'],
+            $facturacion['email_factura'],
+            $facturacion['regimen_fiscal'],
+            $facturacion['cp_factura'],
+            $facturacion['metodo_pago_sat'],
+            $facturacion['uso_cfdi'],
+        ];
+    } else {
         $sql = "
             INSERT INTO clabes_spei (
                 account, clabe, cliente_email, cliente_nombre, descripcion,
+                plan, plazo, tipo_servicio,
                 monto_total, monto_pendiente, fecha_expiracion, estado, 
                 folio, productos_json,
                 requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp_factura, metodo_pago_sat, uso_cfdi
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'vigente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'vigente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ";
         $params = [
             $account,
@@ -277,6 +298,9 @@ if ($col_exists) {
             $clienteEmail,
             $clienteNombre,
             $descripcionFinal,
+            $plan,          // <-- NUEVO
+            $plazo,         // <-- NUEVO
+            $tipoServicio,  // <-- NUEVO
             $montoTotalCentavos,
             $montoTotalCentavos,
             date('Y-m-d H:i:s', strtotime('+1 day')),

@@ -12,8 +12,6 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/email_helper.php';
 require_once __DIR__ . '/facturapi_suscripcion.php';
 
-// Inicializamos $fecha ANTES del try para evitar "undefined variable"
-// si la excepción ocurre antes de leer el input (ej. falla de conexión a BD).
 $fecha = date('Y-m-d\TH:i:s\Z');
 
 try {
@@ -34,26 +32,20 @@ try {
     }
 
     $clabe = $input['clabe'];
-
-    // El monto viene multiplicado por 100 (ej: 20200 = $202.00).
-    // round() a 2 decimales asegura que no se arrastren errores de
-    // precisión de punto flotante antes de guardar en BD.
     $montoRecibido = round((float) $input['monto'] / 100, 2);
 
     $transaccion = $input['transaccion'] ?? null;
     $fecha = $input['fecha'] ?? date('Y-m-d\TH:i:s\Z');
 
-    // Copia del input SOLO para logging: se sobrescribe el campo "monto"
-    // con el valor ya convertido a pesos reales ($202.00 en vez de 20200),
-    // así en spei_transacciones_log se ve directamente el importe real
-    // sin necesidad de un campo adicional ni de recalcular nada.
     $inputParaLog = $input;
     $inputParaLog['monto'] = $montoRecibido;
 
+    // 👇 Agregamos tipo_servicio al SELECT
     $stmt = $pdo->prepare("
         SELECT id, account, estado, monto_pendiente, monto_total,
                cliente_email, cliente_nombre, descripcion, empresa_id,
-               requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp_factura, metodo_pago_sat, uso_cfdi
+               requiere_factura, razon_social, rfc, email_factura, regimen_fiscal, cp_factura, metodo_pago_sat, uso_cfdi,
+               tipo_servicio
         FROM clabes_spei 
         WHERE clabe = ?
     ");
@@ -99,9 +91,7 @@ try {
         exit;
     }
 
-    // IDEMPOTENCIA: si esta transacción ya fue procesada antes (reintento
-    // de red, timeout, reenvío duplicado de Cobroscontarjeta.com), no
-    // volvemos a descontar el monto ni a generar una nueva autorización.
+    // IDEMPOTENCIA
     if ($transaccion !== null) {
         $stmtCheck = $pdo->prepare("
             SELECT numero_autorizacion, fecha_confirmacion
@@ -176,18 +166,39 @@ try {
 
     $pdo->commit();
 
-    // Activar la suscripción: actualizar plan y fecha de vencimiento de la
-    // empresa cuando la CLABE queda completamente saldada (igual que ya se
-    // hace en EntregarPagoLineaToken.php para el flujo de tarjeta).
+    // 👇 Bandera: ¿es un pago de tipo "Pago en Caja"?
+    $esPagoEnCaja = (isset($registro['tipo_servicio']) && $registro['tipo_servicio'] === 'Pago en Caja');
+
+    // ============================================================
+    // Si es "Pago en Caja" NO hacemos nada más: ni suscripción,
+    // ni correo, ni notificaciones, ni factura. Solo respondemos.
+    // ============================================================
+    if ($esPagoEnCaja) {
+        $response = [
+            'codigo' => 0,
+            'mensaje' => 'Operación exitosa',
+            'autorizacion' => $numeroAutorizacion,
+            'transaccion' => $transaccion,
+            'fecha' => date('Y-m-d', strtotime($fecha))
+        ];
+        logSpeiTransaction($pdo, 'pago', $clabe, $registro['account'], $inputParaLog, $response, 0);
+        echo json_encode($response);
+        exit;
+    }
+
+    // ============================================================
+    // Activar la suscripción (solo para pagos que NO son en caja)
+    // ============================================================
     $emp = null;
+    $plan_a_usar = 'empresarial';
+    $esAnualClabe = false;
+
     if ($nuevoEstado === 'pagada' && !empty($registro['empresa_id'])) {
         try {
-            // Extraer plan y periodo de la descripción guardada al generar la CLABE
             $descripcionClabe = $registro['descripcion'] ?? '';
-            $plan_a_usar = 'empresarial';
             if (stripos($descripcionClabe, 'Básico') !== false || stripos($descripcionClabe, 'Basico') !== false) $plan_a_usar = 'basico';
-            elseif (stripos($descripcionClabe, 'Profesional') !== false) $plan_a_usar = 'profesional';
-            elseif (stripos($descripcionClabe, 'Plus') !== false) $plan_a_usar = 'plus';
+            elseif (stripos($descripcionClabe, 'Profesional') !== false) $plan_a_usar = 'starer';
+            elseif (stripos($descripcionClabe, 'Plus') !== false) $plan_a_usar = 'premium';
 
             $esAnualClabe = (stripos($descripcionClabe, 'Anual') !== false);
             $intervalo = $esAnualClabe ? "INTERVAL 1 YEAR" : "INTERVAL 1 MONTH";
@@ -231,7 +242,98 @@ try {
         }
     }
 
-    // Enviar correo de confirmación si con este pago se saldó por completo
+    // ============================================================
+    // Registrar el pago exitoso en pagos_suscripciones
+    // ============================================================
+    if ($nuevoEstado === 'pagada' && !empty($registro['empresa_id'])) {
+        try {
+            $periodoPago = $esAnualClabe ? 'anual' : 'mensual';
+
+            $stmtPagoSus = $pdo->prepare("
+                INSERT INTO pagos_suscripciones
+                    (empresa_id, monto, fecha_pago, referencia, tipo_pago, plan, periodo, status, foliocpagos, auth, raw_response, correo_enviado)
+                VALUES
+                    (:empresa_id, :monto, NOW(), :referencia, 'transferencia', :plan, :periodo, 'completado', :foliocpagos, :auth, :raw_response, 0)
+            ");
+
+            $stmtPagoSus->execute([
+                ':empresa_id'   => $registro['empresa_id'],
+                ':monto'        => $montoRecibido,
+                ':referencia'   => $referencia,
+                ':plan'         => $plan_a_usar,
+                ':periodo'      => $periodoPago,
+                ':foliocpagos'  => $transaccion,
+                ':auth'         => $numeroAutorizacion,
+                ':raw_response' => json_encode([
+                    'clabe'        => $clabe,
+                    'transaccion'  => $transaccion,
+                    'monto'        => $montoRecibido,
+                    'autorizacion' => $numeroAutorizacion,
+                    'fecha'        => $fecha,
+                    'input'        => $inputParaLog,
+                ], JSON_UNESCAPED_UNICODE),
+            ]);
+
+            error_log("Pago registrado en pagos_suscripciones para empresa {$registro['empresa_id']}");
+        } catch (PDOException $e) {
+            error_log("Error registrando pago en pagos_suscripciones: " . $e->getMessage());
+        }
+    }
+
+    // ============================================================
+    // NOTIFICAR A TODOS LOS ADMINISTRADORES
+    // ============================================================
+    if ($nuevoEstado === 'pagada' && !empty($registro['empresa_id'])) {
+        try {
+            $stmtAdmins = $pdo->prepare("
+                SELECT id 
+                FROM usuarios 
+                WHERE rol_usuario = 'administrador' 
+                  AND activo = 1
+            ");
+            $stmtAdmins->execute();
+            $admins = $stmtAdmins->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($admins) {
+                $nombreEmpresaNotif = $registro['cliente_nombre'] ?? 'N/A';
+
+                $tituloNotif  = "Nuevo pago recibido (SPEI)";
+                $mensajeNotif = sprintf(
+                    "Se recibió un pago SPEI aprobado de $%s MXN para la empresa \"%s\" (ID %d). Referencia: %s | Autorización: %s",
+                    number_format($montoRecibido, 2),
+                    $nombreEmpresaNotif,
+                    (int) $registro['empresa_id'],
+                    $referencia,
+                    $numeroAutorizacion
+                );
+
+                $sqlNotif = "INSERT INTO notificaciones 
+                    (usuario_id, titulo, mensaje, tipo, leida, created_at)
+                    VALUES 
+                    (:usuario_id, :titulo, :mensaje, :tipo, 0, NOW())";
+                $stmtNotif = $pdo->prepare($sqlNotif);
+
+                foreach ($admins as $adm) {
+                    $stmtNotif->execute([
+                        ':usuario_id' => $adm['id'],
+                        ':titulo'     => $tituloNotif,
+                        ':mensaje'    => $mensajeNotif,
+                        ':tipo'       => 'success',
+                    ]);
+                }
+
+                error_log("Notificaciones SPEI enviadas a " . count($admins) . " administrador(es)");
+            } else {
+                error_log("No hay usuarios administradores activos para notificar (SPEI)");
+            }
+        } catch (PDOException $e) {
+            error_log("Error al registrar notificaciones a administradores (SPEI): " . $e->getMessage());
+        }
+    }
+
+    // ============================================================
+    // Enviar correo de confirmación
+    // ============================================================
     if ($nuevoEstado === 'pagada') {
         $destino = $registro['cliente_email'] ?? null;
         if (!empty($registro['empresa_id'])) {
@@ -255,7 +357,45 @@ try {
         );
         error_log("Correo de confirmación SPEI " . ($enviado ? "enviado" : "NO enviado"));
 
-        // Timbrar factura si el cliente la solicitó al generar la CLABE
+        if ($enviado && !empty($registro['empresa_id'])) {
+            try {
+                $stmtUpdCorreo = $pdo->prepare("
+                    UPDATE pagos_suscripciones 
+                    SET correo_enviado = 1 
+                    WHERE empresa_id = ? AND referencia = ? 
+                    ORDER BY id DESC LIMIT 1
+                ");
+                $stmtUpdCorreo->execute([$registro['empresa_id'], $referencia]);
+            } catch (PDOException $e) {
+                error_log("No se pudo actualizar correo_enviado: " . $e->getMessage());
+            }
+        }
+
+        // Crear organización Facturapi (solo premium)
+        if (!empty($registro['empresa_id'])) {
+            try {
+                $resOrg = asegurarOrganizacionFacturapi(
+                    $pdo,
+                    (int) $registro['empresa_id'],
+                    $plan_a_usar,
+                    $emp['nombre_empresa'] ?? ($registro['cliente_nombre'] ?? '')
+                );
+
+                if ($resOrg['success']) {
+                    if ($resOrg['creada']) {
+                        error_log("Organización Facturapi creada para empresa {$registro['empresa_id']}. ID: {$resOrg['id']}");
+                    } else {
+                        error_log("Empresa {$registro['empresa_id']} ya tenía organización Facturapi: {$resOrg['id']}");
+                    }
+                } else {
+                    error_log("No se pudo asegurar organización Facturapi (empresa {$registro['empresa_id']}): {$resOrg['message']}");
+                }
+            } catch (Exception $e) {
+                error_log("Error inesperado asegurando organización Facturapi (SPEI): " . $e->getMessage());
+            }
+        }
+
+        // Timbrar factura si el cliente la solicitó
         if (!empty($registro['requiere_factura'])) {
             $resultadoFactura = timbrarFacturaSuscripcion(
                 [
@@ -290,9 +430,6 @@ try {
         }
     }
 
-    // La respuesta debe regresar la fecha en formato yyyy-MM-dd (sin hora),
-    // tal como especifica la documentación, no el valor crudo recibido en
-    // el input (que puede venir como yyyy-MM-ddTHH:mm:ssZ).
     $response = [
         'codigo' => 0,
         'mensaje' => 'Operación exitosa',
