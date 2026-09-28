@@ -27,12 +27,11 @@ try {
     $conn_main = getDBConnection();
 
     // Valores por defecto
-// Valores por defecto (para que el sidebar nunca falle)
 $empresa_plan        = "prueba";
 $timbres_totales     = 0;
 $timbres_disponibles = 0;
-$terminal_emida      = null;   // <-- FALTABA
-$notification_status = null;   // <-- FALTABA
+$terminal_emida      = null;
+$notification_status = null;
 
 if ($conn_main) {
     $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida 
@@ -64,7 +63,6 @@ $_SESSION['empresa_plan'] = $empresa_plan;
 
     // Guardar el plan en la sesión
     $_SESSION['empresa_plan'] = $empresa_plan;
-    // === FIN DEL CÓDIGO AGREGADO ===
 
     // Obtener información de la empresa y colores personalizados
     $sql_config = "SELECT nombre_empresa, rfc, telefono, email, color_primario, color_secundario, logo FROM sistema_config LIMIT 1";
@@ -103,17 +101,13 @@ $_SESSION['empresa_plan'] = $empresa_plan;
             }
         }
 
-        // Si encontramos el logo, convertirlo a base64
         if (!empty($logo_path) && file_exists($logo_path)) {
             $logo_empresa = $logo_path;
 
-            // Obtener la extensión del archivo
             $extension = strtolower(pathinfo($logo_path, PATHINFO_EXTENSION));
 
-            // Verificar que sea una imagen válida
             $extensiones_validas = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
             if (in_array($extension, $extensiones_validas)) {
-                // Leer el archivo y convertirlo a base64
                 $logo_data = base64_encode(file_get_contents($logo_path));
                 $logo_src_base64 = 'data:image/' . $extension . ';base64,' . $logo_data;
             }
@@ -135,9 +129,6 @@ $_SESSION['empresa_plan'] = $empresa_plan;
     if (!in_array($filtro_orden, ['asc', 'desc'])) {
         $filtro_orden = 'desc';
     }
-    // Antes el buscador sólo filtraba con JS las filas ya cargadas en la
-    // página actual, así que una venta en otra página nunca aparecía.
-    // Ahora se busca en toda la tabla (folio, cliente, vendedor, descripción).
     $buscar = trim($_GET['buscar'] ?? '');
 
     // Construir WHERE clause
@@ -190,7 +181,6 @@ $_SESSION['empresa_plan'] = $empresa_plan;
     }
 
     // Obtener el total de registros para paginación
-    // (con LEFT JOIN de cliente/usuario porque la búsqueda puede filtrar por esos campos)
     $sql_count = "
         SELECT COUNT(DISTINCT v.id) as total
         FROM ventas v
@@ -215,7 +205,7 @@ $_SESSION['empresa_plan'] = $empresa_plan;
         $offset = ($pagina_actual - 1) * $registros_por_pagina;
     }
 
-    // Obtener ventas con productos agrupados - MODIFICADO
+    // Obtener ventas con productos agrupados
     $sql_ventas = "
         SELECT 
             v.*,
@@ -241,14 +231,12 @@ $_SESSION['empresa_plan'] = $empresa_plan;
 
     $stmt = $conn->prepare($sql_ventas);
 
-    // Preparar parámetros para la consulta con paginación
     $all_params = $params;
     $all_params[] = $registros_por_pagina;
     $all_params[] = $offset;
     
     $stmt->execute($all_params);
     $ventas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
     
     // Sanitizar valores nulos
     foreach ($ventas as &$venta) {
@@ -264,21 +252,21 @@ $_SESSION['empresa_plan'] = $empresa_plan;
     unset($venta);
     $stmt = null;
 
-    // Obtener estadísticas de ventas (sin paginación para mostrar totales)
-$sql_stats = "
-    SELECT 
-        COUNT(*) as total_ventas,
-        SUM(total) as monto_total,
-        AVG(total) as promedio_venta,
-        SUM(descuento) as total_descuentos,
-        SUM(CASE WHEN estado = 'completada' THEN 1 ELSE 0 END) as ventas_completadas,
-        SUM(CASE WHEN estado = 'cancelada' THEN 1 ELSE 0 END) as ventas_canceladas,
-        SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as ventas_pendientes
-    FROM ventas v
-    LEFT JOIN clientes c ON v.cliente_id = c.id
-    LEFT JOIN usuarios u ON v.usuario_id = u.id
-    $where_clause
-";
+    // Obtener estadísticas de ventas
+    $sql_stats = "
+        SELECT 
+            COUNT(*) as total_ventas,
+            SUM(total) as monto_total,
+            AVG(total) as promedio_venta,
+            SUM(descuento) as total_descuentos,
+            SUM(CASE WHEN estado = 'completada' THEN 1 ELSE 0 END) as ventas_completadas,
+            SUM(CASE WHEN estado = 'cancelada' THEN 1 ELSE 0 END) as ventas_canceladas,
+            SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as ventas_pendientes
+        FROM ventas v
+        LEFT JOIN clientes c ON v.cliente_id = c.id
+        LEFT JOIN usuarios u ON v.usuario_id = u.id
+        $where_clause
+    ";
 
     $stmt_stats = $conn->prepare($sql_stats);
     if (!empty($params)) {
@@ -314,7 +302,6 @@ $sql_stats = "
                 vd.*,
                 p.nombre as producto_nombre,
                 p.codigo as producto_codigo,
-                p.precio as precio_unitario,
                 c.nombre as categoria_nombre,
                 (SELECT COUNT(*) FROM venta_comisiones vc WHERE vc.venta_detalle_id = vd.id) as num_comisiones
             FROM venta_detalles vd
@@ -341,9 +328,7 @@ $sql_stats = "
         $venta_especifica = $stmt_venta->fetch(PDO::FETCH_ASSOC);
         $stmt_venta = null;
 
-        // Calcular el número secuencial de esta venta, respetando los MISMOS
-        // filtros y orden que se usan en el listado, para que coincida
-        // exactamente con el número mostrado en la tabla/tarjetas.
+        // Calcular el número secuencial de esta venta
         $numero_venta_detalle = null;
         if ($venta_especifica) {
             $condicion_posicion = ($filtro_orden === 'desc')
@@ -456,9 +441,7 @@ $usos_cfdi = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Historial de Ventas - <?php echo safe_html($_SESSION['empresa_nombre'] ?? ''); ?></title>
     <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/crm-theme.css">
 </head>
@@ -931,12 +914,19 @@ $usos_cfdi = [
                     <?php if (!empty($detalles_venta) && !empty($venta_especifica)): ?>
                         <div class="row mb-4">
                             <div class="col-md-6">
+                                <?php
+                                $v_desc_promo  = $venta_especifica['descuento_promociones'] ?? 0;
+                                $v_desc_manual = max(0, ($venta_especifica['descuento'] ?? 0) - $v_desc_promo);
+                                ?>
                                 <strong>Información de la Venta:</strong>
                                 <p class="mb-1">Código: <?php echo safe_html($venta_especifica['codigo_venta']); ?></p>
                                 <p class="mb-1">Fecha: <?php echo date('d/m/Y H:i', strtotime($venta_especifica['fecha'])); ?></p>
                                 <p class="mb-1">Subtotal: $<?php echo number_format($venta_especifica['subtotal'], 2); ?></p>
-                                <?php if ($venta_especifica['descuento'] > 0): ?>
-                                    <p class="mb-1 text-danger">Descuento: -$<?php echo number_format($venta_especifica['descuento'], 2); ?></p>
+                                <?php if ($v_desc_manual > 0): ?>
+                                    <p class="mb-1 text-danger">Descuento: -$<?php echo number_format($v_desc_manual, 2); ?></p>
+                                <?php endif; ?>
+                                <?php if ($v_desc_promo > 0): ?>
+                                    <p class="mb-1 text-success">Descuento promociones: -$<?php echo number_format($v_desc_promo, 2); ?></p>
                                 <?php endif; ?>
                                 <p class="mb-1">IVA: $<?php echo number_format($venta_especifica['iva'], 2); ?></p>
                                 <p class="mb-1">Total: <strong>$<?php echo number_format($venta_especifica['total'], 2); ?></strong></p>
@@ -979,6 +969,10 @@ $usos_cfdi = [
                                 </thead>
                                 <tbody>
                                     <?php foreach ($detalles_venta as $detalle): ?>
+                                        <?php
+                                        $d_promo  = $detalle['descuento_promocion'] ?? 0;
+                                        $d_manual = max(0, ($detalle['descuento'] ?? 0) - $d_promo);
+                                        ?>
                                         <tr>
                                             <td>
                                                 <?php echo safe_html($detalle['producto_nombre']); ?>
@@ -996,12 +990,32 @@ $usos_cfdi = [
                                             <td><?php echo safe_html($detalle['producto_codigo']); ?></td>
                                             <td><?php echo $detalle['cantidad']; ?> <?php echo safe_html($detalle['unidad_medida'] ?? ''); ?></td>
                                             <td>$<?php echo number_format($detalle['precio_unitario'], 2); ?></td>
-                                            <td><?php if ($detalle['descuento'] > 0): ?>-$<?php echo number_format($detalle['descuento'], 2); ?><?php else: ?>$0.00<?php endif; ?></td>
-                                            <td>$<?php echo number_format($detalle['subtotal'], 2); ?></td>
+                                            <td>
+                                                <?php if ($d_manual > 0): ?>
+                                                    <span class="text-danger">-$<?php echo number_format($d_manual, 2); ?></span>
+                                                <?php endif; ?>
+                                                <?php if ($d_promo > 0): ?>
+                                                    <br><small class="text-success">promo: -$<?php echo number_format($d_promo, 2); ?></small>
+                                                <?php endif; ?>
+                                                <?php if ($d_manual == 0 && $d_promo == 0): ?>$0.00<?php endif; ?>
+                                            </td>
+                                            <td>$<?php echo number_format($detalle['total'], 2); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                                 <tfoot>
+                                    <tr class="table-light">
+                                        <td colspan="5" class="text-end">
+                                            <strong>Descuento total:</strong>
+                                            <?php if ($v_desc_manual > 0): ?>
+                                                <span class="text-danger">-$<?php echo number_format($v_desc_manual, 2); ?></span>
+                                            <?php endif; ?>
+                                            <?php if ($v_desc_promo > 0): ?>
+                                                <span class="text-success ms-1">(promo -$<?php echo number_format($v_desc_promo, 2); ?>)</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td></td>
+                                    </tr>
                                     <tr class="table-light">
                                         <td colspan="5" class="text-end"><strong>Total:</strong></td>
                                         <td><strong>$<?php echo number_format($venta_especifica['total'], 2); ?></strong></td>
@@ -1010,11 +1024,7 @@ $usos_cfdi = [
                             </table>
                         </div>
 
-                        <!-- ⚠️ TEMPORAL · NORMALIZAR VENTA HISTÓRICA ⚠️
-                             Para ventas capturadas antes de que existieran los
-                             anticipos, donde se registró el anticipo como si
-                             fuera el total. Al terminar de normalizar, BORRAR
-                             este bloque y el archivo ajustar_venta.php. -->
+                        <!-- ⚠️ TEMPORAL · NORMALIZAR VENTA HISTÓRICA ⚠️ -->
                         <?php if ($is_admin): ?>
                         <div class="card border-warning mt-4" id="normalizarVentaCard"
                              data-venta-id="<?php echo $venta_especifica['id']; ?>">
@@ -1028,8 +1038,6 @@ $usos_cfdi = [
                                     <strong>total real</strong>, corrígelo aquí. Se recalculan en cadena los
                                     precios de los productos, el IVA, las comisiones asignadas y las comisiones
                                     ya generadas por cada pago.
-                                    <br>
-                                    <span class="text-danger">Los costos NO se escalan: el costo del producto fue el que fue.</span>
                                 </p>
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-3">
@@ -1064,7 +1072,7 @@ $usos_cfdi = [
                         </div>
                         <?php endif; ?>
 
-                        <!-- COBRANZA · la venta vale su total; aquí se ve lo que realmente entró -->
+                        <!-- COBRANZA -->
                         <h6 class="mt-4"><i class="fas fa-hand-holding-dollar me-2"></i>Cobranza de esta Venta</h6>
                         <div id="cobranzaContenedor" data-venta-id="<?php echo $venta_especifica['id']; ?>">
                             <div class="row g-2 mb-2">
@@ -1203,7 +1211,7 @@ $usos_cfdi = [
                             </small>
                         </div>
 
-                        <!-- 2 · IVA de la venta (opcional) -->
+                        <!-- 2 · IVA de la venta -->
                         <h6 class="mt-4"><i class="fas fa-percent me-2"></i>IVA de esta Venta</h6>
                         <div id="ivaVentaContenedor" data-venta-id="<?php echo $venta_especifica['id']; ?>">
                             <div class="row g-2 align-items-end">
@@ -1281,7 +1289,6 @@ $usos_cfdi = [
                         <button class="btn btn-primary reimprimir-ticket" data-venta-id="<?php echo $venta_especifica['id']; ?>">
                             <i class="fas fa-print me-2"></i>Reimprimir Ticket
                         </button>
-                        <!-- Botón Facturar (solo si la venta está completada y es admin) -->
                         <?php if ($venta_especifica['estado'] === 'completada' && $is_admin): ?>
                             <button class="btn btn-success facturar-venta" data-venta-id="<?php echo $venta_especifica['id']; ?>" data-bs-toggle="modal" data-bs-target="#facturarModal">
                                 <i class="fas fa-file-invoice me-2"></i>Facturar
@@ -1298,9 +1305,7 @@ $usos_cfdi = [
         </div>
     </div>
 
-    <!-- Modal para asignar comisión a un producto de una venta ya cerrada.
-         La comisión es área + colaborador + porcentaje: no hay concepto/rol
-         ni "% de reparto". El porcentaje se captura aquí mismo. -->
+    <!-- Modal Asignar Comisión -->
     <div class="modal fade" id="asignarComisionPostVentaModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -1438,7 +1443,6 @@ $usos_cfdi = [
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Se llenará vía JS -->
                                 </tbody>
                                 <tfoot>
                                     <tr>
@@ -1538,11 +1542,12 @@ $usos_cfdi = [
     </div>
 
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // =============================================
-            // FUNCIONALIDAD DE SIDEBAR (igual que dashboard.php)
+            // SIDEBAR
             // =============================================
             const sidebar = document.getElementById('sidebar');
             const sidebarToggle = document.getElementById('sidebarToggle');
@@ -1579,7 +1584,6 @@ $usos_cfdi = [
                 sidebarBackdrop.addEventListener('click', closeSidebar);
             }
 
-            // Cerrar sidebar al hacer clic en un enlace (en móvil)
             const sidebarLinks = document.querySelectorAll('#sidebar .nav-link');
             sidebarLinks.forEach(link => {
                 link.addEventListener('click', function() {
@@ -1589,7 +1593,6 @@ $usos_cfdi = [
                 });
             });
 
-            // Ajustar en redimensionamiento
             window.addEventListener('resize', function() {
                 if (window.innerWidth >= 768) {
                     closeSidebar();
@@ -1597,7 +1600,7 @@ $usos_cfdi = [
             });
 
             // =============================================
-            // SWIPE AUTOMÁTICO (igual que dashboard.php)
+            // SWIPE
             // =============================================
             let touchStartX = 0;
             let touchStartY = 0;
@@ -1655,11 +1658,8 @@ $usos_cfdi = [
             });
 
             // =============================================
-            // FUNCIONALIDAD ORIGINAL DE VENTAS_LISTA
+            // BÚSQUEDA
             // =============================================
-            // Búsqueda: se manda al servidor (con debounce) para que
-            // encuentre ventas aunque estén en otra página del listado, no
-            // sólo en las que ya están cargadas en esta pantalla.
             const searchInput = document.getElementById('searchInput');
             if (searchInput) {
                 let searchTimer = null;
@@ -1724,7 +1724,7 @@ $usos_cfdi = [
                 });
             });
 
-            // Eliminar venta - Solo para admin
+            // Eliminar venta
             document.querySelectorAll('.eliminar-venta').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -1776,7 +1776,7 @@ $usos_cfdi = [
                 });
             });
 
-            // ===== Gastos de Operación de la venta =====
+            // ===== Gastos de Operación =====
             const tablaGastos = document.getElementById('tablaGastosOperacionVenta');
             if (tablaGastos) {
                 const ventaIdGastos = tablaGastos.dataset.ventaId;
@@ -1860,7 +1860,7 @@ $usos_cfdi = [
                 });
             }
 
-            // ===== ⚠️ TEMPORAL · normalizar venta histórica ⚠️ =====
+            // ===== Normalizar venta histórica =====
             const normCard = document.getElementById('normalizarVentaCard');
             if (normCard) {
                 const normVentaId = normCard.dataset.ventaId;
@@ -1949,7 +1949,7 @@ $usos_cfdi = [
                 });
             }
 
-            // ===== COBRANZA · anticipos y abonos =====
+            // ===== COBRANZA =====
             const cobCont = document.getElementById('cobranzaContenedor');
             if (cobCont) {
                 const cobVentaId = cobCont.dataset.ventaId;
@@ -1961,7 +1961,6 @@ $usos_cfdi = [
                     document.getElementById('cobSaldo').textContent   = '$' + parseFloat(r.saldo).toFixed(2);
                     document.getElementById('cobPct').textContent     = parseFloat(r.pct_cobrado).toFixed(2) + '%';
 
-                    // Sin saldo no hay nada que cobrar
                     const form = document.getElementById('formNuevoPago');
                     if (form) form.style.display = parseFloat(r.saldo) > 0.005 ? '' : 'none';
                     const inp = document.getElementById('pagoMonto');
@@ -2068,7 +2067,7 @@ $usos_cfdi = [
                 });
             }
 
-            // ===== FECHA DE LA VENTA (solo admin) =====
+            // ===== FECHA DE LA VENTA =====
             document.getElementById('btnGuardarFechaVenta')?.addEventListener('click', function () {
                 const cont = document.getElementById('fechaVentaContenedor');
                 const fecha = document.getElementById('fechaVentaInput').value;
@@ -2105,9 +2104,7 @@ $usos_cfdi = [
                     });
             });
 
-            // ===== 2 · IVA de la venta =====
-            // Opcional. Ajusta el total de la venta pero no toca comisiones:
-            // la base de comisión son montos sin IVA.
+            // ===== IVA DE LA VENTA =====
             const ivaCont = document.getElementById('ivaVentaContenedor');
             if (ivaCont) {
                 const ivaVentaId = ivaCont.dataset.ventaId;
@@ -2119,9 +2116,6 @@ $usos_cfdi = [
                 const inpPct   = document.getElementById('ivaVentaPorcentaje');
                 const chkFuera = document.getElementById('ivaVentaPorFuera');
 
-                // Recalcula sin tocar lo que el usuario está escribiendo.
-                // Por fuera: base fija -> total = base + IVA (lo que pide el usuario).
-                // Por dentro: total fijo -> base = total / (1 + pct).
                 function pintarIva(pct, recalcularBase) {
                     let base, iva, total;
                     if (chkFuera.checked) {
@@ -2151,7 +2145,6 @@ $usos_cfdi = [
                             inpBase.value = ivaBase.toFixed(2);
                             pintarIva(parseFloat(data.porcentaje) || 0);
 
-                            // Sin permisos: se muestra, pero no se edita.
                             if (!ivaEsAdmin) {
                                 inpBase.disabled = true;
                                 chkFuera.disabled = true;
@@ -2174,7 +2167,6 @@ $usos_cfdi = [
                 }
 
                 inpPct?.addEventListener('input', function () { pintarIva(pctActual()); });
-                // Al escribir la base NO se la reescribimos encima: se respeta tal cual.
                 inpBase?.addEventListener('input', function () { pintarIva(pctActual(), false); });
                 chkFuera?.addEventListener('change', function () { pintarIva(pctActual()); });
 
@@ -2221,7 +2213,7 @@ $usos_cfdi = [
                 });
             }
 
-            // ===== 3 · Comisiones de toda la venta =====
+            // ===== COMISIONES DE LA VENTA =====
             const comVentaCont = document.getElementById('comisionesVentaContenedor');
             function cargarComisionesVenta() {
                 if (!comVentaCont) return;
@@ -2287,13 +2279,11 @@ $usos_cfdi = [
             }
             cargarComisionesVenta();
 
-            // ===== Asignar comisión a un producto de una venta ya cerrada =====
-            // Area + colaborador + porcentaje. Ya no hay concepto/rol ni
-            // "% de reparto": ese segundo porcentaje era el que provocaba
-            // multiplicar dos veces (41% x 41%).
+            // ===== ASIGNAR COMISIÓN POST-VENTA =====
             let pvCatalogosComision = null;
             let pvVentaIdActual = null;
             let pvVentaDetalleIdActual = null;
+            let pvProporcionCobrado = 0;
 
             function pvCargarCatalogos(callback) {
                 if (pvCatalogosComision) { callback(); return; }
@@ -2320,8 +2310,6 @@ $usos_cfdi = [
                     pvCatalogosComision.colaboradores.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
             }
 
-            // Deja claro, dentro del modal, que el dinero que de verdad se
-            // gana sale de lo cobrado y no del total de la venta.
             function pvPintarNotaCobrado(data) {
                 const nota = document.getElementById('pvComisionNotaCobrado');
                 if (!nota) return;
@@ -2333,8 +2321,6 @@ $usos_cfdi = [
                     'la <strong>Asignada</strong> sólo se alcanza si el cliente liquida.';
                 pvProporcionCobrado = (isNaN(pct) ? 0 : pct) / 100;
             }
-
-            let pvProporcionCobrado = 0;
 
             function pvCargarComisionesDetalle() {
                 fetch('guardar_comision_producto.php?accion=listar_comisiones_detalle&venta_detalle_id=' + pvVentaDetalleIdActual)
@@ -2348,8 +2334,6 @@ $usos_cfdi = [
                             pvPintarNotaCobrado(data);
                             return;
                         }
-                        // El botón de cancelar solo se dibuja para admin. El
-                        // endpoint valida el rol otra vez del lado servidor.
                         const puedeCancelar = data.es_admin === true;
                         tbody.innerHTML = data.comisiones.map(c => `
                             <tr>
@@ -2405,8 +2389,6 @@ $usos_cfdi = [
                 });
             });
 
-            // Cancelar la comisión de una persona. Es cancelación lógica: la
-            // fila se conserva marcada, con quién la canceló y por qué.
             document.addEventListener('click', function(e) {
                 const btn = e.target.closest('.btn-cancelar-comision');
                 if (!btn) return;
@@ -2510,7 +2492,6 @@ $usos_cfdi = [
                 const showSuc = showSucursal?.checked;
                 const showCli = showCliente?.checked;
                 
-                // Tabla
                 const headerRow = document.querySelector('#ventasTable thead tr');
                 if (headerRow) {
                     if (headerRow.cells[1]) headerRow.cells[1].style.display = showCli ? '' : 'none';
@@ -2522,7 +2503,6 @@ $usos_cfdi = [
                     if (row.cells[2]) row.cells[2].style.display = showSuc ? '' : 'none';
                 });
                 
-                // Tarjetas móviles
                 document.querySelectorAll('#mobileVentas .cliente-badge').forEach(function(el) {
                     el.style.display = showCli ? '' : 'none';
                 });
@@ -2536,19 +2516,14 @@ $usos_cfdi = [
             toggleColumnas();
 
             // =============================================
-            // FUNCIONALIDAD DE FACTURACIÓN
+            // FACTURACIÓN
             // =============================================
-            // Al abrir el modal de facturación:
-            //  - se cargan los productos de la venta
-            //  - si la venta tiene un cliente registrado (con RFC/email),
-            //    se prellenan los campos fiscales para no capturarlos de nuevo.
-            //  - si es "Cliente General", los campos quedan vacíos.
             document.getElementById('facturarModal').addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget; // Botón que activó el modal
+                const button = event.relatedTarget;
                 const ventaId = button.getAttribute('data-venta-id');
                 document.getElementById('facturarVentaId').value = ventaId;
 
-                // Limpiar campos por si el modal ya se abrió antes con otra venta
+                // Limpiar campos
                 document.getElementById('cliente_nombre').value  = '';
                 document.getElementById('cliente_rfc').value     = '';
                 document.getElementById('cliente_email').value   = '';
@@ -2556,8 +2531,8 @@ $usos_cfdi = [
                 document.getElementById('cliente_estado').value  = '';
                 document.getElementById('cliente_ciudad').value  = '';
                 document.getElementById('cliente_regimen').value = '';
+                document.getElementById('uso_cfdi').value        = '';
 
-                // Obtener detalles de la venta + datos del cliente vía AJAX
                 fetch('Service/obtener_detalles_venta.php?venta_id=' + ventaId)
                     .then(response => response.json())
                     .then(data => {
@@ -2566,7 +2541,7 @@ $usos_cfdi = [
                             return;
                         }
 
-                        // --- Productos ---
+                        // Productos
                         const tbody = document.querySelector('#productosFacturaTable tbody');
                         tbody.innerHTML = '';
                         let total = 0;
@@ -2584,14 +2559,34 @@ $usos_cfdi = [
                         });
                         document.getElementById('facturaTotal').textContent = '$' + total.toFixed(2);
 
-                        // --- Datos del cliente (si la venta tiene cliente registrado) ---
-if (data.cliente) {
-    document.getElementById('cliente_nombre').value = data.cliente.nombre || '';
-    document.getElementById('cliente_rfc').value    = data.cliente.rfc    || '';
-    document.getElementById('cliente_email').value  = data.cliente.email  || '';
-}
+                        // Cliente
+                        if (data.cliente) {
+                            const c = data.cliente;
 
-                        // Si data.cliente es null → Cliente General, quedan vacíos.
+                            const n = document.getElementById('cliente_nombre');
+                            if (n) n.value = c.nombre_legal || c.razon_social || c.nombre || '';
+
+                            const r = document.getElementById('cliente_rfc');
+                            if (r) r.value = c.rfc || '';
+
+                            const e = document.getElementById('cliente_email');
+                            if (e) e.value = c.email || '';
+
+                            const reg = document.getElementById('cliente_regimen');
+                            if (reg && c.regimen_fiscal) reg.value = c.regimen_fiscal;
+
+                            const zip = document.getElementById('cliente_zip');
+                            if (zip) zip.value = c.codigo_postal || '';
+
+                            const edo = document.getElementById('cliente_estado');
+                            if (edo) edo.value = c.estado_direccion || '';
+
+                            const cd = document.getElementById('cliente_ciudad');
+                            if (cd) cd.value = c.ciudad || '';
+
+                            const uso = document.getElementById('uso_cfdi');
+                            if (uso && c.uso_cfdi) uso.value = c.uso_cfdi;
+                        }
                     })
                     .catch(error => {
                         console.error('Error:', error);
@@ -2599,7 +2594,7 @@ if (data.cliente) {
                     });
             });
 
-            // Envío del formulario de facturación (AJAX)
+            // Submit del formulario de facturación
             document.getElementById('facturarForm').addEventListener('submit', function (e) {
                 e.preventDefault();
 
@@ -2615,25 +2610,46 @@ if (data.cliente) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('✅ ' + data.message + 
-                              '\nUUID: ' + (data.uuid || 'N/A') + 
-                              '\nFolio: ' + (data.folio || 'N/A') +
-                              '\nEstado: ' + (data.status || 'N/A'));
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('facturarModal'));
-                        modal.hide();
-                        // Opcional: recargar la lista para mostrar el nuevo estado
-                        // location.reload();
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Factura generada!',
+                            html:
+                                '<div style="text-align:left; font-size:14px; line-height:1.6;">' +
+                                '<strong>Folio:</strong> ' + (data.folio || 'N/A') + '<br>' +
+                                '<strong>UUID:</strong> <span style="font-size:12px; word-break:break-all;">' + (data.uuid || 'N/A') + '</span><br>' +
+                                '<strong>Estado:</strong> ' + (data.status || 'N/A') +
+                                '</div>',
+                            confirmButtonColor: '#27ae60',
+                            confirmButtonText: 'Aceptar'
+                        }).then(() => {
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('facturarModal'));
+                            if (modal) modal.hide();
+                        });
                     } else {
-                        let msg = '❌ ' + data.message;
-                        if (data.details) {
-                            msg += '\nDetalles: ' + data.details;
-                        }
-                        alert(msg);
+                        // Escapamos el HTML del mensaje para evitar inyección
+                        const msg = String(data.message || 'Error desconocido')
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/\n/g, '<br>');
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'No se pudo facturar',
+                            html: '<div style="text-align:left; font-size:14px; line-height:1.5;">' + msg + '</div>',
+                            confirmButtonColor: '#27ae60',
+                            confirmButtonText: 'Entendido'
+                        });
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('❌ Error en la solicitud. Revisa la consola.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de comunicación',
+                        text: 'No se pudo contactar al servidor. Revisa la consola.',
+                        confirmButtonColor: '#27ae60'
+                    });
                 })
                 .finally(() => {
                     btn.disabled = false;

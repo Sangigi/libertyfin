@@ -34,7 +34,9 @@ $usuario_nombre = 'Usuario';
 $cliente_nombre = "Cliente General";
 
 // Variables de descuento
-$descuento_total = $venta['descuento'] ?? 0;
+$descuento_total        = $venta['descuento'] ?? 0;
+$descuento_promociones  = $venta['descuento_promociones'] ?? 0;
+$descuento_manual       = max(0, $descuento_total - $descuento_promociones);
 $subtotal_sin_descuento = $venta['subtotal'] ?? 0;
 $subtotal_con_descuento = $subtotal_sin_descuento - $descuento_total;
 
@@ -43,6 +45,40 @@ $iva = $venta['iva'] ?? 0;
 
 // Variables para facturación (solo si hay timbres disponibles)
 $url_facturacion = $venta['url_facturacion'] ?? $venta['facturapi_invoice_url'] ?? '';
+
+// Variables para facturación (solo si hay timbres disponibles)
+$url_facturacion = $venta['url_facturacion'] ?? $venta['facturapi_invoice_url'] ?? '';
+
+// ============================================================
+// URL DE AUTOFACTURACIÓN (QR para el cliente)
+// ============================================================
+$factura_token = $venta['factura_token'] ?? '';
+$url_autofactura = '';
+
+$empresa_id_session = $_SESSION['empresa_id'] ?? 0;
+$empresa_db_session = $_SESSION['empresa_db'] ?? '';
+$venta_id_session   = $venta['venta_id'] ?? 0;
+
+if (!empty($factura_token)
+    && $plan_empresa === 'premium'
+    && $timbres_disponibles > 0
+    && $empresa_id_session > 0
+    && $venta_id_session > 0
+    && !empty($empresa_db_session)) {
+
+    $protocolo = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host      = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $base_path = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
+
+    $url_autofactura = $protocolo . '://' . $host . $base_path
+                     . '/facturar_cliente.php'
+                     . '?token='      . urlencode($factura_token)
+                     . '&venta_id='   . urlencode($venta_id_session)
+                     . '&empresa_id=' . urlencode($empresa_id_session)
+                     . '&db='         . urlencode($empresa_db_session);
+}
+
+
 
 if (!empty($dbname)) {
     try {
@@ -804,9 +840,11 @@ header('Content-Type: text/html; charset=utf-8');
         <?php
         $total_descuento_productos = 0;
         foreach ($venta['productos'] as $producto):
-            // Calcular si tiene descuento
-            $tiene_descuento = isset($producto['descuento']) && $producto['descuento'] > 0;
-            $descuento_producto = $producto['descuento'] ?? 0;
+            // Calcular si tiene descuento (manual + promo)
+            $descuento_manual_prod = $producto['descuento'] ?? 0;
+            $descuento_promo_prod  = $producto['descuento_promo'] ?? 0;
+            $descuento_producto    = $descuento_manual_prod + $descuento_promo_prod;
+            $tiene_descuento = $descuento_producto > 0;
             $total_descuento_productos += $descuento_producto;
 
             // Determinar el precio a mostrar
@@ -870,11 +908,21 @@ header('Content-Type: text/html; charset=utf-8');
                 <td class="texto-derecha">$<?php echo number_format($subtotal_sin_descuento, 2); ?></td>
             </tr>
 
-            <?php if ($descuento_total > 0): ?>
+            <?php if ($descuento_manual > 0): ?>
                 <tr class="texto-descuento negrita">
                     <td class="texto-izquierda">Descuento:</td>
-                    <td class="texto-derecha">-$<?php echo number_format($descuento_total, 2); ?></td>
+                    <td class="texto-derecha">-$<?php echo number_format($descuento_manual, 2); ?></td>
                 </tr>
+            <?php endif; ?>
+
+            <?php if ($descuento_promociones > 0): ?>
+                <tr class="texto-descuento negrita">
+                    <td class="texto-izquierda">Descuento promo:</td>
+                    <td class="texto-derecha">-$<?php echo number_format($descuento_promociones, 2); ?></td>
+                </tr>
+            <?php endif; ?>
+
+            <?php if ($descuento_total > 0): ?>
                 <tr>
                     <td class="texto-izquierda">Subtotal c/Desc:</td>
                     <td class="texto-derecha">$<?php echo number_format($subtotal_con_descuento, 2); ?></td>
@@ -921,6 +969,37 @@ header('Content-Type: text/html; charset=utf-8');
         <div class="texto-centro pie-ticket seccion">
             <div class="espacio-minimo"></div>
             <strong>¡Gracias por su compra!</strong><br>
+                    <?php if (!empty($url_autofactura)): ?>
+            <div class="linea-divisoria"></div>
+            <div class="qr-section-premium">
+                <div class="texto-centro negrita" style="font-size:10px;">
+                    ¿NECESITA FACTURA?
+                </div>
+                <div class="texto-centro" style="font-size:8px;">
+                    Escanee el código QR
+                </div>
+                <div class="qr-container">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=5&data=<?= urlencode($url_autofactura) ?>"
+                         alt="QR Facturación"
+                         class="qr-code"
+                         onerror="this.parentNode.innerHTML='<div class=\'qr-error\'>No se pudo cargar el QR. Ingrese manualmente a la URL indicada.</div>'">
+                </div>
+                <div class="texto-centro qr-text">O visite:</div>
+                <div class="texto-centro qr-link">
+                    <?= htmlspecialchars(substr($url_autofactura, 0, 55)) ?>
+                </div>
+                <div class="facturacion-nota">
+                    * Ingrese sus datos fiscales *
+                </div>
+            </div>
+        <?php elseif ($plan_empresa === 'premium' && $timbres_disponibles <= 0): ?>
+            <div class="linea-divisoria"></div>
+            <div class="mensaje-no-timbres">
+                Sin timbres disponibles para facturación
+            </div>
+        <?php endif; ?>
+
+        <div class="linea-divisoria"></div>
             <div class="espacio-minimo"></div>
             Vuelva pronto<br>
             <div class="espacio-minimo"></div>
@@ -931,6 +1010,11 @@ header('Content-Type: text/html; charset=utf-8');
                 <div class="texto-descuento" style="font-size: 8px;">
                     * Descuento aplicado: $<?php echo number_format($descuento_total, 2); ?> *
                 </div>
+                <?php if ($descuento_promociones > 0): ?>
+                    <div class="texto-descuento" style="font-size: 8px;">
+                        (incluye $<?php echo number_format($descuento_promociones, 2); ?> en promociones)
+                    </div>
+                <?php endif; ?>
             <?php endif; ?>
             <?php if ($iva > 0): ?>
                 <div class="texto-iva" style="font-size: 8px;">

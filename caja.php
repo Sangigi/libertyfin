@@ -6,10 +6,12 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/php_errors.log');
 
+// Registrar todos los errores en un archivo
 register_shutdown_function(function () {
     $error = error_get_last();
     if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
         error_log("Fatal error: " . print_r($error, true));
+        // Si es una petición AJAX, responder con JSON de error
         if (isset($_POST['actualizar_descuento_ajax']) || isset($_POST['agregar_producto_ajax']) || isset($_POST['actualizar_cantidad_ajax']) || isset($_POST['actualizar_precio_ajax']) || isset($_POST['actualizar_comisiones_carrito_ajax']) || isset($_POST['actualizar_gastos_operacion_ajax'])) {
             while (ob_get_level()) ob_end_clean();
             header('Content-Type: application/json');
@@ -25,34 +27,59 @@ register_shutdown_function(function () {
 session_start();
 date_default_timezone_set('America/Mexico_City');
 
+// ========== CARGAR CONFIGURACIÓN CENTRALIZADA ==========
 require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/config.php';
 require_once 'vendor/autoload.php';
 
 use Facturapi\Facturapi;
 
+// Verificar si el usuario está logueado
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: login.php");
     exit();
 }
 
 // =====================================================================
-// HELPERS DE COMISIONES Y PAGOS
+// Guarda en venta_comisiones las comisiones que el cajero asignó a un
+// producto del carrito (item['comisiones']) durante la venta actual.
+// Se llama una vez por cada venta_detalle recién insertado, justo
+// después de conocer su $venta_detalle_id.
 // =====================================================================
-function guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, $usuario_id, $carrito = null, $factor_iva = 1.0)
-{
+function guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, $usuario_id, $carrito = null, $factor_iva = 1.0) {
     if (empty($item['comisiones']) || !is_array($item['comisiones'])) {
         return;
     }
 
-    $costo_unitario  = (float)($item['costo'] ?? 0);
-    $cantidad        = (float)($item['cantidad'] ?? 0);
+    $costo_unitario = (float)($item['costo'] ?? 0);
+    $cantidad       = (float)($item['cantidad'] ?? 0);
+
+    // Los precios del carrito son la BASE, SIN IVA (el IVA se añade encima
+    // al momento de cobrar, no se descuenta de aquí). El costo tampoco
+    // lleva IVA. $factor_iva ya no se usa para dividir precios; se deja
+    // como parámetro por compatibilidad con las llamadas existentes.
     $precio_unitario = (float)($item['precio'] ?? 0);
+
+    // El descuento otorgado al cliente SÍ reduce la base de comisión: se
+    // comisiona sobre lo realmente cobrado, no sobre el precio de lista.
     $descuento_linea = (float)($item['descuento'] ?? 0);
 
+    // Utilidad de la línea = (precio x cantidad) - descuento - (costo x cantidad)
     $venta_linea    = $precio_unitario * $cantidad;
     $utilidad_linea = ($venta_linea - $descuento_linea) - ($costo_unitario * $cantidad);
 
+    // -----------------------------------------------------------------
+    // GASTO DE OPERACIÓN
+    // Se resta de la utilidad ANTES de calcular la comisión.
+    //
+    // Solo cuentan los gastos MANUALES (tipo='manual'). Los automáticos
+    // los genera el sistema y representan el costo de mercancía, que YA
+    // está restado vía $costo_unitario; incluirlos restaría dos veces.
+    // El discriminador es `tipo`, NO `origen`: los gastos manuales
+    // ligados a una venta también se guardan con origen='venta'.
+    //
+    // Nota: guardarGastosOperacionDeVenta() ya corrió antes de este
+    // punto, así que los gastos de esta venta ya están en la tabla.
+    // -----------------------------------------------------------------
     $stmt_gasto = $conn->prepare("
         SELECT COALESCE(SUM(monto), 0)
         FROM gastos
@@ -63,6 +90,12 @@ function guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, 
     $stmt_gasto->execute([$venta_id]);
     $gasto_total_venta = (float)$stmt_gasto->fetchColumn();
 
+    // El gasto aplica a la VENTA completa, pero la comisión se calcula por
+    // línea. Se prorratea según la utilidad que aporta cada línea.
+    //
+    // El prorrateo se calcula sobre el CARRITO, no sobre venta_detalles:
+    // esta función se llama dentro del loop de productos, así que las
+    // líneas siguientes todavía no existen en la base.
     $gasto_operacion = 0.0;
     if ($gasto_total_venta > 0) {
         $utilidad_total_venta = 0.0;
@@ -78,6 +111,8 @@ function guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, 
         if ($utilidad_total_venta > 0) {
             $gasto_operacion = $gasto_total_venta * (max(0, $utilidad_linea) / $utilidad_total_venta);
         } elseif (is_array($carrito) && count($carrito) > 0) {
+            // Venta sin utilidad: se reparte parejo para no cargarle todo
+            // el gasto a una sola línea.
             $gasto_operacion = $gasto_total_venta / count($carrito);
         } else {
             $gasto_operacion = $gasto_total_venta;
@@ -85,7 +120,19 @@ function guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, 
     }
     $gasto_operacion = round($gasto_operacion, 2);
 
+    // Base comisionable = utilidad - gasto. Nunca negativa: si el gasto se
+    // come la utilidad, la comisión es 0, no un cargo al colaborador.
     $monto_base = max(0, $utilidad_linea - $gasto_operacion);
+
+    // -----------------------------------------------------------------
+    // PORCENTAJE
+    // Lo captura el cajero al asignar la comision (item['comisiones'][]['porcentaje']),
+    // porque cambia de un caso a otro. Ya no se lee de comision_reglas.
+    //
+    // `porcentaje_reparto` se queda en 100 fijo: existia para dividir un
+    // concepto entre varias personas y provocaba multiplicar dos veces
+    // (41% x 41% = 16.8%, en vez del 41% que tocaba).
+    // -----------------------------------------------------------------
 
     $stmt_ins = $conn->prepare("
         INSERT INTO venta_comisiones
@@ -100,26 +147,57 @@ function guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, 
         $colaborador_id = intval($com['colaborador_id'] ?? 0);
         $area_id_com    = intval($com['area_id'] ?? 0) ?: null;
         $area_nombre    = trim($com['area_nombre'] ?? '');
-        if ($colaborador_id <= 0 || $area_id_com === null) continue;
+        if ($colaborador_id <= 0 || $area_id_com === null) {
+            continue;
+        }
 
+        // Ya no hay concepto/rol: la comision es area + colaborador + %.
+        // `venta_comisiones.concepto` es NOT NULL, asi que se guarda el
+        // nombre del area como etiqueta, y `regla_id` queda en NULL.
         $regla_id = null;
         $concepto = $area_nombre !== '' ? $area_nombre : 'Comisión';
 
         $porcentaje_regla = floatval($com['porcentaje'] ?? 0);
-        if ($porcentaje_regla <= 0 || $porcentaje_regla > 100) continue;
-
+        if ($porcentaje_regla <= 0 || $porcentaje_regla > 100) {
+            continue; // sin porcentaje valido no se guarda la comision
+        }
         $porcentaje_reparto = 100.00;
-        $monto_comision     = round($monto_base * ($porcentaje_regla / 100), 2);
+        $monto_comision = round($monto_base * ($porcentaje_regla / 100), 2);
 
         $stmt_ins->execute([
-            $venta_id, $venta_detalle_id, $area_id_com, $area_nombre, $regla_id, $concepto,
-            $colaborador_id, $com['colaborador_nombre'] ?? '', $porcentaje_regla, $porcentaje_reparto,
-            $costo_unitario, $gasto_operacion, round($precio_unitario, 2), round($descuento_linea, 2),
-            $cantidad, $monto_base, $monto_comision, $usuario_id
+            $venta_id,
+            $venta_detalle_id,
+            $area_id_com,
+            $area_nombre,
+            $regla_id,
+            $concepto,
+            $colaborador_id,
+            $com['colaborador_nombre'] ?? '',
+            $porcentaje_regla,
+            $porcentaje_reparto,
+            $costo_unitario,
+            $gasto_operacion,
+            round($precio_unitario, 2),
+            round($descuento_linea, 2),
+            $cantidad,
+            $monto_base,
+            $monto_comision,
+            $usuario_id
         ]);
     }
 }
 
+// =====================================================================
+// Registra en `venta_pagos` el dinero que realmente entró por esta venta
+// y genera las comisiones que le corresponden a ese pago.
+//
+// La venta se guarda por su TOTAL; lo cobrado vive aparte. Si el cliente
+// dio un anticipo, solo esa parte genera comisión:
+//     comisión del pago = monto_comision x (monto del pago / total)
+//
+// Se llama DESPUÉS de insertar los detalles, porque las asignaciones de
+// comisión (venta_comisiones) tienen que existir ya.
+// =====================================================================
 function registrarPagoDeVenta($conn, $venta_id, $monto, $fecha_pago, $tipo,
                               $metodo_pago, $usuario_id, $sucursal_id) {
     $monto = round((float)$monto, 2);
@@ -136,6 +214,7 @@ function registrarPagoDeVenta($conn, $venta_id, $monto, $fecha_pago, $tipo,
     ]);
     $pago_id = $conn->lastInsertId();
 
+    // Proporción cobrada de la venta
     $stmt_v = $conn->prepare("SELECT total FROM ventas WHERE id = ?");
     $stmt_v->execute([$venta_id]);
     $total = (float)$stmt_v->fetchColumn();
@@ -167,6 +246,11 @@ function registrarPagoDeVenta($conn, $venta_id, $monto, $fecha_pago, $tipo,
     return $pago_id;
 }
 
+// =====================================================================
+// Guarda en `gastos` los gastos de operación que el cajero agregó
+// durante la venta actual (flete, empaque, comisión de plataforma de
+// pago, etc). Estos aplican a la venta completa, no a un producto.
+// =====================================================================
 function guardarGastosOperacionDeVenta($conn, $venta_id, $gastos_operacion, $usuario_id, $sucursal_id, $metodo_pago) {
     if (empty($gastos_operacion) || !is_array($gastos_operacion)) {
         return;
@@ -179,25 +263,33 @@ function guardarGastosOperacionDeVenta($conn, $venta_id, $gastos_operacion, $usu
 
     foreach ($gastos_operacion as $g) {
         $concepto = trim($g['concepto'] ?? '');
-        $monto    = floatval($g['monto'] ?? 0);
-        if ($concepto === '' || $monto <= 0) continue;
+        $monto = floatval($g['monto'] ?? 0);
+        if ($concepto === '' || $monto <= 0) {
+            continue;
+        }
         $stmt_ins->execute([
-            $concepto, $monto, $venta_id, $usuario_id, $sucursal_id, $metodo_pago,
+            $concepto,
+            $monto,
+            $venta_id,
+            $usuario_id,
+            $sucursal_id,
+            $metodo_pago,
             'Gasto de operación agregado durante el cobro de la venta'
         ]);
     }
 }
 
+// ========== FUNCIÓN PARA OBTENER PRECIO CON MAYOREO ==========
 function obtenerPrecioConMayoreo($producto_id, $cantidad, $conn) {
     try {
         $sql_precio_normal = "SELECT subprecio as precio FROM productos WHERE id = ? AND activo = 1";
         $stmt = $conn->prepare($sql_precio_normal);
         $stmt->execute([$producto_id]);
         $producto = $stmt->fetch();
-
+        
         if ($producto) {
             $precio_normal = floatval($producto['precio']);
-
+            
             $sql_mayoreo = "SELECT cantidad_minima, precio_especial 
                             FROM producto_precios_mayoreo 
                             WHERE producto_id = ? 
@@ -205,11 +297,11 @@ function obtenerPrecioConMayoreo($producto_id, $cantidad, $conn) {
                             AND cantidad_minima <= ?
                             ORDER BY cantidad_minima DESC 
                             LIMIT 1";
-
+            
             $stmt_mayoreo = $conn->prepare($sql_mayoreo);
             $stmt_mayoreo->execute([$producto_id, $cantidad]);
             $precio_mayoreo = $stmt_mayoreo->fetch();
-
+            
             if ($precio_mayoreo) {
                 error_log("🎯 Precio de mayoreo aplicado - Producto ID: $producto_id, Cantidad: $cantidad, Precio especial: {$precio_mayoreo['precio_especial']}");
                 return floatval($precio_mayoreo['precio_especial']);
@@ -218,18 +310,29 @@ function obtenerPrecioConMayoreo($producto_id, $cantidad, $conn) {
     } catch (PDOException $e) {
         error_log("Error en obtenerPrecioConMayoreo: " . $e->getMessage());
     }
-
+    
     return $precio_normal ?? 0;
 }
 
+// ========== FUNCIÓN PARA OBTENER INFORMACIÓN COMPLETA DEL PRODUCTO ==========
 function obtenerProductoConPrecio($producto_id, $cantidad, $conn, $sucursal_id) {
     try {
         $sql_producto = "
             SELECT 
-                p.id, p.codigo, p.nombre, p.descripcion,
-                p.subprecio as precio_base, p.subprecio as precio_sin_iva,
-                p.costo, p.categoria_id, p.activo, p.imagen, p.descuento,
-                p.unidad_medida, p.peso_kg, p.permite_fracciones,
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.descripcion,
+                p.subprecio as precio_base,
+                p.subprecio as precio_sin_iva,
+                p.costo,
+                p.categoria_id,
+                p.activo,
+                p.imagen,
+                p.descuento,
+                p.unidad_medida,
+                p.peso_kg,
+                p.permite_fracciones,
                 c.nombre as categoria_nombre,
                 COALESCE(ps.stock, 0) as stock_sucursal,
                 COALESCE(ps.stock_minimo, 0) as stock_minimo,
@@ -237,34 +340,40 @@ function obtenerProductoConPrecio($producto_id, $cantidad, $conn, $sucursal_id) 
             FROM productos p
             INNER JOIN categorias c ON p.categoria_id = c.id
             LEFT JOIN producto_sucursal ps ON p.id = ps.producto_id AND ps.sucursal_id = ?
-            WHERE p.id = ? AND p.activo = 1
+            WHERE p.id = ? 
+            AND p.activo = 1
         ";
-
+        
         $stmt = $conn->prepare($sql_producto);
         $stmt->execute([$sucursal_id, $producto_id]);
         $producto = $stmt->fetch();
-
+        
         if ($producto) {
             $precio_final = obtenerPrecioConMayoreo($producto_id, $cantidad, $conn);
-            $producto['precio_calculado']     = $precio_final;
-            $producto['precio_original']      = floatval($producto['precio_base']);
+            $producto['precio_calculado'] = $precio_final;
+            $producto['precio_original'] = floatval($producto['precio_base']);
             $producto['tiene_precio_mayoreo'] = ($precio_final < floatval($producto['precio_base']));
             return $producto;
         }
     } catch (PDOException $e) {
         error_log("Error en obtenerProductoConPrecio: " . $e->getMessage());
     }
+    
     return null;
 }
 
+// ========== FUNCIÓN PARA OBTENER LA RUTA DE LA IMAGEN DEL PRODUCTO ==========
 function obtenerImagenProducto($producto_id, $conn) {
-    if (empty($producto_id)) return null;
+    if (empty($producto_id)) {
+        return null;
+    }
 
     try {
         $sql_imagen = "SELECT ruta_imagen FROM producto_imagenes 
                        WHERE producto_id = ? 
                        ORDER BY es_principal DESC, orden ASC 
                        LIMIT 1";
+
         $stmt = $conn->prepare($sql_imagen);
         $stmt->execute([$producto_id]);
         $imagen_data = $stmt->fetch();
@@ -272,16 +381,27 @@ function obtenerImagenProducto($producto_id, $conn) {
         if ($imagen_data) {
             $imagen_producto = $imagen_data['ruta_imagen'];
             $rutas_posibles = [
-                $imagen_producto, '../' . $imagen_producto, '../../' . $imagen_producto,
-                'admin/' . $imagen_producto, '../admin/' . $imagen_producto,
-                'img/productos/' . $imagen_producto, 'images/productos/' . $imagen_producto,
-                'uploads/productos/' . $imagen_producto, 'assets/productos/' . $imagen_producto,
-                'productos/' . $imagen_producto, '../img/productos/' . $imagen_producto,
-                '../images/productos/' . $imagen_producto, '../uploads/productos/' . $imagen_producto,
-                '../assets/productos/' . $imagen_producto, '../productos/' . $imagen_producto
+                $imagen_producto,
+                '../' . $imagen_producto,
+                '../../' . $imagen_producto,
+                'admin/' . $imagen_producto,
+                '../admin/' . $imagen_producto,
+                'img/productos/' . $imagen_producto,
+                'images/productos/' . $imagen_producto,
+                'uploads/productos/' . $imagen_producto,
+                'assets/productos/' . $imagen_producto,
+                'productos/' . $imagen_producto,
+                '../img/productos/' . $imagen_producto,
+                '../images/productos/' . $imagen_producto,
+                '../uploads/productos/' . $imagen_producto,
+                '../assets/productos/' . $imagen_producto,
+                '../productos/' . $imagen_producto
             ];
+
             foreach ($rutas_posibles as $ruta) {
-                if (file_exists($ruta) && is_file($ruta)) return $ruta;
+                if (file_exists($ruta) && is_file($ruta)) {
+                    return $ruta;
+                }
             }
         }
     } catch (PDOException $e) {
@@ -297,27 +417,37 @@ function obtenerImagenProducto($producto_id, $conn) {
         if ($producto_data && !empty($producto_data['imagen'])) {
             $imagen_producto = $producto_data['imagen'];
             $rutas_posibles = [
-                $imagen_producto, '../' . $imagen_producto, '../../' . $imagen_producto,
-                'admin/' . $imagen_producto, '../admin/' . $imagen_producto,
-                'img/productos/' . $imagen_producto, 'images/productos/' . $imagen_producto,
-                'uploads/productos/' . $imagen_producto, 'assets/productos/' . $imagen_producto,
-                'productos/' . $imagen_producto, '../img/productos/' . $imagen_producto,
-                '../images/productos/' . $imagen_producto, '../uploads/productos/' . $imagen_producto,
-                '../assets/productos/' . $imagen_producto, '../productos/' . $imagen_producto
+                $imagen_producto,
+                '../' . $imagen_producto,
+                '../../' . $imagen_producto,
+                'admin/' . $imagen_producto,
+                '../admin/' . $imagen_producto,
+                'img/productos/' . $imagen_producto,
+                'images/productos/' . $imagen_producto,
+                'uploads/productos/' . $imagen_producto,
+                'assets/productos/' . $imagen_producto,
+                'productos/' . $imagen_producto,
+                '../img/productos/' . $imagen_producto,
+                '../images/productos/' . $imagen_producto,
+                '../uploads/productos/' . $imagen_producto,
+                '../assets/productos/' . $imagen_producto,
+                '../productos/' . $imagen_producto
             ];
+
             foreach ($rutas_posibles as $ruta) {
-                if (file_exists($ruta) && is_file($ruta)) return $ruta;
+                if (file_exists($ruta) && is_file($ruta)) {
+                    return $ruta;
+                }
             }
         }
     } catch (PDOException $e) {
         error_log("Error en obtenerImagenProducto (productos): " . $e->getMessage());
     }
+
     return null;
 }
 
-// =====================================================================
-// CONEXIONES
-// =====================================================================
+// ========== CONEXIÓN A LA BASE DE DATOS PRINCIPAL (PDO) ==========
 try {
     $conn_main = getDBConnection();
 } catch (Exception $e) {
@@ -327,6 +457,7 @@ try {
     exit();
 }
 
+// Obtener el plan de la empresa
 $empresa_plan = "prueba";
 $timbres_totales = 0;
 $timbres_disponibles = 0;
@@ -334,14 +465,15 @@ $empresa_id = $_SESSION['empresa_id'] ?? 0;
 $organization_id = null;
 $test_api_key_working = null;
 
+// Obtener datos de la empresa (PDO)
 try {
     $sql_empresa = "SELECT plan, facturapi_organization_id, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?";
     $stmt_empresa = $conn_main->prepare($sql_empresa);
     $stmt_empresa->execute([$empresa_id]);
     $empresa_data = $stmt_empresa->fetch();
-
+    
     if ($empresa_data) {
-        $empresa_plan    = $empresa_data['plan'];
+        $empresa_plan = $empresa_data['plan'];
         $organization_id = $empresa_data['facturapi_organization_id'] ?? null;
         $timbres_totales = $empresa_data['timbres_totales'] ?? 0;
         $timbres_disponibles = $empresa_data['timbres_disponibles'] ?? 0;
@@ -351,14 +483,109 @@ try {
     error_log("❌ Error al obtener datos de empresa: " . $e->getMessage());
 }
 
-$test_api_key_working = $_SESSION['test_api_key'] ?? null;
+// ========== OBTENER API KEY DE PRUEBA ==========
+$api_key = "sk_user_LV9Sw1JcA15AUyxSfD53ntQH6sCMiYmRRMP6tpJCi2";
 
-$_SESSION['empresa_plan']     = $empresa_plan;
-$_SESSION['organization_id']  = $organization_id;
+if (!empty($api_key) && !empty($organization_id) && $empresa_plan === 'premium') {
+    try {
+        error_log("🔑 Obteniendo API Key de prueba para organización: $organization_id");
+        $facturapi_master = new Facturapi($api_key);
+        
+        try {
+            $test_api_key = $facturapi_master->Organizations->getTestApiKey($organization_id);
+            $_SESSION['test_api_key'] = $test_api_key;
+            $test_api_key_working = $test_api_key;
+            error_log("✅ API Key de prueba obtenida correctamente");
+            
+            try {
+                $conn_empresa = getEmpresaDBConnection($_SESSION['empresa_db'] ?? '');
+                if ($conn_empresa) {
+                    try {
+                        $sql_check = "SHOW COLUMNS FROM sistema_config LIKE 'facturapi_test_api_key'";
+                        $stmt_check = $conn_empresa->query($sql_check);
+                        if ($stmt_check->rowCount() == 0) {
+                            $sql_add = "ALTER TABLE sistema_config ADD COLUMN facturapi_test_api_key VARCHAR(255) DEFAULT NULL";
+                            $conn_empresa->exec($sql_add);
+                        }
+                    } catch (PDOException $e) {
+                        error_log("⚠️ Error al verificar/crear columna: " . $e->getMessage());
+                    }
+                    
+                    $sql_update = "UPDATE sistema_config SET facturapi_test_api_key = ? WHERE id = 1";
+                    $stmt_update = $conn_empresa->prepare($sql_update);
+                    $stmt_update->execute([$test_api_key_working]);
+                    error_log("💾 API Key de prueba guardada en sistema_config");
+                }
+            } catch (Exception $e) {
+                error_log("⚠️ No se pudo guardar API Key en BD: " . $e->getMessage());
+            }
+        } catch (Exception $e) {
+            $test_api_key_error = $e->getMessage();
+            error_log("❌ Error al obtener API Key de prueba: " . $test_api_key_error);
+            
+            try {
+                $conn_empresa = getEmpresaDBConnection($_SESSION['empresa_db'] ?? '');
+                if ($conn_empresa) {
+                    $sql_test = "SELECT facturapi_test_api_key FROM sistema_config WHERE id = 1";
+                    $stmt_test = $conn_empresa->query($sql_test);
+                    $test_data = $stmt_test->fetch();
+                    if ($test_data && !empty($test_data['facturapi_test_api_key'])) {
+                        $test_api_key_working = $test_data['facturapi_test_api_key'];
+                        $_SESSION['test_api_key'] = $test_api_key_working;
+                        error_log("✅ API Key de prueba obtenida desde BD (fallback)");
+                    }
+                }
+            } catch (Exception $e2) {
+                error_log("❌ Error al obtener API Key desde BD: " . $e2->getMessage());
+            }
+            
+            if (empty($test_api_key_working)) {
+                $test_api_key_working = "sk_test_3NGWy62UprCyUHgvXmJmmqwt3xmvHeALdjyotVP8U1";
+                $_SESSION['test_api_key'] = $test_api_key_working;
+                error_log("⚠️ Usando API key de prueba fija (fallback)");
+            }
+        }
+    } catch (Exception $e) {
+        error_log("❌ Error al inicializar Facturapi: " . $e->getMessage());
+        $test_api_key_working = "sk_test_3NGWy62UprCyUHgvXmJmmqwt3xmvHeALdjyotVP8U1";
+        $_SESSION['test_api_key'] = $test_api_key_working;
+    }
+} else {
+    if ($empresa_plan === 'premium') {
+        error_log("⚠️ No se puede obtener API Key - Org ID: $organization_id");
+        $test_api_key_working = "sk_test_3NGWy62UprCyUHgvXmJmmqwt3xmvHeALdjyotVP8U1";
+        $_SESSION['test_api_key'] = $test_api_key_working;
+    } else {
+        error_log("ℹ️ Plan $empresa_plan - No se requiere API Key de Facturapi");
+    }
+}
+
+// Guardar en sesión
+$_SESSION['empresa_plan'] = $empresa_plan;
+$_SESSION['organization_id'] = $organization_id;
 
 error_log("✅ Configuración de Facturapi cargada - Plan: $empresa_plan, API Key disponible: " . (!empty($test_api_key_working) ? "SÍ" : "NO"));
 
+try {
+    $sql_plan = "SELECT plan, timbres_totales, timbres_disponibles FROM empresas WHERE id = ?";
+    $stmt_plan = $conn_main->prepare($sql_plan);
+    $stmt_plan->execute([$empresa_id]);
+    $plan_data = $stmt_plan->fetch();
+    
+    if ($plan_data) {
+        $empresa_plan = $plan_data['plan'];
+        $timbres_totales = $plan_data['timbres_totales'] ?? 0;
+        $timbres_disponibles = $plan_data['timbres_disponibles'] ?? 0;
+    }
+} catch (PDOException $e) {
+    error_log("Error al obtener plan de empresa: " . $e->getMessage());
+}
+
+$_SESSION['empresa_plan'] = $empresa_plan;
+
+// ========== CONEXIÓN A LA BASE DE DATOS DE LA EMPRESA (PDO) ==========
 $dbname = $_SESSION['empresa_db'] ?? '';
+
 if (empty($dbname)) {
     error_log("ERROR: No se ha especificado la base de datos");
     $_SESSION['error_message'] = "Error de configuración. Contacte al administrador.";
@@ -375,95 +602,7 @@ try {
     exit();
 }
 
-// =====================================================================
-// RECUPERAR VENTA PARA IMPRESIÓN DE TICKET
-// =====================================================================
-if (isset($_GET['venta_exitosa']) && $_GET['venta_exitosa'] === 'true'
-    && empty($_SESSION['venta_realizada'])) {
-
-    $venta_id_get = isset($_GET['venta_id']) ? (int)$_GET['venta_id'] : 0;
-
-    try {
-        if ($venta_id_get > 0) {
-            $stmt_v = $conn->prepare("
-                SELECT v.*, c.nombre AS cliente_nombre
-                FROM ventas v
-                LEFT JOIN clientes c ON c.id = v.cliente_id
-                WHERE v.id = ? LIMIT 1
-            ");
-            $stmt_v->execute([$venta_id_get]);
-        } else {
-            $caja_id_actual = $_SESSION['caja_actual_id'] ?? 0;
-            $stmt_v = $conn->prepare("
-                SELECT v.*, c.nombre AS cliente_nombre
-                FROM ventas v
-                LEFT JOIN clientes c ON c.id = v.cliente_id
-                WHERE v.caja_id = ?
-                  AND v.estado IN ('completada','pendiente')
-                ORDER BY v.id DESC
-                LIMIT 1
-            ");
-            $stmt_v->execute([$caja_id_actual]);
-        }
-
-        $venta_row = $stmt_v->fetch(PDO::FETCH_ASSOC);
-
-        if ($venta_row) {
-            $stmt_d = $conn->prepare("
-                SELECT vd.*, p.nombre, p.codigo, p.unidad_medida, p.permite_fracciones
-                FROM venta_detalles vd
-                INNER JOIN productos p ON p.id = vd.producto_id
-                WHERE vd.venta_id = ?
-            ");
-            $stmt_d->execute([$venta_row['id']]);
-            $detalles = $stmt_d->fetchAll(PDO::FETCH_ASSOC);
-
-            $productos_session = [];
-            foreach ($detalles as $d) {
-                $productos_session[] = [
-                    'id'                     => $d['producto_id'],
-                    'nombre'                 => $d['nombre'],
-                    'codigo'                 => $d['codigo'],
-                    'cantidad'               => (float)$d['cantidad'],
-                    'precio'                 => (float)$d['precio_unitario'],
-                    'subtotal'               => (float)$d['subtotal'],
-                    'descuento'              => (float)$d['descuento'],
-                    'subtotal_con_descuento' => (float)$d['total'],
-                    'unidad_medida'          => $d['unidad_medida'],
-                    'permite_fracciones'     => (int)$d['permite_fracciones'],
-                ];
-            }
-
-            $_SESSION['venta_realizada'] = [
-                'codigo_venta'          => $venta_row['codigo_venta'],
-                'total'                 => (float)$venta_row['total'],
-                'subtotal'              => (float)$venta_row['subtotal'],
-                'descuento'             => (float)$venta_row['descuento'],
-                'iva'                   => (float)$venta_row['iva'],
-                'metodo_pago'           => $venta_row['metodo_pago'],
-                'efectivo_recibido'     => (float)$venta_row['efectivo_recibido'],
-                'cambio'                => (float)$venta_row['cambio'],
-                'fecha'                 => $venta_row['fecha'] ?? date('Y-m-d H:i:s'),
-                'cliente_id'            => $venta_row['cliente_id'],
-                'venta_id'              => (int)$venta_row['id'],
-                'productos'             => $productos_session,
-                'plan_empresa'          => $empresa_plan ?? '',
-                'facturapi_receipt_id'  => $venta_row['facturapi_receipt_id'] ?? null,
-                'facturapi_invoice_url' => $venta_row['urlfacturacion'] ?? null,
-            ];
-
-            error_log("✅ venta_realizada reconstruida para impresión - Venta ID: " . $venta_row['id']);
-        } else {
-            error_log("⚠️ No se encontró venta para reconstruir (venta_id=$venta_id_get)");
-        }
-    } catch (Exception $e) {
-        error_log("❌ Error reconstruyendo venta_realizada: " . $e->getMessage());
-    }
-}
-
-// =====================================================================
-// VENTAS CON SALDO PENDIENTE
-// =====================================================================
+// ========== VENTAS CON SALDO PENDIENTE (para el acceso directo en el navbar) ==========
 $ventas_pendientes_count = 0;
 $ventas_pendientes_saldo = 0.0;
 try {
@@ -472,43 +611,42 @@ try {
     $ventas_pendientes_count = (int)($pend['n'] ?? 0);
     $ventas_pendientes_saldo = (float)($pend['s'] ?? 0);
 } catch (Exception $e) {
+    // Si la vista no existe todavía en esta empresa, no truena caja: solo no se muestra el badge.
     error_log("No se pudo leer v_cuentas_por_cobrar: " . $e->getMessage());
 }
 
-// =====================================================================
-// CONFIGURACIÓN DEL SISTEMA
-// =====================================================================
+// ========== OBTENER CONFIGURACIÓN DEL SISTEMA ==========
 try {
-    $sql_config = "SELECT iva, moneda, color_primario, color_secundario 
+    $sql_config = "SELECT iva, moneda, color_primario, color_secundario, 
+                          paypal_client_id, paypal_secret, paypal_mode 
                    FROM sistema_config WHERE id = 1";
     $stmt_config = $conn->query($sql_config);
     $config = $stmt_config->fetch();
 
-    $iva_porcentaje   = (float)($config['iva'] ?? 0);
-    $moneda           = $config['moneda'] ?? 'MXN';
-    $color_primario   = $config['color_primario'] ?? '#27ae60';
+    // IVA sugerido para la venta. Es OPCIONAL: el cajero puede dejarlo en 0
+    // o cambiarlo en el modal de cobro segun aplique.
+    $iva_porcentaje = (float)($config['iva'] ?? 0);
+    $moneda = $config['moneda'] ?? 'MXN';
+    $color_primario = $config['color_primario'] ?? '#27ae60';
     $color_secundario = $config['color_secundario'] ?? '#2ecc71';
+    
+    // Credenciales PayPal
+    $paypal_client_id = $config['paypal_client_id'] ?? '';
+    $paypal_secret = $config['paypal_secret'] ?? '';
+    $paypal_mode = $config['paypal_mode'] ?? 'sandbox';
+    
 } catch (PDOException $e) {
     error_log("Error al obtener configuración: " . $e->getMessage());
     $iva_porcentaje = 0;
-    $moneda = 'MXN';
+    $moneda = 'MXN';   // fallback si falla la consulta de configuracion
     $color_primario = '#27ae60';
     $color_secundario = '#2ecc71';
+    $paypal_client_id = '';
+    $paypal_secret = '';
+    $paypal_mode = 'sandbox';
 }
 
-// =====================================================================
-// PAYPAL desde config.php (.env)
-// =====================================================================
-$paypal_cfg       = paypalConfig();
-$paypal_client_id = $paypal_cfg['client_id'] ?? '';
-$paypal_secret    = $paypal_cfg['secret']    ?? '';
-$paypal_mode      = $paypal_cfg['mode']      ?? 'sandbox';
-$paypal_currency  = $paypal_cfg['currency']  ?? 'MXN';
-$paypal_enabled   = $paypal_cfg['enabled']   ?? true;
-
-// =====================================================================
-// LOGO DE LA EMPRESA
-// =====================================================================
+// ========== OBTENER LOGO DE LA EMPRESA ==========
 $logo_empresa = null;
 $logo_path = null;
 $empresa_nombre = $_SESSION['empresa_nombre'] ?? 'Sistema';
@@ -529,17 +667,28 @@ try {
         if (!empty($empresa_logo)) {
             $logo_path = '';
             $rutas_posibles = [
-                $empresa_logo, '../' . $empresa_logo, '../../' . $empresa_logo,
-                'admin/' . $empresa_logo, '../admin/' . $empresa_logo,
-                'logos/' . $empresa_logo, 'img/' . $empresa_logo,
-                'images/' . $empresa_logo, 'assets/' . $empresa_logo,
-                'uploads/' . $empresa_logo, '../logos/' . $empresa_logo,
-                '../img/' . $empresa_logo, '../images/' . $empresa_logo,
-                '../assets/' . $empresa_logo, '../uploads/' . $empresa_logo
+                $empresa_logo,
+                '../' . $empresa_logo,
+                '../../' . $empresa_logo,
+                'admin/' . $empresa_logo,
+                '../admin/' . $empresa_logo,
+                'logos/' . $empresa_logo,
+                'img/' . $empresa_logo,
+                'images/' . $empresa_logo,
+                'assets/' . $empresa_logo,
+                'uploads/' . $empresa_logo,
+                '../logos/' . $empresa_logo,
+                '../img/' . $empresa_logo,
+                '../images/' . $empresa_logo,
+                '../assets/' . $empresa_logo,
+                '../uploads/' . $empresa_logo
             ];
 
             foreach ($rutas_posibles as $ruta) {
-                if (file_exists($ruta) && is_file($ruta)) { $logo_path = $ruta; break; }
+                if (file_exists($ruta) && is_file($ruta)) {
+                    $logo_path = $ruta;
+                    break;
+                }
             }
 
             if (!empty($logo_path) && file_exists($logo_path)) {
@@ -561,11 +710,9 @@ try {
     error_log("Error al obtener logo: " . $e->getMessage());
 }
 
-// =====================================================================
-// VERIFICACIÓN DE CAJA ABIERTA
-// =====================================================================
+// ========== VERIFICACIÓN DE CAJA ABIERTA ==========
 $caja_actual = null;
-$usuario_id  = $_SESSION['usuario_id'] ?? 0;
+$usuario_id = $_SESSION['usuario_id'] ?? 0;
 $sucursal_id = $_SESSION['sucursal_id'] ?? 0;
 
 if (isset($_SESSION['caja_actual_id']) && !empty($_SESSION['caja_actual_id'])) {
@@ -609,7 +756,7 @@ if (!$caja_actual) {
 
 if ($caja_actual) {
     $_SESSION['caja_actual_id'] = $caja_actual['id'];
-    $_SESSION['caja_actual']    = $caja_actual;
+    $_SESSION['caja_actual'] = $caja_actual;
 } else {
     header("Location: caja_apertura.php");
     exit();
@@ -620,9 +767,7 @@ if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
 
-// =====================================================================
-// CATEGORÍAS CON CONTEOS
-// =====================================================================
+// ========== OBTENER CATEGORÍAS CON CONTEOS ==========
 $categorias_con_count = [];
 try {
     $sql_categorias = "
@@ -644,9 +789,7 @@ try {
     error_log("Error al obtener categorías: " . $e->getMessage());
 }
 
-// =====================================================================
-// PRODUCTOS
-// =====================================================================
+// ========== OBTENER PRODUCTOS ==========
 $productos = [];
 $categoria_seleccionada = isset($_GET['categoria_id']) ? intval($_GET['categoria_id']) : null;
 $busqueda_nombre = isset($_GET['busqueda_nombre']) ? trim($_GET['busqueda_nombre']) : '';
@@ -662,9 +805,17 @@ try {
     if (!$categoria_seleccionada && empty($busqueda_nombre)) {
         $sql_productos = "
             SELECT 
-                p.id, p.codigo, p.nombre, p.descripcion,
-                p.subprecio as precio_sin_iva, p.subprecio as precio,
-                p.costo, p.categoria_id, p.activo, p.imagen, p.descuento" .
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.descripcion,
+                p.subprecio as precio_sin_iva,
+                p.subprecio as precio,
+                p.costo,
+                p.categoria_id,
+                p.activo,
+                p.imagen,
+                p.descuento" .
             $columnas_productos . ",
                 c.nombre as categoria_nombre,
                 COALESCE(ps.stock, 0) as stock_sucursal,
@@ -678,16 +829,25 @@ try {
             ORDER BY p.nombre
             LIMIT 100
         ";
+
         $stmt = $conn->prepare($sql_productos);
         $stmt->execute([$_SESSION['sucursal_id']]);
         $productos = $stmt->fetchAll();
-
+        
     } elseif ($categoria_seleccionada && empty($busqueda_nombre)) {
         $sql_productos = "
             SELECT 
-                p.id, p.codigo, p.nombre, p.descripcion,
-                p.subprecio as precio_sin_iva, p.subprecio as precio,
-                p.costo, p.categoria_id, p.activo, p.imagen, p.descuento" .
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.descripcion,
+                p.subprecio as precio_sin_iva,
+                p.subprecio as precio,
+                p.costo,
+                p.categoria_id,
+                p.activo,
+                p.imagen,
+                p.descuento" .
             $columnas_productos . ",
                 c.nombre as categoria_nombre,
                 COALESCE(ps.stock, 0) as stock_sucursal,
@@ -701,19 +861,28 @@ try {
             AND (COALESCE(ps.stock, 0) > 0)
             ORDER BY p.nombre
         ";
+
         $stmt = $conn->prepare($sql_productos);
         $stmt->execute([$_SESSION['sucursal_id'], $categoria_seleccionada]);
         $productos = $stmt->fetchAll();
-
+        
     } elseif (!empty($busqueda_nombre)) {
         $search_term = "%" . $busqueda_nombre . "%";
-
+        
         if ($categoria_seleccionada) {
             $sql_productos = "
                 SELECT 
-                    p.id, p.codigo, p.nombre, p.descripcion,
-                    p.subprecio as precio_sin_iva, p.subprecio as precio,
-                    p.costo, p.categoria_id, p.activo, p.imagen, p.descuento" .
+                    p.id,
+                    p.codigo,
+                    p.nombre,
+                    p.descripcion,
+                    p.subprecio as precio_sin_iva,
+                    p.subprecio as precio,
+                    p.costo,
+                    p.categoria_id,
+                    p.activo,
+                    p.imagen,
+                    p.descuento" .
                 $columnas_productos . ",
                     c.nombre as categoria_nombre,
                     COALESCE(ps.stock, 0) as stock_sucursal,
@@ -728,15 +897,24 @@ try {
                 AND (p.nombre LIKE ? OR p.codigo LIKE ?)
                 ORDER BY p.nombre
             ";
+
             $stmt = $conn->prepare($sql_productos);
             $stmt->execute([$_SESSION['sucursal_id'], $categoria_seleccionada, $search_term, $search_term]);
             $productos = $stmt->fetchAll();
         } else {
             $sql_productos = "
                 SELECT 
-                    p.id, p.codigo, p.nombre, p.descripcion,
-                    p.subprecio as precio_sin_iva, p.subprecio as precio,
-                    p.costo, p.categoria_id, p.activo, p.imagen, p.descuento" .
+                    p.id,
+                    p.codigo,
+                    p.nombre,
+                    p.descripcion,
+                    p.subprecio as precio_sin_iva,
+                    p.subprecio as precio,
+                    p.costo,
+                    p.categoria_id,
+                    p.activo,
+                    p.imagen,
+                    p.descuento" .
                 $columnas_productos . ",
                     c.nombre as categoria_nombre,
                     COALESCE(ps.stock, 0) as stock_sucursal,
@@ -751,6 +929,7 @@ try {
                 ORDER BY p.nombre
                 LIMIT 100
             ";
+
             $stmt = $conn->prepare($sql_productos);
             $stmt->execute([$_SESSION['sucursal_id'], $search_term, $search_term]);
             $productos = $stmt->fetchAll();
@@ -760,9 +939,7 @@ try {
     error_log("Error al obtener productos: " . $e->getMessage());
 }
 
-// =====================================================================
-// CLIENTES
-// =====================================================================
+// ========== OBTENER CLIENTES ==========
 $clientes = [];
 try {
     $sql_clientes = "SELECT * FROM clientes WHERE activo = 1 ORDER BY nombre";
@@ -772,42 +949,49 @@ try {
     error_log("Error al obtener clientes: " . $e->getMessage());
 }
 
-// =====================================================================
-// AJAX: ACTUALIZAR PRECIO UNITARIO
-// =====================================================================
+// ========== MANEJO DE ACTUALIZACIÓN DE PRECIO UNITARIO VIA AJAX ==========
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_precio_ajax'])) {
-    if (session_status() === PHP_SESSION_NONE) session_start();
-    while (ob_get_level()) ob_end_clean();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
     header('Content-Type: application/json');
     header('Cache-Control: no-cache, must-revalidate');
-
+    
     $response = [
-        'success' => false, 'message' => '',
+        'success' => false,
+        'message' => '',
         'carrito_actualizado' => $_SESSION['carrito'] ?? [],
         'totales' => []
     ];
-
+    
     try {
         if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             throw new Exception('Sesión no válida');
         }
-
+        
         $index = intval($_POST['index']);
         $nuevo_precio = floatval(str_replace(',', '.', $_POST['precio']));
-
-        if ($nuevo_precio <= 0) throw new Exception("El precio debe ser mayor a 0");
-
+        
+        if ($nuevo_precio <= 0) {
+            throw new Exception("El precio debe ser mayor a 0");
+        }
+        
         if (isset($_SESSION['carrito'][$index])) {
-            $_SESSION['carrito'][$index]['precio']              = $nuevo_precio;
-            $_SESSION['carrito'][$index]['precio_base']         = $nuevo_precio;
-            $_SESSION['carrito'][$index]['precio_sin_iva']      = $nuevo_precio;
-            $_SESSION['carrito'][$index]['precio_original']     = $nuevo_precio;
+            $_SESSION['carrito'][$index]['precio'] = $nuevo_precio;
+            $_SESSION['carrito'][$index]['precio_base'] = $nuevo_precio;
+            $_SESSION['carrito'][$index]['precio_sin_iva'] = $nuevo_precio;
+            $_SESSION['carrito'][$index]['precio_original'] = $nuevo_precio;
             $_SESSION['carrito'][$index]['tiene_precio_mayoreo'] = false;
-
+            
             $cantidad = floatval($_SESSION['carrito'][$index]['cantidad']);
             $subtotal = $cantidad * $nuevo_precio;
             $_SESSION['carrito'][$index]['subtotal'] = $subtotal;
-
+            
             $descuento_porcentaje = floatval($_SESSION['carrito'][$index]['descuento_porcentaje'] ?? 0);
             if ($descuento_porcentaje > 0) {
                 $descuento_total = $subtotal * ($descuento_porcentaje / 100);
@@ -817,20 +1001,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_precio_aja
                 $_SESSION['carrito'][$index]['descuento'] = 0;
                 $_SESSION['carrito'][$index]['subtotal_con_descuento'] = $subtotal;
             }
-
+            
             $response['success'] = true;
             $response['message'] = "Precio unitario actualizado a $" . number_format($nuevo_precio, 2);
         } else {
             throw new Exception("Producto no encontrado en el carrito");
         }
-
-        $subtotal_carrito = 0; $descuento_carrito = 0; $subtotal_con_descuento_carrito = 0;
+        
+        $subtotal_carrito = 0;
+        $descuento_carrito = 0;
+        $subtotal_con_descuento_carrito = 0;
+        
         foreach ($_SESSION['carrito'] as $item) {
             $subtotal_carrito += (float)$item['subtotal'];
             $descuento_carrito += (float)($item['descuento'] ?? 0);
             $subtotal_con_descuento_carrito += (float)($item['subtotal_con_descuento'] ?? $item['subtotal']);
         }
-
+        
         $response['totales'] = [
             'subtotal' => (float)$subtotal_carrito,
             'descuento' => (float)$descuento_carrito,
@@ -838,20 +1025,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_precio_aja
             'iva' => 0,
             'total' => (float)$subtotal_con_descuento_carrito
         ];
+        
         $response['carrito_actualizado'] = $_SESSION['carrito'];
+        
     } catch (Exception $e) {
         $response['message'] = $e->getMessage();
         error_log("Error en actualizar_precio_ajax: " . $e->getMessage());
     }
-
-    while (ob_get_level()) ob_end_clean();
+    
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
     echo json_encode($response);
     exit();
 }
 
-// =====================================================================
-// AJAX: GUARDAR COMISIONES PENDIENTES
-// =====================================================================
+// ========== GUARDAR COMISIONES PENDIENTES ==========
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_comisiones_carrito_ajax'])) {
     header('Content-Type: application/json');
     $index = intval($_POST['index'] ?? -1);
@@ -865,9 +1055,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_comisiones
     exit();
 }
 
-// =====================================================================
-// AJAX: GASTOS DE OPERACIÓN
-// =====================================================================
+// ========== MANEJO DE GASTOS DE OPERACIÓN DE LA VENTA EN CURSO ==========
+// A diferencia de las comisiones (que van por producto), los gastos de
+// operación aplican a la venta completa (flete, empaque, comisión de
+// plataforma de pago, etc.), así que se guardan aparte en la sesión y se
+// insertan en `gastos` hasta que se confirma el pago.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_gastos_operacion_ajax'])) {
     header('Content-Type: application/json');
     $gastos_operacion = json_decode($_POST['gastos_operacion'] ?? '[]', true);
@@ -876,14 +1068,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_gastos_ope
     exit();
 }
 
-// =====================================================================
-// AJAX: ACTUALIZAR CANTIDAD
-// =====================================================================
+// ========== MANEJO DE ACTUALIZACIÓN DE CANTIDAD ==========
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_cantidad_ajax'])) {
     header('Content-Type: application/json');
 
     $response = [
-        'success' => false, 'message' => '',
+        'success' => false,
+        'message' => '',
         'carrito_actualizado' => $_SESSION['carrito'] ?? [],
         'totales' => []
     ];
@@ -898,21 +1089,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_cantidad_a
 
             if ($permite_decimales) {
                 $cantidad = (float)$cantidad;
-                if ($cantidad <= 0) throw new Exception("La cantidad debe ser mayor a 0");
+                if ($cantidad <= 0) {
+                    throw new Exception("La cantidad debe ser mayor a 0");
+                }
             } else {
                 $cantidad = (int)$cantidad;
-                if ($cantidad <= 0) throw new Exception("La cantidad debe ser un número entero mayor a 0");
+                if ($cantidad <= 0) {
+                    throw new Exception("La cantidad debe ser un número entero mayor a 0");
+                }
             }
 
             $sql_stock = "
                 SELECT 
                     COALESCE(ps.stock, 0) as stock_sucursal, 
-                    p.nombre, p.permite_fracciones, p.descuento,
+                    p.nombre,
+                    p.permite_fracciones,
+                    p.descuento,
                     p.subprecio as precio_base
                 FROM productos p 
                 LEFT JOIN producto_sucursal ps ON p.id = ps.producto_id AND ps.sucursal_id = ?
-                WHERE p.id = ? AND p.activo = 1
+                WHERE p.id = ?
+                AND p.activo = 1
             ";
+
             $stmt = $conn->prepare($sql_stock);
             $stmt->execute([$_SESSION['sucursal_id'], $producto_id]);
             $stock_result = $stmt->fetch();
@@ -934,20 +1133,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_cantidad_a
 
             $precio_actual = floatval($_SESSION['carrito'][$index]['precio']);
             $precio_mayoreo = obtenerPrecioConMayoreo($producto_id, $cantidad, $conn);
+            
             $precio_base_original = floatval($_SESSION['carrito'][$index]['precio_original'] ?? $precio_base);
-
+            
             if ($precio_actual == $precio_base_original || $precio_actual == $precio_base) {
                 $precio_unitario = $precio_mayoreo;
                 $_SESSION['carrito'][$index]['tiene_precio_mayoreo'] = ($precio_unitario < $precio_base);
-                $_SESSION['carrito'][$index]['precio_base']    = $precio_base;
+                $_SESSION['carrito'][$index]['precio_base'] = $precio_base;
                 $_SESSION['carrito'][$index]['precio_original'] = $precio_base;
             } else {
                 $precio_unitario = $precio_actual;
             }
-
-            $_SESSION['carrito'][$index]['precio']         = $precio_unitario;
+            
+            $_SESSION['carrito'][$index]['precio'] = $precio_unitario;
             $_SESSION['carrito'][$index]['precio_sin_iva'] = $precio_unitario;
-
+            
             $subtotal = (float)$cantidad * $precio_unitario;
             $_SESSION['carrito'][$index]['subtotal'] = $subtotal;
 
@@ -961,13 +1161,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_cantidad_a
             }
 
             $response['success'] = true;
-            $response['message'] = "Cantidad actualizada: " . $producto_nombre .
+            $response['message'] = "Cantidad actualizada: " . $producto_nombre . 
                 ($_SESSION['carrito'][$index]['tiene_precio_mayoreo'] ?? false ? " (Precio mayoreo aplicado)" : "");
         } else {
             throw new Exception("Producto no encontrado en el carrito");
         }
 
-        $subtotal_carrito = 0; $descuento_carrito = 0; $subtotal_con_descuento_carrito = 0;
+        $subtotal_carrito = 0;
+        $descuento_carrito = 0;
+        $subtotal_con_descuento_carrito = 0;
+
         foreach ($_SESSION['carrito'] as $item) {
             $subtotal_carrito += (float)$item['subtotal'];
             $descuento_carrito += (float)($item['descuento'] ?? 0);
@@ -981,6 +1184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_cantidad_a
             'iva' => 0,
             'total' => (float)$subtotal_con_descuento_carrito
         ];
+
         $response['carrito_actualizado'] = $_SESSION['carrito'];
     } catch (Exception $e) {
         $response['message'] = $e->getMessage();
@@ -990,26 +1194,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_cantidad_a
     exit();
 }
 
-// =====================================================================
-// AJAX: ACTUALIZAR DESCUENTO
-// =====================================================================
+// ========== MANEJO DE ACTUALIZACIÓN DE DESCUENTO VIA AJAX ==========
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_descuento_ajax'])) {
-    while (ob_get_level()) ob_end_clean();
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
 
     error_log("=== INICIO actualizar_descuento_ajax ===");
 
-    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
 
     if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         error_log("ERROR: Sesión no válida");
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Sesión no válida. Por favor inicie sesión nuevamente.']);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Sesión no válida. Por favor inicie sesión nuevamente.'
+        ]);
         exit();
     }
 
     $response = [
-        'success' => false, 'message' => '',
-        'carrito_actualizado' => [], 'totales' => []
+        'success' => false,
+        'message' => '',
+        'carrito_actualizado' => [],
+        'totales' => []
     ];
 
     try {
@@ -1017,8 +1228,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_descuento_
         $descuento_porcentaje = isset($_POST['descuento_porcentaje']) ? (float)$_POST['descuento_porcentaje'] : 0;
         $index = isset($_POST['index']) ? (int)$_POST['index'] : -1;
 
-        if ($producto_id <= 0) throw new Exception('ID de producto no válido');
-        if ($index < 0 || !isset($_SESSION['carrito'][$index])) throw new Exception('Producto no encontrado en el carrito');
+        error_log("Datos recibidos - producto_id: $producto_id, descuento: $descuento_porcentaje, index: $index");
+
+        if ($producto_id <= 0) {
+            throw new Exception('ID de producto no válido');
+        }
+
+        if ($index < 0 || !isset($_SESSION['carrito'][$index])) {
+            throw new Exception('Producto no encontrado en el carrito');
+        }
 
         if ($descuento_porcentaje < 0) $descuento_porcentaje = 0;
         if ($descuento_porcentaje > 100) $descuento_porcentaje = 100;
@@ -1036,15 +1254,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_descuento_
         $stmt = $conn->prepare($sql_update);
         $stmt->execute([$descuento_porcentaje, $producto_id]);
 
+        error_log("Descuento actualizado en BD para producto ID: $producto_id");
+
         $item = &$_SESSION['carrito'][$index];
         $subtotal = $item['cantidad'] * $item['precio'];
         $descuento_total = $subtotal * ($descuento_porcentaje / 100);
 
-        $item['descuento_porcentaje']    = $descuento_porcentaje;
-        $item['descuento']               = $descuento_total;
-        $item['subtotal_con_descuento']  = $subtotal - $descuento_total;
+        $item['descuento_porcentaje'] = $descuento_porcentaje;
+        $item['descuento'] = $descuento_total;
+        $item['subtotal_con_descuento'] = $subtotal - $descuento_total;
 
-        $subtotal_carrito = 0; $descuento_carrito = 0; $subtotal_con_descuento_carrito = 0;
+        $subtotal_carrito = 0;
+        $descuento_carrito = 0;
+        $subtotal_con_descuento_carrito = 0;
+
         foreach ($_SESSION['carrito'] as $item_cart) {
             $subtotal_carrito += $item_cart['subtotal'];
             $descuento_carrito += $item_cart['descuento'] ?? 0;
@@ -1061,12 +1284,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_descuento_
             'iva' => 0,
             'total' => $subtotal_con_descuento_carrito
         ];
+
+        error_log("Respuesta exitosa preparada");
     } catch (Exception $e) {
         $response['message'] = $e->getMessage();
         error_log("EXCEPCIÓN: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine());
     }
 
-    while (ob_get_level()) ob_end_clean();
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+
     header('Content-Type: application/json');
     header('Cache-Control: no-cache');
     echo json_encode($response);
@@ -1074,17 +1302,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_descuento_
     exit();
 }
 
-// =====================================================================
-// AJAX: AGREGAR PRODUCTO
-// =====================================================================
+// ========== AGREGAR PRODUCTO VIA AJAX ==========
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar_producto_ajax'])) {
-    while (ob_get_level()) ob_end_clean();
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+
     header('Content-Type: application/json');
     header('Cache-Control: no-cache, must-revalidate');
 
     $response = [
-        'success' => false, 'message' => '',
-        'carrito_actualizado' => [], 'totales' => []
+        'success' => false,
+        'message' => '',
+        'carrito_actualizado' => [],
+        'totales' => []
     ];
 
     try {
@@ -1095,11 +1326,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar_producto_ajax
         $producto_id = intval($_POST['producto_id']);
         $cantidad = floatval($_POST['cantidad']);
 
-        if ($producto_id <= 0) throw new Exception('ID de producto no válido');
-        if ($cantidad <= 0) throw new Exception('La cantidad debe ser mayor a 0');
+        if ($producto_id <= 0) {
+            throw new Exception('ID de producto no válido');
+        }
+
+        if ($cantidad <= 0) {
+            throw new Exception('La cantidad debe ser mayor a 0');
+        }
 
         $producto = obtenerProductoConPrecio($producto_id, $cantidad, $conn, $_SESSION['sucursal_id']);
-        if (!$producto) throw new Exception('Producto no encontrado o inactivo');
+
+        if (!$producto) {
+            throw new Exception('Producto no encontrado o inactivo');
+        }
 
         $ruta_imagen = obtenerImagenProducto($producto['id'], $conn);
         $stock_disponible = (float)($producto['stock_sucursal'] ?? 0);
@@ -1115,12 +1354,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar_producto_ajax
             'l', 'litro', 'litros', 'ton', 'tonelada', 'toneladas',
             'lb', 'libra', 'libras', 'ml', 'mililitro', 'mililitros'
         ];
+
         $unidades_enteras = ['pieza', 'piezas', 'unidad', 'unidades', 'pza', 'pzas'];
 
         $permite_decimales = false;
-        if ($producto['permite_fracciones'] == 1) $permite_decimales = true;
-        if (in_array($unidad, $unidades_decimales)) $permite_decimales = true;
-        if (in_array($unidad, $unidades_enteras)) $permite_decimales = false;
+
+        if ($producto['permite_fracciones'] == 1) {
+            $permite_decimales = true;
+        }
+        if (in_array($unidad, $unidades_decimales)) {
+            $permite_decimales = true;
+        }
+        if (in_array($unidad, $unidades_enteras)) {
+            $permite_decimales = false;
+        }
 
         if ($permite_decimales) {
             if ($stock_disponible <= 0 && $stock_disponible > 0) {
@@ -1153,14 +1400,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar_producto_ajax
 
         if ($encontrado && $encontrado_index >= 0) {
             $nueva_cantidad = (float)$_SESSION['carrito'][$encontrado_index]['cantidad'] + $cantidad;
+            
             $precio_mayoreo_actualizado = obtenerPrecioConMayoreo($producto_id, $nueva_cantidad, $conn);
-
-            $_SESSION['carrito'][$encontrado_index]['cantidad']            = $nueva_cantidad;
-            $_SESSION['carrito'][$encontrado_index]['precio']              = $precio_mayoreo_actualizado;
-            $_SESSION['carrito'][$encontrado_index]['precio_base']         = $precio_base;
-            $_SESSION['carrito'][$encontrado_index]['costo']               = (float)($producto['costo'] ?? 0);
+            
+            $_SESSION['carrito'][$encontrado_index]['cantidad'] = $nueva_cantidad;
+            $_SESSION['carrito'][$encontrado_index]['precio'] = $precio_mayoreo_actualizado;
+            $_SESSION['carrito'][$encontrado_index]['precio_base'] = $precio_base;
+            $_SESSION['carrito'][$encontrado_index]['costo'] = (float)($producto['costo'] ?? 0);
             $_SESSION['carrito'][$encontrado_index]['tiene_precio_mayoreo'] = ($precio_mayoreo_actualizado < $precio_base);
-
+            
             $subtotal = $nueva_cantidad * $precio_mayoreo_actualizado;
             $_SESSION['carrito'][$encontrado_index]['subtotal'] = $subtotal;
 
@@ -1174,8 +1422,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar_producto_ajax
             }
 
             $_SESSION['carrito'][$encontrado_index]['imagen_ruta'] = $ruta_imagen;
-
-            $response['message'] = "Producto actualizado: " . $producto['nombre'] .
+            
+            $response['message'] = "Producto actualizado: " . $producto['nombre'] . 
                 ($precio_mayoreo_actualizado < $precio_base ? " (Precio mayoreo aplicado)" : "");
         } else {
             $subtotal = $precio_unitario * $cantidad;
@@ -1188,35 +1436,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar_producto_ajax
             }
 
             $_SESSION['carrito'][] = [
-                'id'                    => $producto['id'],
-                'codigo'                => $producto['codigo'],
-                'nombre'                => $producto['nombre'],
-                'precio'                => $precio_unitario,
-                'precio_base'           => $precio_base,
-                'precio_sin_iva'        => $precio_unitario,
-                'precio_original'       => $precio_base,
-                'costo'                 => (float)($producto['costo'] ?? 0),
-                'tiene_precio_mayoreo'  => $tiene_precio_mayoreo,
-                'cantidad'              => $permite_decimales ? (float)$cantidad : (int)$cantidad,
-                'subtotal'              => (float)$subtotal,
-                'descuento'             => (float)$descuento_total,
-                'descuento_porcentaje'  => (float)$descuento_porcentaje,
-                'subtotal_con_descuento'=> (float)$subtotal_con_descuento,
-                'tipo_venta'            => $permite_decimales ? $producto['unidad_medida'] : 'unidad',
-                'unidad_medida'         => $producto['unidad_medida'],
-                'peso_kg'               => $producto['peso_kg'],
-                'permite_fracciones'    => $permite_decimales ? 1 : 0,
-                'imagen'                => $producto['imagen'],
-                'imagen_ruta'           => $ruta_imagen
+                'id' => $producto['id'],
+                'codigo' => $producto['codigo'],
+                'nombre' => $producto['nombre'],
+                'precio' => $precio_unitario,
+                'precio_base' => $precio_base,
+                'precio_sin_iva' => $precio_unitario,
+                'precio_original' => $precio_base,
+                'costo' => (float)($producto['costo'] ?? 0),
+                'tiene_precio_mayoreo' => $tiene_precio_mayoreo,
+                'cantidad' => $permite_decimales ? (float)$cantidad : (int)$cantidad,
+                'subtotal' => (float)$subtotal,
+                'descuento' => (float)$descuento_total,
+                'descuento_porcentaje' => (float)$descuento_porcentaje,
+                'subtotal_con_descuento' => (float)$subtotal_con_descuento,
+                'tipo_venta' => $permite_decimales ? $producto['unidad_medida'] : 'unidad',
+                'unidad_medida' => $producto['unidad_medida'],
+                'peso_kg' => $producto['peso_kg'],
+                'permite_fracciones' => $permite_decimales ? 1 : 0,
+                'imagen' => $producto['imagen'],
+                'imagen_ruta' => $ruta_imagen
             ];
-
-            $response['message'] = "Producto agregado: " . $producto['nombre'] .
+            
+            $response['message'] = "Producto agregado: " . $producto['nombre'] . 
                 ($tiene_precio_mayoreo ? " (Precio mayoreo aplicado)" : "");
         }
 
         $response['success'] = true;
 
-        $subtotal_carrito = 0; $descuento_carrito = 0; $subtotal_con_descuento_carrito = 0;
+        $subtotal_carrito = 0;
+        $descuento_carrito = 0;
+        $subtotal_con_descuento_carrito = 0;
+
         foreach ($_SESSION['carrito'] as $item) {
             $subtotal_carrito += (float)$item['subtotal'];
             $descuento_carrito += (float)($item['descuento'] ?? 0);
@@ -1236,20 +1487,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar_producto_ajax
         error_log("Error en agregar_producto_ajax: " . $e->getMessage());
     }
 
-    while (ob_get_level()) ob_end_clean();
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+
     echo json_encode($response);
     exit();
 }
 
-// =====================================================================
-// AJAX: ELIMINAR PRODUCTO
-// =====================================================================
+// ========== MANEJO DE PETICIONES AJAX PARA ELIMINAR Y VACIAR ==========
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eliminar_producto_ajax'])) {
     header('Content-Type: application/json');
 
     $index = intval($_POST['index']);
     $response = [
-        'success' => false, 'message' => '',
+        'success' => false,
+        'message' => '',
         'carrito_actualizado' => $_SESSION['carrito'] ?? [],
         'totales' => []
     ];
@@ -1263,35 +1516,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eliminar_producto_aja
         $response['message'] = "Producto no encontrado en el carrito";
     }
 
-    $subtotal_carrito = 0; $descuento_carrito = 0; $subtotal_con_descuento_carrito = 0;
+    $subtotal_carrito = 0;
+    $descuento_carrito = 0;
+    $subtotal_con_descuento_carrito = 0;
+
     foreach ($_SESSION['carrito'] ?? [] as $item) {
         $subtotal_carrito += $item['subtotal'];
         $descuento_carrito += $item['descuento'] ?? 0;
         $subtotal_con_descuento_carrito += $item['subtotal_con_descuento'] ?? $item['subtotal'];
     }
 
+    $iva_carrito = 0;
+    $total_carrito = $subtotal_con_descuento_carrito;
+
     $response['totales'] = [
         'subtotal' => $subtotal_carrito,
         'descuento' => $descuento_carrito,
         'subtotal_con_descuento' => $subtotal_con_descuento_carrito,
-        'iva' => 0,
-        'total' => $subtotal_con_descuento_carrito
+        'iva' => $iva_carrito,
+        'total' => $total_carrito
     ];
+
     $response['carrito_actualizado'] = $_SESSION['carrito'] ?? [];
 
     echo json_encode($response);
     exit();
 }
 
-// =====================================================================
-// AJAX: VACIAR CARRITO
-// =====================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vaciar_carrito_ajax'])) {
     header('Content-Type: application/json');
 
     $response = [
-        'success' => false, 'message' => '',
-        'carrito_actualizado' => [], 'totales' => []
+        'success' => false,
+        'message' => '',
+        'carrito_actualizado' => [],
+        'totales' => []
     ];
 
     if (!empty($_SESSION['carrito'])) {
@@ -1301,8 +1560,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vaciar_carrito_ajax']
         $response['message'] = "Carrito vaciado exitosamente";
         $response['carrito_actualizado'] = $_SESSION['carrito'];
         $response['totales'] = [
-            'subtotal' => 0, 'descuento' => 0,
-            'subtotal_con_descuento' => 0, 'iva' => 0, 'total' => 0
+            'subtotal' => 0,
+            'descuento' => 0,
+            'subtotal_con_descuento' => 0,
+            'iva' => 0,
+            'total' => 0
         ];
     } else {
         $response['message'] = "El carrito ya está vacío";
@@ -1312,15 +1574,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vaciar_carrito_ajax']
     exit();
 }
 
-// =====================================================================
-// AJAX: ACTUALIZAR CLIENTE
-// =====================================================================
+// ========== MANEJO DE PETICIONES AJAX PARA CLIENTE ==========
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_cliente_ajax'])) {
     header('Content-Type: application/json');
 
     $cliente_id = isset($_POST['cliente_id']) ? ($_POST['cliente_id'] === '' ? null : intval($_POST['cliente_id'])) : null;
 
-    $response = ['success' => false, 'message' => '', 'cliente_id' => $cliente_id];
+    $response = [
+        'success' => false,
+        'message' => '',
+        'cliente_id' => $cliente_id
+    ];
 
     try {
         if ($cliente_id === null) {
@@ -1350,25 +1614,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_cliente_aj
     exit();
 }
 
-// =====================================================================
-// GUARDAR CLIENTE (crear/editar)
-// =====================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
     $accion = $_POST['accion'];
-
+    
     if ($accion === 'crear' || $accion === 'editar') {
         $nombre = trim($_POST['nombre'] ?? '');
         $rfc = trim($_POST['rfc'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $telefono = trim($_POST['telefono'] ?? '');
         $direccion = trim($_POST['direccion'] ?? '');
-
+        
         if (empty($nombre)) {
             $_SESSION['error_message'] = "El nombre del cliente es obligatorio";
             header("Location: caja.php");
             exit();
         }
-
+        
         try {
             if ($accion === 'crear') {
                 $sql = "INSERT INTO clientes (nombre, rfc, email, telefono, direccion, activo, fecha_creacion) 
@@ -1376,22 +1637,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
                 $stmt = $conn->prepare($sql);
                 $stmt->execute([$nombre, $rfc, $email, $telefono, $direccion]);
                 $cliente_id = $conn->lastInsertId();
+                
                 $_SESSION['cliente_venta'] = $cliente_id;
+                
                 $_SESSION['success_message'] = "Cliente creado exitosamente: " . htmlspecialchars($nombre);
+                
             } else if ($accion === 'editar') {
                 $id = intval($_POST['id'] ?? 0);
-                if ($id <= 0) throw new Exception("ID de cliente no válido");
-
+                if ($id <= 0) {
+                    throw new Exception("ID de cliente no válido");
+                }
+                
                 $sql = "UPDATE clientes 
                         SET nombre = ?, rfc = ?, email = ?, telefono = ?, direccion = ? 
                         WHERE id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->execute([$nombre, $rfc, $email, $telefono, $direccion, $id]);
+                
                 $_SESSION['success_message'] = "Cliente actualizado exitosamente: " . htmlspecialchars($nombre);
             }
-
+            
             header("Location: caja.php");
             exit();
+            
         } catch (PDOException $e) {
             error_log("Error al guardar cliente: " . $e->getMessage());
             $_SESSION['error_message'] = "Error al guardar el cliente: " . $e->getMessage();
@@ -1401,9 +1669,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
     }
 }
 
-// =====================================================================
-// PROCESAR PAGO
-// =====================================================================
+// ========== PROCESAR PAGO ==========
 if (isset($_POST['procesar_pago'])) {
     error_log("=== INICIO PROCESAR PAGO ===");
     error_log("Plan de empresa: " . $empresa_plan);
@@ -1415,27 +1681,24 @@ if (isset($_POST['procesar_pago'])) {
         exit();
     }
 
-    // ---- Métodos válidos según plan ----
-    $metodos_validos = ['efectivo'];
-    if (in_array($empresa_plan, ['emprendedor', 'premium'], true)) {
-        $metodos_validos[] = 'tarjeta';
-        $metodos_validos[] = 'transferencia';
-        if ($paypal_enabled && !empty($paypal_client_id) && !empty($paypal_secret)) {
-            $metodos_validos[] = 'paypal';
-        }
-    }
-
+    $metodos_validos = ['efectivo', 'tarjeta', 'transferencia', 'paypal'];
     $metodo_pago = $_POST['metodo_pago'] ?? 'efectivo';
     if (!in_array($metodo_pago, $metodos_validos)) {
-        $_SESSION['error_message'] = "Método de pago no válido para su plan";
+        $_SESSION['error_message'] = "Método de pago no válido";
         header("Location: caja.php");
         exit();
     }
 
     $efectivo_recibido = floatval($_POST['efectivo_recibido'] ?? 0);
-    $monto_anticipo    = floatval($_POST['monto_anticipo'] ?? 0);
-    $cambio            = floatval($_POST['cambio'] ?? 0);
-    $descuento_total   = floatval($_POST['descuento_total'] ?? 0);
+
+    // Anticipo: cuánto de la venta se cobra AHORA. Si viene vacío o en 0,
+    // se asume que se cobra completa.
+    //
+    // No confundir con $efectivo_recibido, que es con cuánto te pagaron
+    // para calcular el cambio.
+    $monto_anticipo = floatval($_POST['monto_anticipo'] ?? 0);
+    $cambio = floatval($_POST['cambio'] ?? 0);
+    $descuento_total = floatval($_POST['descuento_total'] ?? 0);
 
     $descripcion_venta = isset($_POST['descripcion']) ? trim($_POST['descripcion']) : '';
     if ($descripcion_venta === '') {
@@ -1457,47 +1720,69 @@ if (isset($_POST['procesar_pago'])) {
     }
 
     $subtotal_sin_iva = $subtotal_sin_descuento - $descuento_total;
-    if ($subtotal_sin_iva < 0) $subtotal_sin_iva = 0;
+    if ($subtotal_sin_iva < 0) {
+        $subtotal_sin_iva = 0;
+    }
 
+    // -----------------------------------------------------------------
+    // IVA · el precio capturado es la BASE, SIN IVA
+    //
+    // Si capturas 2,500 con IVA al 16%, esos 2,500 son el precio del
+    // producto. El impuesto se AÑADE encima:
+    //     IVA   = 2,500 x 0.16   = 400.00
+    //     total = 2,500 + 400.00 = 2,900.00
+    //
+    // El total SÍ cambia al mover el porcentaje: la base (lo que vale el
+    // producto) se queda fija, y lo que aumenta o disminuye es el
+    // impuesto que se suma encima.
+    //
+    // La comisión se calcula sobre la BASE (2,500), nunca sobre el total
+    // con IVA: el impuesto no es ingreso de la empresa.
+    // -----------------------------------------------------------------
     $iva_porcentaje_venta = floatval($_POST['iva_porcentaje'] ?? 0);
     if ($iva_porcentaje_venta < 0)   $iva_porcentaje_venta = 0;
     if ($iva_porcentaje_venta > 100) $iva_porcentaje_venta = 100;
 
     $factor_iva = 1 + ($iva_porcentaje_venta / 100);
 
+    // La base es el carrito tal cual lo capturó el cajero (sin IVA)
     $base_sin_iva = round($subtotal_sin_iva, 2);
-    $iva_total    = round($base_sin_iva * ($iva_porcentaje_venta / 100), 2);
-    $total        = round($base_sin_iva + $iva_total, 2);
 
+    // El IVA se añade encima de la base para llegar al total a cobrar
+    $iva_total = round($base_sin_iva * ($iva_porcentaje_venta / 100), 2);
+    $total     = round($base_sin_iva + $iva_total, 2);
+
+    // subtotal/descuento se guardan tal cual (ya son sin IVA, no hay
+    // nada que desglosar hacia atrás)
     $subtotal_sin_descuento = round($subtotal_sin_descuento, 2);
     $descuento_total        = round($descuento_total, 2);
 
+    // El anticipo nunca puede pasar del total ni ser negativo. Vacío = todo.
     if ($monto_anticipo <= 0 || $monto_anticipo > $total) {
         $monto_anticipo = $total;
     }
     $monto_anticipo = round($monto_anticipo, 2);
     $tipo_pago_inicial = ($monto_anticipo < $total - 0.005) ? 'anticipo' : 'liquidacion';
 
-    // =================================================================
-    // PAGO CON PAYPAL (venta pendiente, se completa al capturar)
-    // =================================================================
+    // Si es PayPal, crear venta pendiente y redirigir
+    // ($factor_iva ya quedó calculado arriba y aplica igual en esta rama)
     if ($metodo_pago === 'paypal') {
         try {
             $conn->beginTransaction();
-
+            
             $codigo_venta = date('YmdHis');
-            $cliente_id   = $_SESSION['cliente_venta'] ?? null;
-            if (empty($cliente_id)) $cliente_id = null;
-
-            $sql_venta = "INSERT INTO ventas (
-                            codigo_venta, cliente_id, usuario_id, sucursal_id, caja_id,
-                            subtotal, descuento, iva, total, metodo_pago, estado,
-                            descripcion, paypal_status
-                          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'paypal', 'pendiente', ?, 'CREATED')";
-
+            $cliente_id = $_SESSION['cliente_venta'] ?? null;
+            if (empty($cliente_id)) {
+                $cliente_id = null;
+            }
+            
+            $sql_venta = "INSERT INTO ventas (codigo_venta, cliente_id, usuario_id, sucursal_id, caja_id, 
+                            subtotal, descuento, iva, total, metodo_pago, estado, descripcion)
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'paypal', 'pendiente', ?)";
+            
             $stmt = $conn->prepare($sql_venta);
             $caja_id = $_SESSION['caja_actual_id'] ?? $caja_actual['id'];
-
+            
             $stmt->execute([
                 $codigo_venta,
                 $cliente_id,
@@ -1510,53 +1795,67 @@ if (isset($_POST['procesar_pago'])) {
                 $total,
                 $descripcion_venta
             ]);
-
+            
             $venta_id = $conn->lastInsertId();
             error_log("✅ Venta pendiente PayPal - ID: $venta_id, Código: $codigo_venta");
-
             guardarGastosOperacionDeVenta(
                 $conn, $venta_id, $_SESSION['carrito_gastos_operacion'] ?? [],
                 $_SESSION['usuario_id'], $_SESSION['sucursal_id'] ?? null, 'paypal'
             );
-
+            
+            // Insertar detalles
+            $costo_total_venta = 0;
             foreach ($_SESSION['carrito'] as $item) {
                 $precio_unitario_sin_iva = $item['precio'];
-                $subtotal_producto       = $item['subtotal'];
-                $descuento_producto      = $item['descuento'] ?? 0;
-                $total_producto          = $item['subtotal_con_descuento'] ?? $subtotal_producto;
+                $subtotal_producto = $item['subtotal'];
+                $descuento_producto = $item['descuento'] ?? 0;
+                $total_producto = $item['subtotal_con_descuento'] ?? $subtotal_producto;
 
                 $permite_decimales = $item['permite_fracciones'] == 1;
-                $unidad_medida     = $item['unidad_medida'] ?? 'unidad';
-                $cantidad          = $permite_decimales ? (float)$item['cantidad'] : (int)$item['cantidad'];
+                $unidad_medida = $item['unidad_medida'] ?? 'unidad';
 
-                $sql_detalle = "INSERT INTO venta_detalles 
-                                (venta_id, producto_id, cantidad, precio_unitario, subtotal, descuento, total, unidad_medida)
+                $costo_unitario_item = (float)($item['costo'] ?? 0);
+                $costo_total_venta += $costo_unitario_item * (float)$item['cantidad'];
+
+                if ($permite_decimales) {
+                    $cantidad = (float)$item['cantidad'];
+                } else {
+                    $cantidad = (int)$item['cantidad'];
+                }
+
+                $sql_detalle = "INSERT INTO venta_detalles (venta_id, producto_id, cantidad, precio_unitario, subtotal, descuento, total, unidad_medida)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $conn->prepare($sql_detalle);
                 $stmt->execute([
-                    $venta_id, $item['id'], $cantidad,
-                    $precio_unitario_sin_iva, $subtotal_producto,
-                    $descuento_producto, $total_producto, $unidad_medida
+                    $venta_id,
+                    $item['id'],
+                    $cantidad,
+                    $precio_unitario_sin_iva,
+                    $subtotal_producto,
+                    $descuento_producto,
+                    $total_producto,
+                    $unidad_medida
                 ]);
 
                 $venta_detalle_id = $conn->lastInsertId();
-                guardarComisionesDeCarrito(
-                    $conn, $venta_id, $venta_detalle_id, $item,
-                    $_SESSION['usuario_id'], $_SESSION['carrito'], $factor_iva
-                );
+                guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, $_SESSION['usuario_id'], $_SESSION['carrito'], $factor_iva);
             }
-
+            
             $conn->commit();
-
-            $_SESSION['paypal_venta_id']  = $venta_id;
-            $_SESSION['paypal_amount']    = $total;
+            
+            // Guardar en sesión para PayPal
+            $_SESSION['paypal_venta_id'] = $venta_id;
+            $_SESSION['paypal_amount'] = $total;
             $_SESSION['paypal_reference'] = $codigo_venta;
-            $_SESSION['paypal_items']     = $_SESSION['carrito'];
-            $_SESSION['paypal_cliente']   = $cliente_id;
-
+            $_SESSION['paypal_items'] = $_SESSION['carrito'];
+            $_SESSION['paypal_cliente'] = $cliente_id;
+            
+            // No limpiar carrito aún, se limpiará después del pago exitoso
+            
+            // Redirigir a generar link de PayPal
             header("Location: Service/generar_link_pago_paypal.php");
             exit();
-
+            
         } catch (Exception $e) {
             $conn->rollBack();
             $_SESSION['error_message'] = 'Error al procesar pago PayPal: ' . $e->getMessage();
@@ -1566,22 +1865,21 @@ if (isset($_POST['procesar_pago'])) {
         }
     }
 
-    // ---- Validación efectivo ----
+    // Para otros métodos de pago (efectivo, tarjeta, transferencia)
     if ($metodo_pago === 'efectivo' && $efectivo_recibido < $monto_anticipo) {
         $_SESSION['error_message'] = "El efectivo recibido es menor al total a pagar";
         header("Location: caja.php");
         exit();
     }
 
-    // =================================================================
-    // PAGOS NORMALES (efectivo / tarjeta / transferencia)
-    // =================================================================
     try {
         $conn->beginTransaction();
 
         $codigo_venta = date('YmdHis');
         $cliente_id = $_SESSION['cliente_venta'] ?? null;
-        if (empty($cliente_id)) $cliente_id = null;
+        if (empty($cliente_id)) {
+            $cliente_id = null;
+        }
 
         $sql_venta = "
             INSERT INTO ventas (codigo_venta, cliente_id, usuario_id, sucursal_id, caja_id, subtotal, descuento, iva, total, metodo_pago, estado, efectivo_recibido, cambio, descripcion)
@@ -1589,7 +1887,7 @@ if (isset($_POST['procesar_pago'])) {
         ";
         $stmt = $conn->prepare($sql_venta);
         $caja_id = $_SESSION['caja_actual_id'] ?? $caja_actual['id'];
-
+        
         $stmt->execute([
             $codigo_venta,
             $cliente_id,
@@ -1605,10 +1903,9 @@ if (isset($_POST['procesar_pago'])) {
             $cambio,
             $descripcion_venta
         ]);
-
+        
         $venta_id = $conn->lastInsertId();
         error_log("✅ Venta insertada - ID: $venta_id, Código: $codigo_venta");
-
         guardarGastosOperacionDeVenta(
             $conn, $venta_id, $_SESSION['carrito_gastos_operacion'] ?? [],
             $_SESSION['usuario_id'], $_SESSION['sucursal_id'] ?? null, $metodo_pago
@@ -1617,17 +1914,21 @@ if (isset($_POST['procesar_pago'])) {
         $costo_total_venta = 0;
         foreach ($_SESSION['carrito'] as $item) {
             $precio_unitario_sin_iva = $item['precio'];
-            $subtotal_producto       = $item['subtotal'];
-            $descuento_producto      = $item['descuento'] ?? 0;
-            $total_producto          = $item['subtotal_con_descuento'] ?? $subtotal_producto;
+            $subtotal_producto = $item['subtotal'];
+            $descuento_producto = $item['descuento'] ?? 0;
+            $total_producto = $item['subtotal_con_descuento'] ?? $subtotal_producto;
 
             $permite_decimales = $item['permite_fracciones'] == 1;
-            $unidad_medida     = $item['unidad_medida'] ?? 'unidad';
+            $unidad_medida = $item['unidad_medida'] ?? 'unidad';
 
             $costo_unitario_item = (float)($item['costo'] ?? 0);
             $costo_total_venta += $costo_unitario_item * (float)$item['cantidad'];
 
-            $cantidad = $permite_decimales ? (float)$item['cantidad'] : (int)$item['cantidad'];
+            if ($permite_decimales) {
+                $cantidad = (float)$item['cantidad'];
+            } else {
+                $cantidad = (int)$item['cantidad'];
+            }
 
             $sql_detalle = "
                 INSERT INTO venta_detalles (venta_id, producto_id, cantidad, precio_unitario, subtotal, descuento, total, unidad_medida)
@@ -1635,9 +1936,14 @@ if (isset($_POST['procesar_pago'])) {
             ";
             $stmt = $conn->prepare($sql_detalle);
             $stmt->execute([
-                $venta_id, $item['id'], $cantidad,
-                $precio_unitario_sin_iva, $subtotal_producto,
-                $descuento_producto, $total_producto, $unidad_medida
+                $venta_id,
+                $item['id'],
+                $cantidad,
+                $precio_unitario_sin_iva,
+                $subtotal_producto,
+                $descuento_producto,
+                $total_producto,
+                $unidad_medida
             ]);
             $venta_detalle_id = $conn->lastInsertId();
             guardarComisionesDeCarrito($conn, $venta_id, $venta_detalle_id, $item, $_SESSION['usuario_id'], $_SESSION['carrito'], $factor_iva);
@@ -1653,6 +1959,9 @@ if (isset($_POST['procesar_pago'])) {
             error_log("✅ STOCK ACTUALIZADO - Producto: {$item['nombre']}, Cantidad descontada: {$cantidad_a_descontar}");
         }
 
+        // El dinero cobrado se registra aparte de la venta. Va DESPUÉS del
+        // loop de detalles porque necesita que las asignaciones de comisión
+        // ya existan para poder generar la comisión de este pago.
         registrarPagoDeVenta(
             $conn, $venta_id, $monto_anticipo, date('Y-m-d'), $tipo_pago_inicial,
             $metodo_pago, $_SESSION['usuario_id'] ?? null, $_SESSION['sucursal_id'] ?? null
@@ -1669,12 +1978,15 @@ if (isset($_POST['procesar_pago'])) {
             WHERE id = ?
         ";
 
+        // La caja registra lo que REALMENTE entró (el anticipo), no el total
+        // vendido: el resto todavía no está en el cajón.
         $ventas_efectivo_inc = $metodo_pago == 'efectivo' ? $monto_anticipo : 0;
         $ventas_tarjeta_inc = $metodo_pago == 'tarjeta' ? $monto_anticipo : 0;
         $ventas_transferencia_inc = $metodo_pago == 'transferencia' ? $monto_anticipo : 0;
 
         $stmt = $conn->prepare($sql_update_caja);
         $stmt->execute([$monto_anticipo, $ventas_efectivo_inc, $ventas_tarjeta_inc, $ventas_transferencia_inc, $caja_id]);
+        error_log("✅ Caja actualizada correctamente");
 
         if ($costo_total_venta > 0) {
             $sql_gasto = "
@@ -1685,21 +1997,32 @@ if (isset($_POST['procesar_pago'])) {
             $concepto_gasto = "Costo de mercancía - Venta #" . $codigo_venta;
             $descripcion_gasto = "Costo generado automáticamente al concretar la venta " . $codigo_venta;
             $stmt->execute([
-                $concepto_gasto, $costo_total_venta, $venta_id,
-                $_SESSION['usuario_id'], $_SESSION['sucursal_id'],
-                $metodo_pago, $descripcion_gasto
+                $concepto_gasto,
+                $costo_total_venta,
+                $venta_id,
+                $_SESSION['usuario_id'],
+                $_SESSION['sucursal_id'],
+                $metodo_pago,
+                $descripcion_gasto
             ]);
+            error_log("✅ Gasto automático registrado para la venta $venta_id - Monto: $costo_total_venta");
         }
 
-        // Facturapi (solo premium)
+        // ========== GENERAR RECIBO FACTURAPI ==========
         $facturapi_receipt_id = null;
         $facturapi_invoice_url = null;
+        $facturapi_success = false;
 
         if ($empresa_plan === 'premium') {
+            error_log("🎯 Plan Premium detectado - Generando recibo Facturapi");
+
             try {
                 $facturapi_api_key = $_SESSION['test_api_key'] ?? $test_api_key_working;
-                if (empty($facturapi_api_key)) throw new Exception("No se encontró API Key de Facturapi");
+                if (empty($facturapi_api_key)) {
+                    throw new Exception("No se encontró API Key de Facturapi");
+                }
 
+                error_log("🔑 Usando API Key: " . substr($facturapi_api_key, 0, 10) . "...");
                 $facturapi = new Facturapi($facturapi_api_key);
 
                 $facturapi_items = [];
@@ -1714,17 +2037,28 @@ if (isset($_POST['procesar_pago'])) {
                                 "quantity" => (float)$item['cantidad'],
                                 "product" => $producto_data['facturapi_producto_id']
                             ];
+                            error_log("📦 Producto agregado a Facturapi: ID {$item['id']}, Producto Facturapi: {$producto_data['facturapi_producto_id']}");
+                        } else {
+                            error_log("⚠️ Producto ID {$item['id']} no tiene facturapi_producto_id");
                         }
                     }
                 }
 
-                if (empty($facturapi_items)) throw new Exception("No se encontraron productos válidos para Facturapi.");
+                if (empty($facturapi_items)) {
+                    throw new Exception("No se encontraron productos válidos para Facturapi.");
+                }
 
-                $payment_form_map = ['efectivo' => '01', 'tarjeta' => '04', 'transferencia' => '03'];
+                $payment_form_map = [
+                    'efectivo' => '01',
+                    'tarjeta' => '04',
+                    'transferencia' => '03'
+                ];
                 $payment_form = $payment_form_map[$metodo_pago] ?? '01';
 
                 $folio_number = preg_replace('/[^0-9]/', '', $codigo_venta);
-                if (empty($folio_number)) $folio_number = time();
+                if (empty($folio_number)) {
+                    $folio_number = time();
+                }
 
                 $customer_data = [];
                 if (!empty($cliente_id)) {
@@ -1732,6 +2066,7 @@ if (isset($_POST['procesar_pago'])) {
                     $stmt_cliente = $conn->prepare($sql_cliente);
                     $stmt_cliente->execute([$cliente_id]);
                     $cliente_info = $stmt_cliente->fetch();
+                    
                     if ($cliente_info) {
                         $customer_data = [
                             "legal_name" => $cliente_info['nombre'],
@@ -1739,6 +2074,7 @@ if (isset($_POST['procesar_pago'])) {
                             "email" => $cliente_info['email'] ?? '',
                             "phone" => $cliente_info['telefono'] ?? ''
                         ];
+                        error_log("👤 Cliente encontrado para Facturapi: " . $cliente_info['nombre']);
                     }
                 }
 
@@ -1747,20 +2083,35 @@ if (isset($_POST['procesar_pago'])) {
                     "payment_form" => $payment_form,
                     "items" => $facturapi_items
                 ];
-                if (!empty($customer_data)) $receipt_data["customer"] = $customer_data;
 
+                if (!empty($customer_data)) {
+                    $receipt_data["customer"] = $customer_data;
+                }
+
+                error_log("📝 Creando recibo Facturapi con datos: " . json_encode($receipt_data, JSON_PRETTY_PRINT));
+                
                 $receipt = $facturapi->Receipts->create($receipt_data);
                 $facturapi_receipt_id = $receipt->id;
                 $facturapi_invoice_url = $receipt->self_invoice_url ?? $receipt->url ?? null;
+                $facturapi_success = true;
+
+                error_log("✅ Recibo Facturapi creado: " . $facturapi_receipt_id);
+                error_log("🔗 URL de facturación: " . $facturapi_invoice_url);
 
                 $sql_update_venta_facturapi = "UPDATE ventas SET facturapi_receipt_id = ?, urlfacturacion = ? WHERE id = ?";
                 $stmt_update = $conn->prepare($sql_update_venta_facturapi);
-                if ($stmt_update) $stmt_update->execute([$facturapi_receipt_id, $facturapi_invoice_url, $venta_id]);
+                if ($stmt_update) {
+                    $stmt_update->execute([$facturapi_receipt_id, $facturapi_invoice_url, $venta_id]);
+                    error_log("✅ Venta actualizada con facturapi_receipt_id y urlfacturacion");
+                }
 
             } catch (Exception $e) {
                 error_log("❌ Error al crear recibo Facturapi: " . $e->getMessage());
                 $_SESSION['warning_message'] = "Venta realizada, pero no se pudo generar el recibo electrónico: " . $e->getMessage();
+                $facturapi_success = false;
             }
+        } else {
+            error_log("ℹ️ Plan $empresa_plan - No se genera recibo Facturapi");
         }
 
         $conn->commit();
@@ -1803,9 +2154,7 @@ if (isset($_POST['procesar_pago'])) {
     }
 }
 
-// =====================================================================
-// CALCULAR TOTALES DEL CARRITO
-// =====================================================================
+// ========== CALCULAR TOTALES DEL CARRITO ==========
 $carrito_json = json_encode($_SESSION['carrito'] ?? []);
 $carrito_count = count($_SESSION['carrito'] ?? []);
 $subtotal_carrito = 0;
@@ -1856,16 +2205,22 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                         alt="<?php echo htmlspecialchars($empresa_nombre); ?>"
                         class="me-2"
                         style="height: 40px; width: auto; max-width: 120px; object-fit: contain; border-radius: 4px;">
-                    <span><?php echo htmlspecialchars($empresa_nombre); ?></span>
+                    <span>
+                        <?php echo htmlspecialchars($empresa_nombre); ?>
+                    </span>
                 <?php elseif ($logo_empresa && file_exists($logo_empresa)): ?>
                     <img src="<?php echo htmlspecialchars($logo_empresa); ?>"
                         alt="<?php echo htmlspecialchars($empresa_nombre); ?>"
                         class="me-2"
                         style="height: 40px; width: auto; max-width: 120px; object-fit: contain; border-radius: 4px;">
-                    <span><?php echo htmlspecialchars($empresa_nombre); ?></span>
+                    <span>
+                        <?php echo htmlspecialchars($empresa_nombre); ?>
+                    </span>
                 <?php else: ?>
                     <i class="fas fa-cash-register me-2"></i>
-                    <span><?php echo htmlspecialchars($empresa_nombre); ?></span>
+                    <span>
+                        <?php echo htmlspecialchars($empresa_nombre); ?>
+                    </span>
                 <?php endif; ?>
             </a>
 
@@ -1896,15 +2251,23 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         <div class="mobile-navbar-brand d-flex align-items-center">
             <?php if (isset($logo_src_base64) && !empty($logo_src_base64)): ?>
                 <img src="<?php echo $logo_src_base64; ?>"
-                    alt="<?php echo htmlspecialchars($empresa_nombre); ?>" class="me-2">
-                <span><?php echo htmlspecialchars($empresa_nombre); ?></span>
+                    alt="<?php echo htmlspecialchars($empresa_nombre); ?>"
+                    class="me-2">
+                <span>
+                    <?php echo htmlspecialchars($empresa_nombre); ?>
+                </span>
             <?php elseif ($logo_empresa && file_exists($logo_empresa)): ?>
                 <img src="<?php echo htmlspecialchars($logo_empresa); ?>"
-                    alt="<?php echo htmlspecialchars($empresa_nombre); ?>" class="me-2">
-                <span><?php echo htmlspecialchars($empresa_nombre); ?></span>
+                    alt="<?php echo htmlspecialchars($empresa_nombre); ?>"
+                    class="me-2">
+                <span>
+                    <?php echo htmlspecialchars($empresa_nombre); ?>
+                </span>
             <?php else: ?>
                 <i class="fas fa-cash-register me-2"></i>
-                <span><?php echo htmlspecialchars($empresa_nombre); ?></span>
+                <span>
+                    <?php echo htmlspecialchars($empresa_nombre); ?>
+                </span>
             <?php endif; ?>
         </div>
         <div class="d-flex align-items-center">
@@ -1924,7 +2287,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         </div>
     </div>
 
-    <!-- Alertas -->
+    <!-- Mensajes de Alerta con Auto-ocultamiento -->
     <?php if (isset($_SESSION['success_message'])): ?>
         <div class="alert alert-success alert-dismissible fade show m-2 auto-hide-alert" role="alert" data-auto-hide="2000">
             <i class="fas fa-check-circle me-2"></i><?php echo $_SESSION['success_message']; ?>
@@ -1941,7 +2304,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         <?php unset($_SESSION['error_message']); ?>
     <?php endif; ?>
 
-    <!-- Modal cantidad -->
+    <!-- Modal para cantidad de productos por peso/volumen -->
     <div class="modal fade" id="cantidadModal" tabindex="-1">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
@@ -1974,7 +2337,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         </div>
     </div>
 
-    <!-- Modal cliente -->
+    <!-- Modal para cliente -->
     <div class="modal fade" id="clienteModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -2028,7 +2391,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         </div>
     </div>
 
-    <!-- Modal editar descuento -->
+    <!-- Modal para editar descuento -->
     <div class="modal fade" id="editarDescuentoModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -2063,16 +2426,28 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                         <label class="form-label fw-bold">Vista previa:</label>
                         <div class="bg-light p-3 rounded">
                             <div class="row">
-                                <div class="col-6"><span class="text-muted">Subtotal:</span></div>
-                                <div class="col-6 text-end"><span id="previewSubtotal" class="fw-bold">$0.00</span></div>
+                                <div class="col-6">
+                                    <span class="text-muted">Subtotal:</span>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <span id="previewSubtotal" class="fw-bold">$0.00</span>
+                                </div>
                             </div>
                             <div class="row">
-                                <div class="col-6"><span class="text-muted">Descuento:</span></div>
-                                <div class="col-6 text-end"><span id="previewDescuento" class="text-danger fw-bold">-$0.00</span></div>
+                                <div class="col-6">
+                                    <span class="text-muted">Descuento:</span>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <span id="previewDescuento" class="text-danger fw-bold">-$0.00</span>
+                                </div>
                             </div>
                             <div class="row mt-2 border-top pt-2">
-                                <div class="col-6"><span class="fw-bold">Total:</span></div>
-                                <div class="col-6 text-end"><span id="previewTotal" class="fw-bold text-success">$0.00</span></div>
+                                <div class="col-6">
+                                    <span class="fw-bold">Total:</span>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <span id="previewTotal" class="fw-bold text-success">$0.00</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2092,7 +2467,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         </div>
     </div>
 
-    <!-- Modal asignar comisión -->
+    <!-- Modal para asignar comisión a un producto del carrito -->
     <div class="modal fade" id="asignarComisionModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -2141,7 +2516,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         </div>
     </div>
 
-    <!-- Modal gastos operación -->
+    <!-- Modal para gastos de operación (aplica a toda la venta, no a un producto) -->
     <div class="modal fade" id="gastosOperacionModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -2179,7 +2554,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         </div>
     </div>
 
-    <!-- Modal editar precio -->
+    <!-- Modal para editar precio unitario -->
     <div class="modal fade precio-edit-modal" id="editarPrecioModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -2280,6 +2655,24 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                 <td class="label"><strong>TOTAL DE LA VENTA:</strong></td>
                                 <td class="value total-grande" id="modal-total">$<?php echo number_format($total_carrito, 2); ?></td>
                             </tr>
+                            <tr>
+                                <td class="label">
+                                    Se cobra ahora
+                                    <small class="d-block text-muted" style="font-size:11px;">anticipo · déjalo igual al total si se paga completa</small>
+                                </td>
+                                <td class="value">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" min="0"
+                                               class="form-control form-control-sm text-end"
+                                               id="modal-anticipo" data-form-field="true">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr id="modal-fila-saldo" style="display:none;">
+                                <td class="label text-danger"><strong>Queda a deber:</strong></td>
+                                <td class="value text-danger fw-bold" id="modal-saldo">$0.00</td>
+                            </tr>
                         </table>
                     </div>
 
@@ -2288,42 +2681,50 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                             <i class="fas fa-credit-card me-2"></i>Método de Pago
                         </h6>
 
-                        <div class="payment-methods-grid">
-                            <div class="payment-btn active" data-method="efectivo">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="modal_metodo_pago"
-                                           value="efectivo" id="modal-efectivo" checked required>
-                                    <label class="form-check-label" for="modal-efectivo">
-                                        <i class="fas fa-money-bill-wave me-2"></i>Efectivo
-                                    </label>
-                                </div>
-                            </div>
+<div class="payment-methods-grid">
+        <?php if ($empresa_plan === 'basico' || $empresa_plan === 'starter'): ?>
+            <!-- Solo Efectivo para planes Básico y Starter -->
+            <div class="payment-btn active" data-method="efectivo">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="modal_metodo_pago"
+                           value="efectivo" id="modal-efectivo" checked required>
+                    <label class="form-check-label" for="modal-efectivo">
+                        <i class="fas fa-money-bill-wave me-2"></i>Efectivo
+                    </label>
+                </div>
+            </div>
+        <?php else: ?>
+            <!-- Todos los métodos para planes Premium y otros -->
+            <div class="payment-btn active" data-method="efectivo">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="modal_metodo_pago"
+                           value="efectivo" id="modal-efectivo" checked required>
+                    <label class="form-check-label" for="modal-efectivo">
+                        <i class="fas fa-money-bill-wave me-2"></i>Efectivo
+                    </label>
+                </div>
+            </div>
 
-                            <?php if (in_array($empresa_plan, ['emprendedor', 'premium'], true)): ?>
+            <div class="payment-btn" data-method="tarjeta">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="modal_metodo_pago"
+                           value="tarjeta" id="modal-tarjeta" required>
+                    <label class="form-check-label" for="modal-tarjeta">
+                        <i class="fas fa-credit-card me-2"></i>Tarjeta
+                    </label>
+                </div>
+            </div>
 
-                                <div class="payment-btn" data-method="tarjeta">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="modal_metodo_pago"
-                                               value="tarjeta" id="modal-tarjeta" required>
-                                        <label class="form-check-label" for="modal-tarjeta">
-                                            <i class="fas fa-credit-card me-2"></i>Tarjeta
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="payment-btn" data-method="transferencia">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="modal_metodo_pago"
-                                               value="transferencia" id="modal-transferencia" required>
-                                        <label class="form-check-label" for="modal-transferencia">
-                                            <i class="fas fa-university me-2"></i>Transferencia
-                                        </label>
-                                    </div>
-                                </div>
-
-
-
-                            <?php endif; ?>
+            <div class="payment-btn" data-method="transferencia">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="modal_metodo_pago"
+                           value="transferencia" id="modal-transferencia" required>
+                    <label class="form-check-label" for="modal-transferencia">
+                        <i class="fas fa-university me-2"></i>Transferencia
+                    </label>
+                </div>
+            </div>
+        <?php endif; ?>
                         </div>
                     </div>
 
@@ -2335,6 +2736,40 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                             placeholder="Agregar nota o descripción para esta venta (opcional)..."
                             data-form-field="true"></textarea>
                         <small class="text-muted">Máximo 500 caracteres</small>
+                    </div>
+
+                    <!-- Cobro parcial: el cliente puede dejar sólo una parte hoy.
+                         La venta se registra por su total real y el resto queda
+                         como saldo pendiente en Cuentas por Cobrar. -->
+                    <div class="mb-4">
+                        <h6 class="section-title">
+                            <i class="fas fa-hand-holding-dollar me-2"></i>¿Cuánto se cobra ahora?
+                        </h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="modal-cobroParcial">
+                            <label class="form-check-label" for="modal-cobroParcial">
+                                Cobro parcial / anticipo (el cliente deja menos del total)
+                            </label>
+                        </div>
+                        <div id="modal-anticipoWrap" style="display:none;">
+                            <div class="efectivo-fields">
+                                <div class="efectivo-field">
+                                    <span class="efectivo-label">Se cobra ahora</span>
+                                    <input type="text" class="efectivo-input fw-bold" id="modal-anticipo"
+                                           value="" placeholder="0.00" onfocus="this.select()"
+                                           style="font-size: 13px; font-weight: bold;">
+                                </div>
+                                <div class="efectivo-field">
+                                    <span class="efectivo-label">Queda pendiente</span>
+                                    <input type="text" class="efectivo-input fw-bold text-danger" id="modal-saldoPendiente"
+                                           value="$0.00" readonly style="font-size: 13px; font-weight: bold;">
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                La venta se guarda por su total. El saldo aparece en Cuentas por Cobrar
+                                y las comisiones se van generando conforme el cliente pague.
+                            </small>
+                        </div>
                     </div>
 
                     <div class="efectivo-section">
@@ -2372,6 +2807,8 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                             </div>
                         </div>
 
+                        <div class="alert alert-warning py-2 px-3 small mb-2" id="modal-aviso-anticipo" style="display:none;"></div>
+
                         <div class="numpad">
                             <button type="button" class="numpad-btn" data-value="1">1</button>
                             <button type="button" class="numpad-btn" data-value="2">2</button>
@@ -2398,7 +2835,9 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                             <div id="qrLinkContainer" class="mb-4">
                                 <h6 class="text-muted mb-2">Código QR del link de pago:</h6>
                                 <div id="qrLinkContent">
-                                    <img id="qrLinkImage" src="" alt="Código QR del link de pago"
+                                    <img id="qrLinkImage"
+                                        src=""
+                                        alt="Código QR del link de pago"
                                         style="max-width: 250px; max-height: 250px; border: 1px solid #dee2e6; padding: 10px; border-radius: 10px; margin-bottom: 15px;">
 
                                     <div class="mt-3 p-3 bg-light rounded">
@@ -2419,10 +2858,16 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                         <span id="qrLinkTotalAmount" class="text-success">$0.00</span>
                                     </p>
 
+                                    <p class="text-muted small mb-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Escanea el código QR o haz clic en el link para realizar el pago
+                                    </p>
+
                                     <div class="d-flex justify-content-center gap-2 mt-3">
                                         <button type="button" class="btn btn-outline-primary btn-sm" id="refreshLinkQrBtn">
                                             <i class="fas fa-sync-alt me-1"></i>Generar nuevo link
                                         </button>
+                                        
                                     </div>
                                 </div>
                             </div>
@@ -2462,24 +2907,19 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
 
                 </div>
                 <div class="modal-footer">
-                    <div class="d-flex w-100 gap-2">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="modal-btnSalir">
-                            <i class="fas fa-times me-1"></i>Salir
+                    <form method="POST" id="formPagoModal" class="w-100">
+                        <input type="hidden" name="metodo_pago" id="modal-metodoPagoInput" value="efectivo">
+                        <input type="hidden" name="efectivo_recibido" id="modal-efectivoRecibidoHidden" value="0">
+                        <input type="hidden" name="cambio" id="modal-cambioHidden" value="0">
+                        <input type="hidden" name="descuento_total" id="modal-descuentoTotal" value="<?php echo $descuento_carrito; ?>">
+                        <input type="hidden" name="descripcion" id="modal-descripcionHidden" value="">
+                        <input type="hidden" name="iva_porcentaje" id="modal-ivaPorcentajeHidden" value="<?php echo number_format($iva_porcentaje, 2, '.', ''); ?>">
+                        <input type="hidden" name="monto_anticipo" id="modal-anticipoHidden" value="0">
+                        <button type="submit" name="procesar_pago" class="btn btn-pagar w-100" id="modal-btnPagar">
+                            <i class="fas fa-check-circle me-2"></i>
+                            CONFIRMAR PAGO - $<?php echo number_format($total_carrito, 2); ?>
                         </button>
-                        <form method="POST" id="formPagoModal" class="flex-grow-1">
-                            <input type="hidden" name="metodo_pago" id="modal-metodoPagoInput" value="efectivo">
-                            <input type="hidden" name="efectivo_recibido" id="modal-efectivoRecibidoHidden" value="0">
-                            <input type="hidden" name="cambio" id="modal-cambioHidden" value="0">
-                            <input type="hidden" name="descuento_total" id="modal-descuentoTotal" value="<?php echo $descuento_carrito; ?>">
-                            <input type="hidden" name="descripcion" id="modal-descripcionHidden" value="">
-                            <input type="hidden" name="iva_porcentaje" id="modal-ivaPorcentajeHidden" value="<?php echo number_format($iva_porcentaje, 2, '.', ''); ?>">
-                            <input type="hidden" name="monto_anticipo" id="modal-anticipoHidden" value="0">
-                            <button type="submit" name="procesar_pago" class="btn btn-pagar w-100" id="modal-btnPagar">
-                                <i class="fas fa-check-circle me-2"></i>
-                                CONFIRMAR PAGO - $<?php echo number_format($total_carrito, 2); ?>
-                            </button>
-                        </form>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -2581,6 +3021,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                             $input_class = 'cantidad-input';
                                             $input_width = '80px';
                                             $show_buttons = false;
+                                            $unidad_text = isset($item['unidad_medida']) ? $item['unidad_medida'] : '';
                                         } else {
                                             $cantidad_mostrar = (int)$cantidad_raw;
                                             $step = '1';
@@ -2588,6 +3029,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                             $input_class = 'quantity-input';
                                             $input_width = '60px';
                                             $show_buttons = true;
+                                            $unidad_text = '';
                                         }
                                         ?>
                                         <tr data-index="<?php echo $index; ?>">
@@ -2610,7 +3052,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                                 <div class="fw-bold text-dark"><?php echo htmlspecialchars($item['nombre']); ?></div>
                                                 <small class="text-muted">Código: <?php echo htmlspecialchars($item['codigo']); ?></small>
                                                 <?php if (!empty($item['costo'])): ?>
-                                                    <br><small class="text-muted">
+                                                    <br><small class="text-muted" title="Costo del producto, solo informativo, no afecta el precio de venta">
                                                         <i class="fas fa-tag me-1"></i>Costo: $<?php echo number_format((float)$item['costo'], 2); ?>
                                                     </small>
                                                 <?php endif; ?>
@@ -2629,7 +3071,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                                             </span>
                                                         </div>
                                                     <?php endif; ?>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary btn-editar-precio"
+                                                    <button type="button" class="btn btn-sm btn-outline-primary btn-editar-precio" 
                                                             data-index="<?php echo $index; ?>"
                                                             data-producto-id="<?php echo $item['id']; ?>"
                                                             data-producto-nombre="<?php echo htmlspecialchars($item['nombre']); ?>"
@@ -2742,6 +3184,10 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                     <td class="label">Total con Descuento:</td>
                                     <td class="value" id="subtotal-con-descuento-display">$<?php echo number_format($subtotal_con_descuento_carrito, 2); ?></td>
                                 </tr>
+                                <tr style="display: none;">
+                                    <td class="label">IVA (0%):</td>
+                                    <td class="value">$0.00</span></td>
+                                </tr>
                                 <tr style="border-top: 2px solid #dee2e6;">
                                     <td class="label"><strong>TOTAL:</strong></td>
                                     <td class="value total-grande" id="total-display">$<?php echo number_format($total_carrito, 2); ?></td>
@@ -2825,6 +3271,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                         GROUP BY c.id
                                         ORDER BY c.nombre
                                     ";
+
                                     $stmt_cat = $conn->prepare($sql_categorias_select);
                                     $stmt_cat->execute([$_SESSION['sucursal_id']]);
                                     $categorias_select = $stmt_cat->fetchAll();
@@ -2865,6 +3312,29 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                         <?php else: ?>
                             <span class="badge bg-secondary ms-2" id="productCount">0 productos</span>
                         <?php endif; ?>
+                        <?php if ($categoria_seleccionada || !empty($busqueda_nombre)): ?>
+                            <small class="text-muted ms-2" id="filterInfo">
+                                (
+                                <?php
+                                $filtros = [];
+                                if ($categoria_seleccionada) {
+                                    if ($categorias_con_count) {
+                                        foreach ($categorias_con_count as $cat) {
+                                            if ($cat['id'] == $categoria_seleccionada) {
+                                                $filtros[] = "Categoría: " . htmlspecialchars($cat['nombre']);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (!empty($busqueda_nombre)) {
+                                    $filtros[] = "Búsqueda: \"" . htmlspecialchars($busqueda_nombre) . "\"";
+                                }
+                                echo implode(', ', $filtros);
+                                ?>
+                                )
+                            </small>
+                        <?php endif; ?>
                     </div>
 
                     <div class="product-grid-container">
@@ -2872,7 +3342,22 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                             <?php if (empty($productos)): ?>
                                 <div class="col-12 text-center py-4" id="emptyProductsMessage">
                                     <i class="fas fa-box-open fa-2x text-muted mb-2"></i>
-                                    <p class="text-muted">No se encontraron productos con stock que coincidan con los filtros</p>
+                                    <p class="text-muted">
+                                        <?php if ($categoria_seleccionada || !empty($busqueda_nombre)): ?>
+                                            No se encontraron productos con stock que coincidan con los filtros
+                                        <?php else: ?>
+                                            No se encontraron productos con stock en esta sucursal
+                                        <?php endif; ?>
+                                    </p>
+                                    <small class="text-muted">
+                                        <?php if ($categoria_seleccionada): ?>
+                                            Categoría ID: <?php echo $categoria_seleccionada; ?><br>
+                                        <?php endif; ?>
+                                        <?php if (!empty($busqueda_nombre)): ?>
+                                            Búsqueda: "<?php echo htmlspecialchars($busqueda_nombre); ?>"<br>
+                                        <?php endif; ?>
+                                        Sucursal ID: <?php echo $_SESSION['sucursal_id'] ?? 'No definido'; ?>
+                                    </small>
                                 </div>
                             <?php else: ?>
                                 <?php foreach ($productos as $producto): ?>
@@ -2881,7 +3366,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                     $imagen_src = $imagen_path ? $imagen_path : '';
                                     $tiene_descuento = $producto['descuento'] > 0;
                                     $precio_con_descuento = $producto['precio_sin_iva'] - ($producto['precio_sin_iva'] * $producto['descuento'] / 100);
-
+                                    
                                     try {
                                         $sql_check_mayoreo = "SELECT COUNT(*) as tiene_mayoreo FROM producto_precios_mayoreo WHERE producto_id = ? AND activo = 1";
                                         $stmt_mayoreo_check = $conn->prepare($sql_check_mayoreo);
@@ -2890,6 +3375,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                         $tiene_mayoreo = $row_mayoreo['tiene_mayoreo'] > 0;
                                     } catch (PDOException $e) {
                                         $tiene_mayoreo = false;
+                                        error_log("Error al verificar mayoreo: " . $e->getMessage());
                                     }
 
                                     $stock_sucursal = (float)($producto['stock_sucursal'] ?? 0);
@@ -2901,9 +3387,15 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                         'l', 'litro', 'litros', 'ton', 'tonelada', 'toneladas',
                                         'lb', 'libra', 'libras', 'ml', 'mililitro', 'mililitros'
                                     ];
+
                                     $mostrar_decimales = ($permite_fracciones == 1) || in_array($unidad_medida, $unidades_decimales);
 
-                                    $stock_display = $mostrar_decimales ? number_format($stock_sucursal, 3, '.', '') : (int)$stock_sucursal;
+                                    if ($mostrar_decimales) {
+                                        $stock_display = number_format($stock_sucursal, 3, '.', '');
+                                    } else {
+                                        $stock_display = (int)$stock_sucursal;
+                                    }
+
                                     $stock_class = ($stock_sucursal <= 5 && $stock_sucursal > 0) ? 'stock-bajo' : '';
                                     ?>
                                     <div class="product-btn"
@@ -3048,7 +3540,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                 <option value="">Todas las Categorías</option>
                                 <?php
                                 try {
-                                    $sql_categorias_mobile = "
+                                    $sql_categorias_select = "
                                         SELECT c.*, COUNT(p.id) as producto_count
                                         FROM categorias c
                                         LEFT JOIN productos p ON c.id = p.categoria_id 
@@ -3059,7 +3551,8 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                         GROUP BY c.id
                                         ORDER BY c.nombre
                                     ";
-                                    $stmt_cat_mobile = $conn->prepare($sql_categorias_mobile);
+
+                                    $stmt_cat_mobile = $conn->prepare($sql_categorias_select);
                                     $stmt_cat_mobile->execute([$_SESSION['sucursal_id']]);
                                     $categorias_mobile = $stmt_cat_mobile->fetchAll();
 
@@ -3100,7 +3593,13 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                 <?php if (empty($productos)): ?>
                                     <div class="col-12 text-center py-4" id="mobileEmptyProductsMessage">
                                         <i class="fas fa-box-open fa-2x text-muted mb-2"></i>
-                                        <p class="text-muted">No se encontraron productos con stock en esta sucursal</p>
+                                        <p class="text-muted">
+                                            <?php if ($categoria_seleccionada || !empty($busqueda_nombre)): ?>
+                                                No se encontraron productos con stock que coincidan con los filtros
+                                            <?php else: ?>
+                                                No se encontraron productos con stock en esta sucursal
+                                            <?php endif; ?>
+                                        </p>
                                     </div>
                                 <?php else: ?>
                                     <?php foreach ($productos as $producto): ?>
@@ -3109,7 +3608,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                         $imagen_src = $imagen_path ? $imagen_path : '';
                                         $tiene_descuento = $producto['descuento'] > 0;
                                         $precio_con_descuento = $producto['precio_sin_iva'] - ($producto['precio_sin_iva'] * $producto['descuento'] / 100);
-
+                                        
                                         try {
                                             $sql_check_mayoreo_mobile = "SELECT COUNT(*) as tiene_mayoreo FROM producto_precios_mayoreo WHERE producto_id = ? AND activo = 1";
                                             $stmt_mayoreo_check_mobile = $conn->prepare($sql_check_mayoreo_mobile);
@@ -3118,6 +3617,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                             $tiene_mayoreo_mobile = $row_mayoreo_mobile['tiene_mayoreo'] > 0;
                                         } catch (PDOException $e) {
                                             $tiene_mayoreo_mobile = false;
+                                            error_log("Error al verificar mayoreo móvil: " . $e->getMessage());
                                         }
 
                                         $stock_sucursal = (float)($producto['stock_sucursal'] ?? 0);
@@ -3129,9 +3629,15 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                             'l', 'litro', 'litros', 'ton', 'tonelada', 'toneladas',
                                             'lb', 'libra', 'libras', 'ml', 'mililitro', 'mililitros'
                                         ];
+
                                         $mostrar_decimales = ($permite_fracciones == 1) || in_array($unidad_medida, $unidades_decimales);
 
-                                        $stock_display = $mostrar_decimales ? number_format($stock_sucursal, 3, '.', '') : (int)$stock_sucursal;
+                                        if ($mostrar_decimales) {
+                                            $stock_display = number_format($stock_sucursal, 3, '.', '');
+                                        } else {
+                                            $stock_display = (int)$stock_sucursal;
+                                        }
+
                                         $stock_class = ($stock_sucursal <= 5 && $stock_sucursal > 0) ? 'stock-bajo' : '';
                                         ?>
                                         <div class="product-btn"
@@ -3218,17 +3724,11 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                 <span class="badge bg-primary ms-2"><?php echo count($_SESSION['carrito']); ?></span>
                             <?php endif; ?>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#gastosOperacionModal">
-                                <i class="fas fa-money-bill-wave me-1"></i>Gastos
-                                <span class="badge bg-warning text-dark ms-1" id="badgeGastosOperacionCountMobile" style="display:none;">0</span>
+                        <?php if (!empty($_SESSION['carrito'])): ?>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="mobileBtnVaciarCarrito">
+                                <i class="fas fa-trash"></i>
                             </button>
-                            <?php if (!empty($_SESSION['carrito'])): ?>
-                                <button type="button" class="btn btn-outline-danger btn-sm" id="mobileBtnVaciarCarrito">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            <?php endif; ?>
-                        </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="scrollable-content" id="mobile-carrito-container" style="padding: 0 15px 15px 15px;">
@@ -3248,7 +3748,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                 $tiene_descuento = $descuento_producto > 0;
                                 $tiene_precio_mayoreo = isset($item['tiene_precio_mayoreo']) && $item['tiene_precio_mayoreo'] === true;
                                 $precio_base = isset($item['precio_base']) ? floatval($item['precio_base']) : floatval($item['precio']);
-
+                                
                                 $cantidad_raw = $item['cantidad'];
                                 $permite_decimales = $item['permite_fracciones'] == 1;
 
@@ -3259,6 +3759,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                     $input_class = 'cantidad-input';
                                     $input_width = '80px';
                                     $show_buttons = false;
+                                    $unidad_text = isset($item['unidad_medida']) ? $item['unidad_medida'] : '';
                                 } else {
                                     $cantidad_mostrar = (int)$cantidad_raw;
                                     $step = '1';
@@ -3266,6 +3767,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                     $input_class = 'quantity-input';
                                     $input_width = '60px';
                                     $show_buttons = true;
+                                    $unidad_text = '';
                                 }
                                 ?>
                                 <div class="card mb-3" data-index="<?php echo $index; ?>">
@@ -3276,7 +3778,8 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                                     <img src="<?php echo htmlspecialchars($imagen_src); ?>"
                                                         alt="<?php echo htmlspecialchars($item['nombre']); ?>"
                                                         class="product-image-cart"
-                                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                                        onload="this.style.display='block'; this.nextElementSibling.style.display='none';">
                                                     <div class="product-image-placeholder-cart" style="display: none;">
                                                         <i class="fas fa-box"></i>
                                                     </div>
@@ -3292,7 +3795,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                                         <h6 class="card-title mb-1"><?php echo htmlspecialchars($item['nombre']); ?></h6>
                                                         <p class="card-text text-muted small mb-1">Código: <?php echo htmlspecialchars($item['codigo']); ?></p>
                                                         <?php if (!empty($item['costo'])): ?>
-                                                            <p class="card-text text-muted small mb-1">
+                                                            <p class="card-text text-muted small mb-1" title="Costo del producto, solo informativo, no afecta el precio de venta">
                                                                 <i class="fas fa-tag me-1"></i>Costo: $<?php echo number_format((float)$item['costo'], 2); ?>
                                                             </p>
                                                         <?php endif; ?>
@@ -3307,7 +3810,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                                                     <i class="fas fa-tags me-1"></i>Precio Mayoreo
                                                                 </span>
                                                             <?php endif; ?>
-                                                            <button type="button" class="btn btn-sm btn-outline-primary btn-editar-precio-mobile"
+                                                            <button type="button" class="btn btn-sm btn-outline-primary btn-editar-precio-mobile" 
                                                                     data-index="<?php echo $index; ?>"
                                                                     data-producto-id="<?php echo $item['id']; ?>"
                                                                     data-producto-nombre="<?php echo htmlspecialchars($item['nombre']); ?>"
@@ -3325,7 +3828,7 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                                                 <?php endif; ?>
                                                             </button>
                                                         </div>
-
+                                                        
                                                         <div class="descuento-info mt-1">
                                                             <?php if ($tiene_descuento): ?>
                                                                 <span class="badge bg-danger">-<?php echo number_format($descuento_porcentaje, 0); ?>%</span>
@@ -3448,6 +3951,10 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
                                     <td class="label">Total con Descuento:</td>
                                     <td class="value" id="mobile-subtotal-con-descuento-display">$<?php echo number_format($subtotal_con_descuento_carrito, 2); ?></td>
                                 </tr>
+                                <tr style="display: none;">
+                                    <td class="label">IVA (0%):</td>
+                                    <td class="value">$0.00</span></td>
+                                </tr>
                                 <tr style="border-top: 2px solid #dee2e6;">
                                     <td class="label"><strong>TOTAL:</strong></td>
                                     <td class="value total-grande" id="mobile-total-display">$<?php echo number_format($total_carrito, 2); ?></td>
@@ -3472,12 +3979,12 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         </div>
     </div>
 
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
     window.CajaConfig = {
         carrito: <?php echo json_encode($_SESSION['carrito'] ?? []); ?>,
-        empresaId: <?= (int)($_SESSION['empresa_id'] ?? 0) ?>,
         sucursalId: <?php echo $_SESSION['sucursal_id'] ?? 0; ?>,
         clienteActual: '<?php echo $_SESSION['cliente_venta'] ?? ''; ?>',
         busquedaNombre: '<?php echo addslashes($busqueda_nombre ?? ''); ?>',
@@ -3490,14 +3997,13 @@ if (isset($_SESSION['carrito']) && !empty($_SESSION['carrito'])) {
         subtotalConDescuentoInicial: <?php echo $subtotal_con_descuento_carrito ?? 0; ?>,
         carritoCountInicial: <?php echo count($_SESSION['carrito'] ?? []); ?>,
         paypalConfig: {
-            enabled: <?php echo ($paypal_enabled && !empty($paypal_client_id) && !empty($paypal_secret) && in_array($empresa_plan, ['emprendedor', 'premium'], true)) ? 'true' : 'false'; ?>,
-            mode: '<?php echo htmlspecialchars($paypal_mode); ?>',
-            currency: '<?php echo htmlspecialchars($paypal_currency); ?>'
+            enabled: <?php echo (!empty($paypal_client_id) && !empty($paypal_secret)) ? 'true' : 'false'; ?>,
+            mode: '<?php echo $paypal_mode; ?>'
         }
     };
-    </script>
+</script>
 
-    <script src="js/cajas.js?v=<?php echo @filemtime(__DIR__ . '/js/cajas.js') ?: time(); ?>"></script>
+<script src="js/cajas.js?v=<?php echo @filemtime(__DIR__ . '/js/cajas.js') ?: time(); ?>"></script>
 </body>
 
 </html>

@@ -1657,3 +1657,231 @@ Stack trace:
 [23-Sep-2026 17:49:17 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
 [23-Sep-2026 17:51:08 America/Mexico_City] LOGIN DEBUG - Empresa: Ideas Mx | activo: '1' | fecha_venc: '2027-08-22' | no_vencida: true
 [23-Sep-2026 17:51:08 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 201.103.118.208
+[23-Sep-2026 18:32:10 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[23-Sep-2026 18:32:10 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.118.208
+[24-Sep-2026 09:03:50 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[24-Sep-2026 09:03:50 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.118.208
+[24-Sep-2026 09:05:35 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 09:05:35 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 09:09:49 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[24-Sep-2026 09:09:49 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.118.208
+[24-Sep-2026 09:10:07 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 09:10:07 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 09:12:19 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 09:12:19 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 09:32:53 America/Mexico_City] LOGIN DEBUG - Empresa: Ideas Mx | activo: '1' | fecha_venc: '2027-08-22' | no_vencida: true
+[24-Sep-2026 09:32:53 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 201.103.118.208
+[24-Sep-2026 10:29:47 America/Mexico_City] Error conexión/config BD principal: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'juanc141_ventas.empresa_caracteristicas' doesn't exist
+[24-Sep-2026 10:31:16 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 10:31:16 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 11:25:39 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 11:25:39 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 12:07:18 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[24-Sep-2026 12:07:18 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.189.102.73
+[24-Sep-2026 13:07:41 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 13:07:41 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 13:15:58 America/Mexico_City] Error conexión/config BD principal: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'juanc141_ventas.empresa_caracteristicas' doesn't exist
+[24-Sep-2026 13:16:41 America/Mexico_City] Error conexión/config BD principal: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'juanc141_ventas.empresa_caracteristicas' doesn't exist
+[24-Sep-2026 13:18:43 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 13:18:43 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 13:20:28 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 13:20:28 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 13:47:16 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 13:47:16 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 14:47:17 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 14:47:17 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 14:52:32 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 14:52:32 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 14:59:28 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 14:59:28 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 15:04:30 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 15:04:30 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 15:05:24 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 15:05:24 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 15:15:36 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 15:15:36 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 15:16:52 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 15:16:52 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 17:18:12 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[24-Sep-2026 17:18:12 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.118.208
+[24-Sep-2026 17:20:16 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 17:20:16 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 17:30:01 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 17:30:01 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 17:33:38 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 17:33:38 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 17:36:25 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 17:36:25 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 18:02:16 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 18:02:16 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 18:07:54 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 18:07:54 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[24-Sep-2026 18:08:04 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[24-Sep-2026 18:08:04 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 06:10:46 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[25-Sep-2026 06:10:46 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.190.255.222
+[25-Sep-2026 06:10:55 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[25-Sep-2026 06:10:55 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 06:11:20 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[25-Sep-2026 06:11:20 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 06:11:29 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[25-Sep-2026 06:11:29 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 06:11:38 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[25-Sep-2026 06:11:38 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 06:21:11 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[25-Sep-2026 06:21:11 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 07:12:31 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[25-Sep-2026 07:12:31 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.190.255.222
+[25-Sep-2026 07:13:36 America/Mexico_City] Error conexión/config BD principal: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'juanc141_ventas.empresa_caracteristicas' doesn't exist
+[25-Sep-2026 07:14:44 America/Mexico_City] Error conexión/config BD principal: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'juanc141_ventas.empresa_caracteristicas' doesn't exist
+[25-Sep-2026 07:42:50 America/Mexico_City] ✅ Imagen subida: /uploads/productos/producto_112_1790343770_6ab67a5a549dc.png
+[25-Sep-2026 07:47:58 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[25-Sep-2026 07:48:31 America/Mexico_City] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /home2/juanc141/public_html/productos.php:796
+Stack trace:
+#0 /home2/juanc141/public_html/productos.php(796): mysqli_stmt->bind_param('ssssdddddiissds...', 'PROD0438', 'Sabritas Lim\xC3\xB3n...', 'Sabritas sabor ...', 'Sabritas', 23.44, 23.44, 18.75, 0.0, 0.0, 20, 21, 34.0, '5', 'pieza', 1.0, 0, '2026-10-02', 'Estandar', 0.0, 0.0, 0, 0)
+#1 /home2/juanc141/public_html/productos.php(1093): crearProducto(Object(mysqli), Array, '5', 'premium')
+#2 {main}
+  thrown in /home2/juanc141/public_html/productos.php on line 796
+[25-Sep-2026 07:53:09 America/Mexico_City] ✅ Imagen subida: /uploads/productos/producto_113_1790344389_6ab67cc52e69e.png
+[25-Sep-2026 08:07:22 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[25-Sep-2026 08:07:22 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 08:07:26 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[25-Sep-2026 08:07:26 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 09:05:42 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[25-Sep-2026 09:05:42 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.118.208
+[25-Sep-2026 10:19:07 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[25-Sep-2026 10:19:07 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.118.208
+[25-Sep-2026 10:40:24 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[25-Sep-2026 10:40:24 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.118.208
+[25-Sep-2026 10:40:28 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[25-Sep-2026 10:40:28 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.118.208
+[25-Sep-2026 11:04:09 America/Mexico_City] LOGIN DEBUG - Empresa: Ideas Mx | activo: '1' | fecha_venc: '2027-08-22' | no_vencida: true
+[25-Sep-2026 11:04:09 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 201.103.118.208
+[25-Sep-2026 11:08:58 America/Mexico_City] Posible secuestro de sesión - IP cambio de 187.190.255.222 a 187.189.102.73
+[25-Sep-2026 11:09:01 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 64
+[25-Sep-2026 11:09:01 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:64
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(64): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 64
+[25-Sep-2026 11:09:07 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[25-Sep-2026 11:09:07 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.189.102.73
+[25-Sep-2026 15:09:50 America/Mexico_City] Posible secuestro de sesión - IP cambio de 187.189.102.73 a 200.68.158.78
+[25-Sep-2026 15:09:52 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 64
+[25-Sep-2026 15:09:52 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:64
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(64): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 64
+[25-Sep-2026 15:09:57 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[25-Sep-2026 15:09:57 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 200.68.158.78
+[25-Sep-2026 15:21:13 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[25-Sep-2026 15:21:13 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 15:21:13 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[25-Sep-2026 17:06:59 America/Mexico_City] LOGIN DEBUG - Empresa: Ideas Mx | activo: '1' | fecha_venc: '2027-08-22' | no_vencida: true
+[25-Sep-2026 17:06:59 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 201.103.118.208
+[25-Sep-2026 17:46:52 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[25-Sep-2026 17:46:52 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 17:46:52 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[25-Sep-2026 17:50:09 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[25-Sep-2026 17:50:09 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 17:50:09 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[25-Sep-2026 17:51:19 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[25-Sep-2026 17:51:19 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[25-Sep-2026 17:51:19 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[26-Sep-2026 06:38:43 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[26-Sep-2026 06:38:43 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.211.83.54
+[27-Sep-2026 08:11:22 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[27-Sep-2026 08:11:22 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.211.83.54
+[27-Sep-2026 12:18:04 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[27-Sep-2026 12:18:04 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 200.68.134.160
+[27-Sep-2026 12:21:26 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[27-Sep-2026 12:21:26 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.211.83.54
+[27-Sep-2026 16:03:14 America/Mexico_City] Posible secuestro de sesión - IP cambio de 187.211.83.54 a 200.68.169.136
+[27-Sep-2026 16:03:16 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 64
+[27-Sep-2026 16:03:16 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:64
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(64): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 64
+[27-Sep-2026 16:03:22 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[27-Sep-2026 16:03:22 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 200.68.169.136
+[27-Sep-2026 16:05:50 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[27-Sep-2026 16:05:50 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[27-Sep-2026 16:55:07 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[27-Sep-2026 16:55:07 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[27-Sep-2026 16:55:18 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[27-Sep-2026 16:55:18 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[27-Sep-2026 20:49:26 America/Mexico_City] Posible secuestro de sesión - IP cambio de 200.68.169.136 a 187.190.255.222
+[27-Sep-2026 20:49:30 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 64
+[27-Sep-2026 20:49:30 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:64
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(64): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 64
+[27-Sep-2026 20:49:36 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[27-Sep-2026 20:49:36 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.190.255.222
+[28-Sep-2026 05:14:20 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[28-Sep-2026 05:14:20 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 187.190.255.222
+[28-Sep-2026 08:09:02 America/Mexico_City] Error de login: Usuario/Email o contraseña incorrectos. - IP: 200.68.158.105
+[28-Sep-2026 08:09:21 America/Mexico_City] LOGIN DEBUG - Empresa: Hugo Boss | activo: '1' | fecha_venc: '2027-03-21' | no_vencida: true
+[28-Sep-2026 08:09:21 America/Mexico_City] Login exitoso - Usuario: hugo_boss_admin, Empresa: Hugo Boss, IP: 200.68.158.105
+[28-Sep-2026 08:42:16 America/Mexico_City] LOGIN DEBUG - Empresa: Ideas Mx | activo: '1' | fecha_venc: '2027-08-22' | no_vencida: true
+[28-Sep-2026 08:42:16 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 201.103.7.132
+[28-Sep-2026 08:47:24 America/Mexico_City] LOGIN DEBUG - Empresa: Ideas Mx | activo: '1' | fecha_venc: '2027-08-22' | no_vencida: true
+[28-Sep-2026 08:47:24 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 201.103.7.132
+[28-Sep-2026 08:47:24 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 08:47:24 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 08:47:24 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[28-Sep-2026 08:57:46 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[28-Sep-2026 08:57:46 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.7.132
+[28-Sep-2026 09:01:20 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 09:01:20 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 09:02:10 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 09:02:10 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 09:03:37 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 09:03:37 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 09:21:37 America/Mexico_City] LOGIN DEBUG - Empresa: Ideas Mx | activo: '1' | fecha_venc: '2027-08-22' | no_vencida: true
+[28-Sep-2026 09:21:37 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 201.103.7.132
+[28-Sep-2026 09:25:17 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 09:25:17 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 11:07:09 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 11:07:09 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 11:07:29 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 11:07:29 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 11:07:51 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 11:07:51 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 12:04:30 America/Mexico_City] Posible secuestro de sesión - IP cambio de 200.68.158.105 a 200.68.183.227
+[28-Sep-2026 12:04:32 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 64
+[28-Sep-2026 12:04:32 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:64
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(64): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 64
+[28-Sep-2026 12:04:35 America/Mexico_City] PHP Warning:  Undefined array key "csrf_token" in /home2/juanc141/public_html/login.php on line 64
+[28-Sep-2026 12:04:35 America/Mexico_City] PHP Fatal error:  Uncaught TypeError: hash_equals(): Argument #1 ($known_string) must be of type string, null given in /home2/juanc141/public_html/login.php:64
+Stack trace:
+#0 /home2/juanc141/public_html/login.php(64): hash_equals(Object(SensitiveParameterValue), Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home2/juanc141/public_html/login.php on line 64
+[28-Sep-2026 12:04:41 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[28-Sep-2026 12:04:41 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 200.68.183.227
+[28-Sep-2026 12:05:06 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 12:05:06 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 12:23:23 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 12:23:23 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 12:23:23 America/Mexico_City] PHP Warning:  Undefined variable $timbres_disponibles in /home2/juanc141/public_html/includes/sidebar.php on line 154
+[28-Sep-2026 12:36:38 America/Mexico_City] LOGIN DEBUG - Empresa: Ideas Mx | activo: '1' | fecha_venc: '2027-08-22' | no_vencida: true
+[28-Sep-2026 12:36:38 America/Mexico_City] Login exitoso - Usuario: recepcionIdeas, Empresa: Ideas Mx, IP: 201.103.7.132
+[28-Sep-2026 12:46:21 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 12:46:21 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 12:46:25 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 12:46:25 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 12:48:54 America/Mexico_City] LOGIN DEBUG - Empresa: PRUEBAS | activo: '1' | fecha_venc: '2031-04-11' | no_vencida: true
+[28-Sep-2026 12:48:54 America/Mexico_City] Login exitoso - Usuario: admin, Empresa: PRUEBAS, IP: 201.103.7.132
+[28-Sep-2026 12:50:21 America/Mexico_City] LOGIN DEBUG - Empresa: Ideas Mx | activo: '1' | fecha_venc: '2027-08-22' | no_vencida: true
+[28-Sep-2026 12:50:21 America/Mexico_City] Login exitoso - Usuario: ggonzalez, Empresa: Ideas Mx, IP: 201.103.7.132
+[28-Sep-2026 13:00:34 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 13:00:34 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84
+[28-Sep-2026 13:18:14 America/Mexico_City] PHP Warning:  Undefined variable $logo_src_base64 in /home2/juanc141/public_html/includes/navbar.php on line 74
+[28-Sep-2026 13:18:14 America/Mexico_City] PHP Warning:  Undefined variable $logo_empresa in /home2/juanc141/public_html/includes/navbar.php on line 84

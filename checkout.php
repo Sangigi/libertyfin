@@ -798,17 +798,22 @@ $plan_badge_class = match ($empresa_plan) {
                                                 </p>
                                             </div>
 
-                                            <div class="alert alert-info d-flex align-items-start gap-2 mb-3"
-                                                style="border-radius:var(--lf-r); font-size:13px;">
-                                                <i class="fas fa-info-circle mt-1"></i>
-                                                <div>
-                                                    <strong>Instrucciones:</strong> al generar la referencia podrás
-                                                    descargar
-                                                    un PDF con el código de barras. Preséntalo en caja y realiza tu
-                                                    pago.
-                                                    La referencia vence en <strong>3</strong> días.
-                                                </div>
-                                            </div>
+<div class="alert alert-info d-flex align-items-start gap-2 mb-3"
+    style="border-radius:var(--lf-r); font-size:13px;">
+    <i class="fas fa-info-circle mt-1"></i>
+    <div>
+        <strong>Instrucciones:</strong> al generar la referencia podrás
+        descargar un PDF con el código de barras. Preséntalo en caja y realiza tu
+        pago. La referencia vence en <strong>3</strong> días.
+        <div class="mt-2">
+            <span class="badge d-inline-flex align-items-center gap-1"
+                style="background:#27ae60; color:#fff; font-size:11px; font-weight:700; 
+                       letter-spacing:0.5px; padding:6px 12px; border-radius:50px;">
+                <i class="fas fa-money-bill-wave"></i> SOLO EFECTIVO
+            </span>
+        </div>
+    </div>
+</div>
 
                                             <button type="button" class="btn btn-pay w-100 py-2"
                                                 id="btnGenerarReferencia" onclick="generarReferenciaEfectivo()">

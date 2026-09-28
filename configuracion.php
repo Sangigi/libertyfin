@@ -18,8 +18,8 @@ $conn_main = getDBConnection();
 $empresa_plan        = "prueba";
 $timbres_totales     = 0;
 $timbres_disponibles = 0;
-$terminal_emida      = null;   // <-- FALTABA
-$notification_status = null;   // <-- FALTABA
+$terminal_emida      = null;
+$notification_status = null;
 
 if ($conn_main) {
     $sql_empresa = "SELECT plan, timbres_totales, timbres_disponibles, terminal_emida 
@@ -74,13 +74,30 @@ try {
     // Columnas que necesitamos agregar
     $new_columns = [
         "notificaciones_stock" => "ALTER TABLE sistema_config ADD COLUMN notificaciones_stock BOOLEAN DEFAULT 1",
-        "stock_minimo_global" => "ALTER TABLE sistema_config ADD COLUMN stock_minimo_global INT DEFAULT 5",
-        "backup_automatico" => "ALTER TABLE sistema_config ADD COLUMN backup_automatico BOOLEAN DEFAULT 0",
-        "frecuencia_backup" => "ALTER TABLE sistema_config ADD COLUMN frecuencia_backup VARCHAR(20) DEFAULT 'diario'",
-        "ticket_empresa" => "ALTER TABLE sistema_config ADD COLUMN ticket_empresa BOOLEAN DEFAULT 1",
-        "ticket_leyenda" => "ALTER TABLE sistema_config ADD COLUMN ticket_leyenda TEXT",
-        "color_primario" => "ALTER TABLE sistema_config ADD COLUMN color_primario VARCHAR(7) DEFAULT '#27ae60'",
-        "color_secundario" => "ALTER TABLE sistema_config ADD COLUMN color_secundario VARCHAR(7) DEFAULT '#2ecc71'"
+        "stock_minimo_global"  => "ALTER TABLE sistema_config ADD COLUMN stock_minimo_global INT DEFAULT 5",
+        "backup_automatico"    => "ALTER TABLE sistema_config ADD COLUMN backup_automatico BOOLEAN DEFAULT 0",
+        "frecuencia_backup"    => "ALTER TABLE sistema_config ADD COLUMN frecuencia_backup VARCHAR(20) DEFAULT 'diario'",
+        "ticket_empresa"       => "ALTER TABLE sistema_config ADD COLUMN ticket_empresa BOOLEAN DEFAULT 1",
+        "ticket_leyenda"       => "ALTER TABLE sistema_config ADD COLUMN ticket_leyenda TEXT",
+        "color_primario"       => "ALTER TABLE sistema_config ADD COLUMN color_primario VARCHAR(7) DEFAULT '#27ae60'",
+        "color_secundario"     => "ALTER TABLE sistema_config ADD COLUMN color_secundario VARCHAR(7) DEFAULT '#2ecc71'",
+
+        // --- Campos de dirección estructurada ---
+        "calle_numero"         => "ALTER TABLE sistema_config ADD COLUMN calle_numero VARCHAR(200) COLLATE utf8_unicode_ci DEFAULT NULL",
+        "numero_interior"      => "ALTER TABLE sistema_config ADD COLUMN numero_interior VARCHAR(200) COLLATE utf8_unicode_ci DEFAULT NULL",
+        "colonia"              => "ALTER TABLE sistema_config ADD COLUMN colonia VARCHAR(200) COLLATE utf8_unicode_ci DEFAULT NULL",
+        "delegacion_municipio" => "ALTER TABLE sistema_config ADD COLUMN delegacion_municipio VARCHAR(200) COLLATE utf8_unicode_ci DEFAULT NULL",
+        "ciudad"               => "ALTER TABLE sistema_config ADD COLUMN ciudad VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL",
+        "estado_direccion"     => "ALTER TABLE sistema_config ADD COLUMN estado_direccion VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL",
+        "pais"                 => "ALTER TABLE sistema_config ADD COLUMN pais VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT 'México'",
+
+        // --- Campos de formas de pago ---
+        "pago_efectivo"              => "ALTER TABLE sistema_config ADD COLUMN pago_efectivo BOOLEAN DEFAULT 1",
+        "pago_transferencia"         => "ALTER TABLE sistema_config ADD COLUMN pago_transferencia BOOLEAN DEFAULT 1",
+        "pago_tdc"                   => "ALTER TABLE sistema_config ADD COLUMN pago_tdc BOOLEAN DEFAULT 1",
+        "pago_efectivo_leyenda"      => "ALTER TABLE sistema_config ADD COLUMN pago_efectivo_leyenda VARCHAR(255) DEFAULT 'Efectivo'",
+        "pago_transferencia_leyenda" => "ALTER TABLE sistema_config ADD COLUMN pago_transferencia_leyenda VARCHAR(255) DEFAULT 'Transferencia'",
+        "pago_tdc_leyenda"           => "ALTER TABLE sistema_config ADD COLUMN pago_tdc_leyenda VARCHAR(255) DEFAULT 'Tarjeta de Crédito/Débito'",
     ];
 
     // Agregar columnas faltantes
@@ -88,6 +105,7 @@ try {
         if (!in_array($column_name, $existing_columns)) {
             try {
                 $conn->exec($alter_sql);
+                $existing_columns[] = $column_name;
             } catch (Exception $e) {
                 throw new Exception("Error al agregar columna $column_name: " . $e->getMessage());
             }
@@ -126,13 +144,22 @@ try {
 
     // Procesar actualización de configuración general
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_config'])) {
-        $nombre_empresa = $_POST['nombre_empresa'];
-        $rfc = $_POST['rfc'];
-        $telefono = $_POST['telefono'];
-        $email = $_POST['email'];
-        $direccion = $_POST['direccion'];
-        $iva = floatval($_POST['iva']);
-        $moneda = $_POST['moneda'];
+        $nombre_empresa      = $_POST['nombre_empresa'] ?? '';
+        $rfc                 = $_POST['rfc'] ?? '';
+        $telefono            = $_POST['telefono'] ?? '';
+        $email               = $_POST['email'] ?? '';
+        $direccion           = $_POST['direccion'] ?? '';
+        $iva                 = floatval($_POST['iva'] ?? 0);
+        $moneda              = $_POST['moneda'] ?? 'MXN';
+
+        // Campos nuevos de dirección estructurada
+        $calle_numero         = $_POST['calle_numero'] ?? '';
+        $numero_interior      = $_POST['numero_interior'] ?? '';
+        $colonia              = $_POST['colonia'] ?? '';
+        $delegacion_municipio = $_POST['delegacion_municipio'] ?? '';
+        $ciudad               = $_POST['ciudad'] ?? '';
+        $estado_direccion     = $_POST['estado_direccion'] ?? '';
+        $pais                 = $_POST['pais'] ?? 'México';
 
         $sql_update = "UPDATE sistema_config SET 
                       nombre_empresa = ?,
@@ -141,22 +168,40 @@ try {
                       email = ?,
                       direccion = ?,
                       iva = ?,
-                      moneda = ?";
+                      moneda = ?,
+                      calle_numero = ?,
+                      numero_interior = ?,
+                      colonia = ?,
+                      delegacion_municipio = ?,
+                      ciudad = ?,
+                      estado_direccion = ?,
+                      pais = ?";
 
         $stmt = $conn->prepare($sql_update);
-        $stmt->execute([$nombre_empresa, $rfc, $telefono, $email, $direccion, $iva, $moneda]);
+        $stmt->execute([
+            $nombre_empresa, $rfc, $telefono, $email, $direccion, $iva, $moneda,
+            $calle_numero, $numero_interior, $colonia, $delegacion_municipio,
+            $ciudad, $estado_direccion, $pais
+        ]);
 
         if ($stmt->rowCount() >= 0) {
             $mensaje = "Configuración actualizada correctamente";
             $tipo_mensaje = "success";
-            // Actualizar variable de configuración
-            $config['nombre_empresa'] = $nombre_empresa;
-            $config['rfc'] = $rfc;
-            $config['telefono'] = $telefono;
-            $config['email'] = $email;
-            $config['direccion'] = $direccion;
-            $config['iva'] = $iva;
-            $config['moneda'] = $moneda;
+            // Actualizar variables de configuración
+            $config['nombre_empresa']       = $nombre_empresa;
+            $config['rfc']                  = $rfc;
+            $config['telefono']             = $telefono;
+            $config['email']                = $email;
+            $config['direccion']            = $direccion;
+            $config['iva']                  = $iva;
+            $config['moneda']               = $moneda;
+            $config['calle_numero']         = $calle_numero;
+            $config['numero_interior']      = $numero_interior;
+            $config['colonia']              = $colonia;
+            $config['delegacion_municipio'] = $delegacion_municipio;
+            $config['ciudad']               = $ciudad;
+            $config['estado_direccion']     = $estado_direccion;
+            $config['pais']                 = $pais;
         } else {
             $mensaje = "Error al actualizar la configuración";
             $tipo_mensaje = "danger";
@@ -217,6 +262,58 @@ try {
             $stmt = null;
         } else {
             $mensaje = "Las columnas de configuración de tickets no están disponibles";
+            $tipo_mensaje = "warning";
+        }
+    }
+
+    // Procesar configuración de formas de pago
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_pagos'])) {
+        if (
+            in_array('pago_efectivo', $existing_columns) &&
+            in_array('pago_transferencia', $existing_columns) &&
+            in_array('pago_tdc', $existing_columns)
+        ) {
+            $pago_efectivo      = isset($_POST['pago_efectivo']) ? 1 : 0;
+            $pago_transferencia = isset($_POST['pago_transferencia']) ? 1 : 0;
+            $pago_tdc           = isset($_POST['pago_tdc']) ? 1 : 0;
+
+            $pago_efectivo_leyenda      = $_POST['pago_efectivo_leyenda'] ?? 'Efectivo';
+            $pago_transferencia_leyenda = $_POST['pago_transferencia_leyenda'] ?? 'Transferencia';
+            $pago_tdc_leyenda           = $_POST['pago_tdc_leyenda'] ?? 'Tarjeta de Crédito/Débito';
+
+            $sql_update = "UPDATE sistema_config SET 
+                          pago_efectivo = ?,
+                          pago_transferencia = ?,
+                          pago_tdc = ?,
+                          pago_efectivo_leyenda = ?,
+                          pago_transferencia_leyenda = ?,
+                          pago_tdc_leyenda = ?";
+            $stmt = $conn->prepare($sql_update);
+            $stmt->execute([
+                $pago_efectivo,
+                $pago_transferencia,
+                $pago_tdc,
+                $pago_efectivo_leyenda,
+                $pago_transferencia_leyenda,
+                $pago_tdc_leyenda
+            ]);
+
+            if ($stmt->rowCount() >= 0) {
+                $mensaje = "Formas de pago actualizadas correctamente";
+                $tipo_mensaje = "success";
+                $config['pago_efectivo'] = $pago_efectivo;
+                $config['pago_transferencia'] = $pago_transferencia;
+                $config['pago_tdc'] = $pago_tdc;
+                $config['pago_efectivo_leyenda'] = $pago_efectivo_leyenda;
+                $config['pago_transferencia_leyenda'] = $pago_transferencia_leyenda;
+                $config['pago_tdc_leyenda'] = $pago_tdc_leyenda;
+            } else {
+                $mensaje = "Error al actualizar las formas de pago";
+                $tipo_mensaje = "danger";
+            }
+            $stmt = null;
+        } else {
+            $mensaje = "Las columnas de formas de pago no están disponibles";
             $tipo_mensaje = "warning";
         }
     }
@@ -512,7 +609,7 @@ function crearBackupPHP($conn, $backup_file)
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuración - <?php echo htmlspecialchars($_SESSION['empresa_nombre']); ?></title>
-        <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -532,7 +629,7 @@ function crearBackupPHP($conn, $backup_file)
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-  <?php include 'includes/sidebar.php'; ?>
+            <?php include 'includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
@@ -564,11 +661,18 @@ function crearBackupPHP($conn, $backup_file)
                             <i class="fas fa-receipt me-1"></i>Tickets
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pagos-tab" data-bs-toggle="tab" data-bs-target="#pagos" type="button" role="tab">
+                            <i class="fas fa-credit-card me-1"></i>Pagos
+                        </button>
+                    </li>
                 </ul>
 
                 <div class="tab-content" id="configTabsContent">
 
-                    <!-- Pestaña General -->
+                    <!-- ============================= -->
+                    <!-- Pestaña General               -->
+                    <!-- ============================= -->
                     <div class="tab-pane fade show active" id="general" role="tabpanel">
                         <div class="row">
                             <div class="col-lg-8">
@@ -602,10 +706,72 @@ function crearBackupPHP($conn, $backup_file)
                                                         value="<?php echo htmlspecialchars(getConfigValue($config, 'email')); ?>">
                                                 </div>
                                             </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Dirección</label>
-                                                <textarea class="form-control" name="direccion" rows="3"><?php echo htmlspecialchars(getConfigValue($config, 'direccion')); ?></textarea>
+
+                                            <!-- ============================= -->
+                                            <!-- Dirección estructurada        -->
+                                            <!-- ============================= -->
+                                            <hr>
+                                            <h6 class="text-muted mb-3"><i class="fas fa-map-marker-alt me-2"></i>Dirección</h6>
+
+                                            <div class="row">
+                                                <div class="col-md-8 mb-3">
+                                                    <label class="form-label">Calle y número</label>
+                                                    <input type="text" class="form-control" name="calle_numero"
+                                                        value="<?php echo htmlspecialchars(getConfigValue($config, 'calle_numero')); ?>"
+                                                        maxlength="200" placeholder="Ej: Av. Reforma 123">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label">Número interior</label>
+                                                    <input type="text" class="form-control" name="numero_interior"
+                                                        value="<?php echo htmlspecialchars(getConfigValue($config, 'numero_interior')); ?>"
+                                                        maxlength="200" placeholder="Ej: Int. 4B">
+                                                </div>
                                             </div>
+
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Colonia</label>
+                                                    <input type="text" class="form-control" name="colonia"
+                                                        value="<?php echo htmlspecialchars(getConfigValue($config, 'colonia')); ?>"
+                                                        maxlength="200">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Delegación / Municipio</label>
+                                                    <input type="text" class="form-control" name="delegacion_municipio"
+                                                        value="<?php echo htmlspecialchars(getConfigValue($config, 'delegacion_municipio')); ?>"
+                                                        maxlength="200">
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label">Ciudad</label>
+                                                    <input type="text" class="form-control" name="ciudad"
+                                                        value="<?php echo htmlspecialchars(getConfigValue($config, 'ciudad')); ?>"
+                                                        maxlength="100">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label">Estado</label>
+                                                    <input type="text" class="form-control" name="estado_direccion"
+                                                        value="<?php echo htmlspecialchars(getConfigValue($config, 'estado_direccion')); ?>"
+                                                        maxlength="100">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label">País</label>
+                                                    <input type="text" class="form-control" name="pais"
+                                                        value="<?php echo htmlspecialchars(getConfigValue($config, 'pais', 'México')); ?>"
+                                                        maxlength="100">
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Dirección (texto libre / referencia)</label>
+                                                <textarea class="form-control" name="direccion" rows="2"
+                                                    placeholder="Texto adicional de dirección o referencia"><?php echo htmlspecialchars(getConfigValue($config, 'direccion')); ?></textarea>
+                                            </div>
+
+                                            <hr>
+
                                             <div class="row">
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">IVA (%) *</label>
@@ -621,6 +787,7 @@ function crearBackupPHP($conn, $backup_file)
                                                     </select>
                                                 </div>
                                             </div>
+
                                             <button type="submit" name="actualizar_config" class="btn btn-primary">
                                                 <i class="fas fa-save me-2"></i>Guardar Configuración
                                             </button>
@@ -657,7 +824,9 @@ function crearBackupPHP($conn, $backup_file)
                         </div>
                     </div>
 
-                    <!-- Pestaña Inventario -->
+                    <!-- ============================= -->
+                    <!-- Pestaña Inventario            -->
+                    <!-- ============================= -->
                     <div class="tab-pane fade" id="inventario" role="tabpanel">
                         <div class="row">
                             <div class="col-lg-6">
@@ -694,7 +863,9 @@ function crearBackupPHP($conn, $backup_file)
                         </div>
                     </div>
 
-                    <!-- Pestaña Tickets -->
+                    <!-- ============================= -->
+                    <!-- Pestaña Tickets               -->
+                    <!-- ============================= -->
                     <div class="tab-pane fade" id="tickets" role="tabpanel">
                         <div class="row">
                             <div class="col-lg-8">
@@ -731,8 +902,106 @@ function crearBackupPHP($conn, $backup_file)
                         </div>
                     </div>
 
+                    <!-- ============================= -->
+                    <!-- Pestaña Pagos                 -->
+                    <!-- ============================= -->
+                    <div class="tab-pane fade" id="pagos" role="tabpanel">
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div class="card">
+                                    <div class="card-header bg-info text-white">
+                                        <h5 class="card-title text-white mb-0"><i class="fas fa-credit-card me-2"></i>Formas de Pago</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form method="POST" action="">
+                                            <p class="text-muted">
+                                                Selecciona las formas de pago que estarán disponibles al momento de cobrar en el punto de venta.
+                                            </p>
 
-                   
+                                            <!-- Efectivo -->
+                                            <div class="card mb-3 border-success">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <div class="form-check form-switch mb-0">
+                                                            <input class="form-check-input" type="checkbox" name="pago_efectivo"
+                                                                id="pago_efectivo" <?php echo getConfigValue($config, 'pago_efectivo', 1) ? 'checked' : ''; ?>>
+                                                            <label class="form-check-label fw-bold" for="pago_efectivo">
+                                                                <i class="fas fa-money-bill-wave text-success me-2"></i>Efectivo
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <label class="form-label small">Etiqueta a mostrar</label>
+                                                    <input type="text" class="form-control form-control-sm" name="pago_efectivo_leyenda"
+                                                        value="<?php echo htmlspecialchars(getConfigValue($config, 'pago_efectivo_leyenda', 'Efectivo')); ?>"
+                                                        maxlength="255" placeholder="Ej: Efectivo">
+                                                </div>
+                                            </div>
+
+                                            <!-- Transferencia -->
+                                            <div class="card mb-3 border-primary">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <div class="form-check form-switch mb-0">
+                                                            <input class="form-check-input" type="checkbox" name="pago_transferencia"
+                                                                id="pago_transferencia" <?php echo getConfigValue($config, 'pago_transferencia', 1) ? 'checked' : ''; ?>>
+                                                            <label class="form-check-label fw-bold" for="pago_transferencia">
+                                                                <i class="fas fa-exchange-alt text-primary me-2"></i>Transferencia
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <label class="form-label small">Etiqueta a mostrar</label>
+                                                    <input type="text" class="form-control form-control-sm" name="pago_transferencia_leyenda"
+                                                        value="<?php echo htmlspecialchars(getConfigValue($config, 'pago_transferencia_leyenda', 'Transferencia')); ?>"
+                                                        maxlength="255" placeholder="Ej: Transferencia bancaria">
+                                                </div>
+                                            </div>
+
+                                            <!-- Tarjeta de Crédito/Débito -->
+                                            <div class="card mb-3 border-warning">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <div class="form-check form-switch mb-0">
+                                                            <input class="form-check-input" type="checkbox" name="pago_tdc"
+                                                                id="pago_tdc" <?php echo getConfigValue($config, 'pago_tdc', 1) ? 'checked' : ''; ?>>
+                                                            <label class="form-check-label fw-bold" for="pago_tdc">
+                                                                <i class="fas fa-credit-card text-warning me-2"></i>Tarjeta de Crédito/Débito (TDC)
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <label class="form-label small">Etiqueta a mostrar</label>
+                                                    <input type="text" class="form-control form-control-sm" name="pago_tdc_leyenda"
+                                                        value="<?php echo htmlspecialchars(getConfigValue($config, 'pago_tdc_leyenda', 'Tarjeta de Crédito/Débito')); ?>"
+                                                        maxlength="255" placeholder="Ej: Tarjeta">
+                                                </div>
+                                            </div>
+
+                                            <button type="submit" name="actualizar_pagos" class="btn btn-info text-white">
+                                                <i class="fas fa-save me-2"></i>Guardar Formas de Pago
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small text-muted mb-2">
+                                            <i class="fas fa-check-circle text-success me-1"></i>
+                                            Las formas de pago habilitadas aparecerán en el módulo de <strong>Ventas / Punto de Venta</strong>.
+                                        </p>
+                                        <p class="small text-muted mb-0">
+                                            <i class="fas fa-lightbulb text-warning me-1"></i>
+                                            Puedes personalizar la etiqueta de cada forma de pago según tus necesidades.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
             </main>
@@ -751,14 +1020,19 @@ function crearBackupPHP($conn, $backup_file)
 
             // Función para mostrar/ocultar sidebar
             function toggleSidebar() {
+                if (!sidebar || !sidebarBackdrop) return;
                 sidebar.classList.toggle('show');
                 sidebarBackdrop.classList.toggle('show');
                 document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
             }
 
             // Event listeners
-            sidebarToggle.addEventListener('click', toggleSidebar);
-            sidebarBackdrop.addEventListener('click', toggleSidebar);
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', toggleSidebar);
+            }
+            if (sidebarBackdrop) {
+                sidebarBackdrop.addEventListener('click', toggleSidebar);
+            }
 
             // Cerrar sidebar al hacer clic en un enlace (en móvil)
             const sidebarLinks = document.querySelectorAll('#sidebar .nav-link');
@@ -769,7 +1043,6 @@ function crearBackupPHP($conn, $backup_file)
                     }
                 });
             });
-
         });
     </script>
 </body>

@@ -523,6 +523,10 @@ CREATE TABLE `ventas` (
   `paypal_order_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
   `paypal_payer_id` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
   `paypal_status` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `empresa_id` INT NULL,
+  `empresa_db` VARCHAR(100) NULL,
+  `factura_token` VARCHAR(64) NULL,
+  `factura_token_expira` DATETIME NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `codigo_venta` (`codigo_venta`),
   KEY `cliente_id` (`cliente_id`),
@@ -950,6 +954,85 @@ CREATE TABLE `producto_precios_mayoreo` (
   CONSTRAINT `producto_precios_mayoreo_ibfk_1` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE
 );
 
+CREATE TABLE `promociones` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `descripcion` text COLLATE utf8_unicode_ci,
+  `tipo_promocion` enum('descuento_porcentual','descuento_fijo','precio_especial','llevalo_paga','precio_volumen','combo') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'descuento_porcentual',
+  `aplica_a` enum('producto','categoria','marca','venta_completa','combo') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'producto',
+  `fecha_inicio` datetime NOT NULL,
+  `fecha_fin` datetime NOT NULL,
+  `dias_semana` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '1=Lun,7=Dom; NULL=todos',
+  `hora_inicio` time DEFAULT NULL,
+  `hora_fin` time DEFAULT NULL,
+  `todas_sucursales` tinyint(1) NOT NULL DEFAULT '1',
+  `valor_descuento` decimal(10,2) DEFAULT '0.00' COMMENT 'Para descuento_porcentual (%) o descuento_fijo ($)',
+  `precio_especial` decimal(10,2) DEFAULT '0.00',
+  `cantidad_lleva` int(11) DEFAULT '0' COMMENT 'Para llevalo_paga',
+  `cantidad_paga` int(11) DEFAULT '0',
+  `cantidad_minima_volumen` int(11) DEFAULT '0' COMMENT 'Para precio_volumen',
+  `precio_volumen` decimal(10,2) DEFAULT '0.00',
+  `cantidad_minima` int(11) DEFAULT '0' COMMENT 'Cantidad mínima de productos para que aplique',
+  `monto_minimo` decimal(10,2) DEFAULT '0.00' COMMENT 'Monto mínimo de compra',
+  `metodo_pago` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'efectivo, tarjeta, transferencia',
+  `tipo_cliente` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'publico, mayorista, vip',
+  `acumulable` tinyint(1) NOT NULL DEFAULT '0',
+  `prioridad` int(11) NOT NULL DEFAULT '10' COMMENT 'Menor = mayor prioridad',
+  `activo` tinyint(1) NOT NULL DEFAULT '1',
+  `color_badge` varchar(20) COLLATE utf8_unicode_ci DEFAULT '#667eea',
+  `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `fecha_actualizacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_promos_activo` (`activo`),
+  KEY `idx_promos_vigencia` (`fecha_inicio`,`fecha_fin`),
+  KEY `idx_promos_aplica` (`aplica_a`),
+  KEY `idx_promos_tipo` (`tipo_promocion`)
+);
+
+CREATE TABLE `promocion_productos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `promocion_id` int(11) NOT NULL,
+  `producto_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_promo_prod` (`promocion_id`,`producto_id`),
+  KEY `producto_id` (`producto_id`),
+  CONSTRAINT `promocion_productos_ibfk_1` FOREIGN KEY (`promocion_id`) REFERENCES `promociones` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `promocion_productos_ibfk_2` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `promociones_aplicables` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `promocion_id` int(11) NOT NULL,
+  `tipo` enum('producto','categoria','marca') COLLATE utf8_unicode_ci NOT NULL,
+  `referencia_id` int(11) DEFAULT NULL COMMENT 'producto_id o categoria_id',
+  `referencia_nombre` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'texto libre (marca)',
+  PRIMARY KEY (`id`),
+  KEY `idx_pa_promo` (`promocion_id`),
+  KEY `idx_pa_ref` (`tipo`,`referencia_id`),
+  CONSTRAINT `promociones_aplicables_ibfk_1` FOREIGN KEY (`promocion_id`) REFERENCES `promociones` (`id`) ON DELETE CASCADE
+);
+
+
+CREATE TABLE `promociones_combo` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `promocion_id` int(11) NOT NULL,
+  `producto_id` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `idx_pc_promo` (`promocion_id`),
+  CONSTRAINT `promociones_combo_ibfk_1` FOREIGN KEY (`promocion_id`) REFERENCES `promociones` (`id`) ON DELETE CASCADE
+);
+
+
+CREATE TABLE `promociones_sucursales` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `promocion_id` int(11) NOT NULL,
+  `sucursal_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_promo_sucursal` (`promocion_id`,`sucursal_id`),
+  KEY `idx_ps_promo` (`promocion_id`),
+  CONSTRAINT `promociones_sucursales_ibfk_1` FOREIGN KEY (`promocion_id`) REFERENCES `promociones` (`id`) ON DELETE CASCADE
+);
 
     CREATE VIEW vista_usuarios AS
     SELECT 

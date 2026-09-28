@@ -35,11 +35,60 @@ if ($conn_main) {
         $terminal_emida = $result_empresa['terminal_emida'] ?? null;
     }
     $stmt_empresa = null;
-    // No cerramos $conn_main aquí porque se necesita para getNotificationStatus
 }
 
 // Guardar el plan en la sesión
 $_SESSION['empresa_plan'] = $empresa_plan;
+
+// ============================================================
+// CATÁLOGOS SAT (Régimen Fiscal y Uso CFDI)
+// ============================================================
+$regimenes_fiscales = [
+    '601' => 'General de Ley Personas Morales',
+    '603' => 'Personas Morales con Fines no Lucrativos',
+    '605' => 'Sueldos y Salarios e Ingresos Asimilados a Salarios',
+    '606' => 'Arrendamiento',
+    '607' => 'Régimen de Enajenación o Adquisición de Bienes',
+    '608' => 'Demás ingresos',
+    '610' => 'Residentes en el Extranjero sin Establecimiento Permanente en México',
+    '611' => 'Ingresos por Dividendos (socios y accionistas)',
+    '612' => 'Personas Físicas con Actividades Empresariales y Profesionales',
+    '614' => 'Ingresos por intereses',
+    '615' => 'Régimen de los ingresos por obtención de premios',
+    '616' => 'Sin obligaciones fiscales',
+    '620' => 'Sociedades Cooperativas de Producción que optan por diferir sus ingresos',
+    '621' => 'Incorporación Fiscal',
+    '622' => 'Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras',
+    '623' => 'Opcional para Grupos de Sociedades',
+    '624' => 'Coordinados',
+    '625' => 'Régimen de las Actividades Empresariales con ingresos a través de Plataformas Tecnológicas',
+    '626' => 'Régimen Simplificado de Confianza',
+];
+
+$usos_cfdi = [
+    'G01' => 'Adquisición de mercancías',
+    'G02' => 'Devoluciones, descuentos o bonificaciones',
+    'G03' => 'Gastos en general',
+    'I01' => 'Construcciones',
+    'I02' => 'Mobiliario y equipo de oficina por inversiones',
+    'I03' => 'Equipo de transporte',
+    'I04' => 'Equipo de cómputo y accesorios',
+    'I05' => 'Dados, troqueles, moldes, matrices y herramental',
+    'I06' => 'Comunicaciones telefónicas',
+    'I07' => 'Comunicaciones satelitales',
+    'I08' => 'Otra maquinaria y equipo',
+    'D01' => 'Honorarios médicos, dentales y gastos hospitalarios',
+    'D02' => 'Gastos médicos por incapacidad o discapacidad',
+    'D03' => 'Gastos funerarios',
+    'D04' => 'Donativos',
+    'D05' => 'Intereses reales efectivamente pagados por créditos hipotecarios',
+    'D06' => 'Aportaciones voluntarias al SAR',
+    'D07' => 'Primas por seguros de gastos médicos',
+    'D08' => 'Gastos de transportación escolar obligatoria',
+    'D09' => 'Depósitos en cuentas para el ahorro',
+    'D10' => 'Pagos por servicios educativos',
+    'P01' => 'Por definir',
+];
 
 // Configuración de paginación
 $registros_por_pagina = 10;
@@ -119,19 +168,43 @@ try {
         $campos_clientes[] = $row['Field'];
     }
 
+    // Campos fiscales que podrían existir (según migración)
+    $campos_fiscales_cliente = [
+        'razon_social',
+        'calle_numero',
+        'numero_interior',
+        'colonia',
+        'delegacion_municipio',
+        'ciudad',
+        'estado_direccion',
+        'pais',
+        'codigo_postal',
+        'regimen_fiscal',
+        'uso_cfdi'
+    ];
+
     // Construir consulta usando fecha_creacion
     $campos_select = "c.id, c.nombre, c.email, c.telefono, c.direccion, c.rfc, c.activo, c.fecha_creacion, c.fecha_actualizacion";
 
-    // Búsqueda: antes sólo filtraba con JS las filas de la página actual, así
-    // que un cliente en otra página nunca aparecía. Ahora se busca en toda
-    // la tabla y se reinicia a la página 1 (ver JS más abajo).
+    // Añadir dinámicamente campos fiscales disponibles
+    foreach ($campos_fiscales_cliente as $cf) {
+        if (in_array($cf, $campos_clientes)) {
+            $campos_select .= ", c.$cf";
+        }
+    }
+
+    // Búsqueda
     $buscar = trim($_GET['buscar'] ?? '');
     $where_cli = '';
     $params_cli = [];
     if ($buscar !== '') {
-        $where_cli = "WHERE (c.nombre LIKE ? OR c.email LIKE ? OR c.telefono LIKE ? OR c.rfc LIKE ?)";
+        $campos_busqueda = ['c.nombre', 'c.email', 'c.telefono', 'c.rfc'];
+        if (in_array('razon_social', $campos_clientes)) {
+            $campos_busqueda[] = 'c.razon_social';
+        }
+        $where_cli = "WHERE (" . implode(' OR ', array_map(fn($c) => "$c LIKE ?", $campos_busqueda)) . ")";
         $like = '%' . $buscar . '%';
-        $params_cli = [$like, $like, $like, $like];
+        $params_cli = array_fill(0, count($campos_busqueda), $like);
     }
 
     // Obtener el total de registros para paginación
@@ -160,7 +233,7 @@ try {
     $stmt_clientes = $conn->prepare($sql_clientes);
     $stmt_clientes->execute(array_merge($params_cli, [$registros_por_pagina, $offset]));
     $clientes = $stmt_clientes->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Asegurar valores por defecto
     foreach ($clientes as &$cliente) {
         $cliente['nombre'] = $cliente['nombre'] ?? '';
@@ -169,6 +242,9 @@ try {
         $cliente['direccion'] = $cliente['direccion'] ?? '';
         $cliente['rfc'] = $cliente['rfc'] ?? '';
         $cliente['fecha_creacion'] = $cliente['fecha_creacion'] ?? $cliente['fecha_actualizacion'] ?? date('Y-m-d H:i:s');
+        foreach ($campos_fiscales_cliente as $cf) {
+            $cliente[$cf] = $cliente[$cf] ?? '';
+        }
     }
     unset($cliente);
     $stmt_clientes = null;
@@ -203,16 +279,16 @@ try {
     $total_clientes = $stats_clientes['total_clientes'] ?? 0;
     $clientes_activos = $stats_clientes['clientes_activos'] ?? 0;
     $clientes_inactivos = $stats_clientes['clientes_inactivos'] ?? 0;
-    
+
     // OBTENER LISTAS DE CLIENTES PARA LOS MODALES
     $sql_todos = "SELECT id, nombre, email, telefono, activo FROM clientes ORDER BY nombre";
     $result_todos = $conn->query($sql_todos);
     $todos_clientes = $result_todos->fetchAll(PDO::FETCH_ASSOC);
-    
+
     $sql_activos = "SELECT id, nombre, email, telefono FROM clientes WHERE activo = 1 ORDER BY nombre";
     $result_activos_lista = $conn->query($sql_activos);
     $clientes_activos_lista = $result_activos_lista->fetchAll(PDO::FETCH_ASSOC);
-    
+
     $sql_con_compras = "
         SELECT DISTINCT c.id, c.nombre, c.email, c.telefono, COUNT(v.id) as total_compras
         FROM clientes c
@@ -223,7 +299,7 @@ try {
     $result_con_compras = $conn->query($sql_con_compras);
     $clientes_con_compras = $result_con_compras->fetchAll(PDO::FETCH_ASSOC);
 
-    // Notificaciones (opcional) - se necesita para el sidebar
+    // Notificaciones (opcional)
     $notification_status = null;
     if (file_exists(__DIR__ . '/../EmidaServicios/config.php')) {
         require_once __DIR__ . '/../EmidaServicios/config.php';
@@ -231,9 +307,38 @@ try {
             $notification_status = getNotificationStatus($conn_main);
         }
     }
-    
+
 } catch (Exception $e) {
     die("Error: " . $e->getMessage());
+}
+
+// ============================================================
+// HELPERS PARA CAMPOS FISCALES
+// ============================================================
+
+function columnasTabla($conn, $tabla) {
+    static $cache = [];
+    if (isset($cache[$tabla])) return $cache[$tabla];
+    $stmt = $conn->query("SHOW COLUMNS FROM `$tabla`");
+    $cols = [];
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) $cols[] = $row['Field'];
+    return $cache[$tabla] = $cols;
+}
+
+function fiscalFieldsFromPost() {
+    return [
+        'razon_social'         => trim($_POST['razon_social'] ?? ''),
+        'calle_numero'         => trim($_POST['calle_numero'] ?? ''),
+        'numero_interior'      => trim($_POST['numero_interior'] ?? ''),
+        'colonia'              => trim($_POST['colonia'] ?? ''),
+        'delegacion_municipio' => trim($_POST['delegacion_municipio'] ?? ''),
+        'ciudad'               => trim($_POST['ciudad'] ?? ''),
+        'estado_direccion'     => trim($_POST['estado_direccion'] ?? ''),
+        'pais'                 => trim($_POST['pais'] ?? 'México'),
+        'codigo_postal'        => trim($_POST['codigo_postal'] ?? ''),
+        'regimen_fiscal'       => trim($_POST['regimen_fiscal'] ?? ''),
+        'uso_cfdi'             => trim($_POST['uso_cfdi'] ?? ''),
+    ];
 }
 
 // Procesar formularios
@@ -258,11 +363,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 function crearCliente($conn)
 {
-    $nombre = trim($_POST['nombre'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $telefono = trim($_POST['telefono'] ?? '');
+    $nombre    = trim($_POST['nombre'] ?? '');
+    $email     = trim($_POST['email'] ?? '');
+    $telefono  = trim($_POST['telefono'] ?? '');
     $direccion = trim($_POST['direccion'] ?? '');
-    $rfc = trim($_POST['rfc'] ?? '');
+    $rfc       = strtoupper(trim($_POST['rfc'] ?? ''));
+    $fiscales  = fiscalFieldsFromPost();
 
     try {
         if (empty($nombre)) {
@@ -271,44 +377,58 @@ function crearCliente($conn)
 
         $condiciones = [];
         $params = [];
-        
+
         if (!empty($email)) {
             $condiciones[] = "email = ?";
             $params[] = $email;
         }
-        
+
         if (!empty($rfc)) {
             $condiciones[] = "rfc = ?";
             $params[] = $rfc;
         }
-        
+
         if (!empty($condiciones)) {
             $sql_verificar = "SELECT id, email, rfc FROM clientes WHERE " . implode(" OR ", $condiciones);
             $stmt_verificar = $conn->prepare($sql_verificar);
             $stmt_verificar->execute($params);
             $result_verificar = $stmt_verificar->fetchAll(PDO::FETCH_ASSOC);
-            
+
             if (count($result_verificar) > 0) {
                 $cliente_existente = $result_verificar[0];
                 $mensaje = "Ya existe un cliente con ";
                 $conflictos = [];
-                
+
                 if (!empty($email) && $cliente_existente['email'] === $email) {
                     $conflictos[] = "el email '$email'";
                 }
                 if (!empty($rfc) && $cliente_existente['rfc'] === $rfc) {
                     $conflictos[] = "el RFC '$rfc'";
                 }
-                
+
                 throw new Exception($mensaje . implode(" y ", $conflictos));
             }
             $stmt_verificar = null;
         }
 
-        $sql = "INSERT INTO clientes (nombre, email, telefono, direccion, rfc, fecha_creacion, fecha_actualizacion) 
-                VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+        $cols = columnasTabla($conn, 'clientes');
+        $insertCols = ['nombre', 'email', 'telefono', 'direccion', 'rfc'];
+        $insertVals = [$nombre, $email, $telefono, $direccion, $rfc];
+
+        foreach ($fiscales as $col => $val) {
+            if (in_array($col, $cols)) {
+                $insertCols[] = $col;
+                $insertVals[] = $val;
+            }
+        }
+
+        $insertCols[] = 'fecha_creacion';
+        $insertCols[] = 'fecha_actualizacion';
+        $placeholders = array_merge(array_fill(0, count($insertVals), '?'), ['NOW()', 'NOW()']);
+
+        $sql = "INSERT INTO clientes (" . implode(', ', $insertCols) . ") VALUES (" . implode(', ', $placeholders) . ")";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([$nombre, $email, $telefono, $direccion, $rfc]);
+        $stmt->execute($insertVals);
 
         if ($stmt->rowCount() > 0) {
             $_SESSION['mensaje'] = "Cliente creado exitosamente";
@@ -329,18 +449,19 @@ function crearCliente($conn)
 
 function editarCliente($conn)
 {
-    $id = intval($_POST['id'] ?? 0);
-    $nombre = trim($_POST['nombre'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $telefono = trim($_POST['telefono'] ?? '');
+    $id        = intval($_POST['id'] ?? 0);
+    $nombre    = trim($_POST['nombre'] ?? '');
+    $email     = trim($_POST['email'] ?? '');
+    $telefono  = trim($_POST['telefono'] ?? '');
     $direccion = trim($_POST['direccion'] ?? '');
-    $rfc = trim($_POST['rfc'] ?? '');
+    $rfc       = strtoupper(trim($_POST['rfc'] ?? ''));
+    $fiscales  = fiscalFieldsFromPost();
 
     try {
         if ($id <= 0) {
             throw new Exception("ID de cliente inválido");
         }
-        
+
         if (empty($nombre)) {
             throw new Exception("El nombre del cliente es obligatorio");
         }
@@ -349,7 +470,7 @@ function editarCliente($conn)
         $stmt_existe = $conn->prepare($sql_existe);
         $stmt_existe->execute([$id]);
         $result_existe = $stmt_existe->fetchAll(PDO::FETCH_ASSOC);
-        
+
         if (count($result_existe) === 0) {
             throw new Exception("El cliente no existe en esta base de datos");
         }
@@ -357,51 +478,57 @@ function editarCliente($conn)
 
         $condiciones = [];
         $params = [];
-        
+
         if (!empty($email)) {
             $condiciones[] = "email = ?";
             $params[] = $email;
         }
-        
+
         if (!empty($rfc)) {
             $condiciones[] = "rfc = ?";
             $params[] = $rfc;
         }
-        
+
         if (!empty($condiciones)) {
             $params[] = $id;
             $sql_verificar = "SELECT id, email, rfc FROM clientes WHERE (" . implode(" OR ", $condiciones) . ") AND id != ?";
             $stmt_verificar = $conn->prepare($sql_verificar);
             $stmt_verificar->execute($params);
             $result_verificar = $stmt_verificar->fetchAll(PDO::FETCH_ASSOC);
-            
+
             if (count($result_verificar) > 0) {
                 $cliente_existente = $result_verificar[0];
                 $mensaje = "Ya existe otro cliente con ";
                 $conflictos = [];
-                
+
                 if (!empty($email) && $cliente_existente['email'] === $email) {
                     $conflictos[] = "el email '$email'";
                 }
                 if (!empty($rfc) && $cliente_existente['rfc'] === $rfc) {
                     $conflictos[] = "el RFC '$rfc'";
                 }
-                
+
                 throw new Exception($mensaje . implode(" y ", $conflictos));
             }
             $stmt_verificar = null;
         }
 
-        $sql = "UPDATE clientes SET 
-                nombre = ?, 
-                email = ?, 
-                telefono = ?, 
-                direccion = ?, 
-                rfc = ?, 
-                fecha_actualizacion = NOW() 
-                WHERE id = ?";
+        $cols = columnasTabla($conn, 'clientes');
+        $set = ['nombre = ?', 'email = ?', 'telefono = ?', 'direccion = ?', 'rfc = ?'];
+        $vals = [$nombre, $email, $telefono, $direccion, $rfc];
+
+        foreach ($fiscales as $col => $val) {
+            if (in_array($col, $cols)) {
+                $set[] = "$col = ?";
+                $vals[] = $val;
+            }
+        }
+        $set[] = 'fecha_actualizacion = NOW()';
+        $vals[] = $id;
+
+        $sql = "UPDATE clientes SET " . implode(', ', $set) . " WHERE id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([$nombre, $email, $telefono, $direccion, $rfc, $id]);
+        $stmt->execute($vals);
 
         if ($stmt->rowCount() >= 0) {
             $_SESSION['mensaje'] = "Cliente actualizado exitosamente";
@@ -461,7 +588,7 @@ function eliminarCliente($conn)
         $stmt_existe = $conn->prepare($sql_existe);
         $stmt_existe->execute([$id]);
         $result_existe = $stmt_existe->fetchAll(PDO::FETCH_ASSOC);
-        
+
         if (count($result_existe) === 0) {
             throw new Exception("El cliente no existe");
         }
@@ -689,7 +816,10 @@ function eliminarCliente($conn)
                                                     data-activo="<?php echo $cliente['activo']; ?>"
                                                     data-fecha_creacion="<?php echo $cliente['fecha_creacion']; ?>"
                                                     data-total_ventas="<?php echo $total_ventas; ?>"
-                                                    data-monto_total="<?php echo $monto_total; ?>">
+                                                    data-monto_total="<?php echo $monto_total; ?>"
+                                                    <?php foreach ($campos_fiscales_cliente as $cf): ?>
+                                                    data-<?php echo $cf; ?>="<?php echo htmlspecialchars($cliente[$cf] ?? ''); ?>"
+                                                    <?php endforeach; ?>>
                                                     <td>
                                                         <div class="d-flex align-items-center">
                                                             <div class="cliente-avatar me-3">
@@ -697,6 +827,9 @@ function eliminarCliente($conn)
                                                             </div>
                                                             <div>
                                                                 <div class="fw-bold"><?php echo htmlspecialchars($cliente['nombre']); ?></div>
+                                                                <?php if (!empty($cliente['razon_social'])): ?>
+                                                                    <small class="text-muted d-block"><?php echo htmlspecialchars($cliente['razon_social']); ?></small>
+                                                                <?php endif; ?>
                                                                 <?php if (!empty($cliente['rfc'])): ?>
                                                                     <small class="rfc-badge"><?php echo htmlspecialchars($cliente['rfc']); ?></small>
                                                                 <?php endif; ?>
@@ -824,7 +957,10 @@ function eliminarCliente($conn)
                                         data-activo="<?php echo $cliente['activo']; ?>"
                                         data-fecha_creacion="<?php echo $cliente['fecha_creacion']; ?>"
                                         data-total_ventas="<?php echo $total_ventas; ?>"
-                                        data-monto_total="<?php echo $monto_total; ?>">
+                                        data-monto_total="<?php echo $monto_total; ?>"
+                                        <?php foreach ($campos_fiscales_cliente as $cf): ?>
+                                        data-<?php echo $cf; ?>="<?php echo htmlspecialchars($cliente[$cf] ?? ''); ?>"
+                                        <?php endforeach; ?>>
                                         <div class="card-body">
                                             <div class="d-flex justify-content-between align-items-start mb-2">
                                                 <div class="d-flex align-items-center">
@@ -833,6 +969,9 @@ function eliminarCliente($conn)
                                                     </div>
                                                     <div>
                                                         <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($cliente['nombre']); ?></h6>
+                                                        <?php if (!empty($cliente['razon_social'])): ?>
+                                                            <small class="text-muted d-block"><?php echo htmlspecialchars($cliente['razon_social']); ?></small>
+                                                        <?php endif; ?>
                                                         <?php if (!empty($cliente['rfc'])): ?>
                                                             <small class="rfc-badge"><?php echo htmlspecialchars($cliente['rfc']); ?></small>
                                                         <?php endif; ?>
@@ -930,54 +1069,163 @@ function eliminarCliente($conn)
         </div>
     </div>
 
-    <!-- Modal para Nuevo/Editar Cliente -->
+    <!-- Modal para Nuevo/Editar Cliente (con pestañas) -->
     <div class="modal fade" id="clienteModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalTitle">Nuevo Cliente</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" id="clienteForm">
+                    <input type="hidden" name="accion" id="formAction" value="crear">
+                    <input type="hidden" name="id" id="clienteId">
+
                     <div class="modal-body">
-                        <input type="hidden" name="accion" id="formAction" value="crear">
-                        <input type="hidden" name="id" id="clienteId">
+                        <!-- Pestañas -->
+                        <ul class="nav nav-tabs mb-3" id="clienteTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="tab-general-btn" data-bs-toggle="tab"
+                                        data-bs-target="#tab-general" type="button" role="tab"
+                                        aria-controls="tab-general" aria-selected="true">
+                                    <i class="fas fa-user me-1"></i>Datos Generales
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-fiscal-btn" data-bs-toggle="tab"
+                                        data-bs-target="#tab-fiscal" type="button" role="tab"
+                                        aria-controls="tab-fiscal" aria-selected="false">
+                                    <i class="fas fa-file-invoice me-1"></i>Datos Fiscales (CFDI)
+                                </button>
+                            </li>
+                        </ul>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Nombre del Cliente *</label>
-                                <input type="text" class="form-control" name="nombre" id="nombre" required
-                                    placeholder="Nombre completo del cliente">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">RFC</label>
-                                <input type="text" class="form-control" name="rfc" id="rfc"
-                                    placeholder="RFC del cliente">
-                            </div>
-                        </div>
+                        <div class="tab-content" id="clienteTabsContent">
+                            <!-- TAB: Datos Generales -->
+                            <div class="tab-pane fade show active" id="tab-general" role="tabpanel"
+                                 aria-labelledby="tab-general-btn">
+                                <div class="row">
+                                    <div class="col-md-7 mb-3">
+                                        <label class="form-label">Nombre del Cliente *</label>
+                                        <input type="text" class="form-control" name="nombre" id="nombre" required
+                                            placeholder="Nombre completo del cliente">
+                                    </div>
+                                    <div class="col-md-5 mb-3">
+                                        <label class="form-label">RFC</label>
+                                        <input type="text" class="form-control" name="rfc" id="rfc"
+                                            placeholder="RFC del cliente" style="text-transform: uppercase;">
+                                    </div>
+                                </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" id="email"
-                                    placeholder="Correo electrónico">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Teléfono</label>
-                                <input type="tel" class="form-control" name="telefono" id="telefono"
-                                    placeholder="Número de teléfono">
-                            </div>
-                        </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="email" id="email"
+                                            placeholder="Correo electrónico">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Teléfono</label>
+                                        <input type="tel" class="form-control" name="telefono" id="telefono"
+                                            placeholder="Número de teléfono">
+                                    </div>
+                                </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Dirección</label>
-                            <textarea class="form-control" name="direccion" id="direccion" rows="3"
-                                placeholder="Dirección completa del cliente"></textarea>
+                                <div class="mb-3">
+                                    <label class="form-label">Dirección</label>
+                                    <textarea class="form-control" name="direccion" id="direccion" rows="3"
+                                        placeholder="Dirección completa del cliente"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- TAB: Datos Fiscales -->
+                            <div class="tab-pane fade" id="tab-fiscal" role="tabpanel"
+                                 aria-labelledby="tab-fiscal-btn">
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <label class="form-label">Razón Social</label>
+                                        <input type="text" class="form-control" name="razon_social" id="razon_social"
+                                               placeholder="Nombre o razón social tal como aparece en la constancia fiscal">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Código Postal Fiscal</label>
+                                        <input type="text" class="form-control" name="codigo_postal" id="codigo_postal"
+                                               maxlength="5" placeholder="00000">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Régimen Fiscal</label>
+                                        <select class="form-select" name="regimen_fiscal" id="regimen_fiscal">
+                                            <option value="">— Selecciona —</option>
+                                            <?php foreach ($regimenes_fiscales as $clave => $desc): ?>
+                                                <option value="<?php echo htmlspecialchars($clave); ?>">
+                                                    <?php echo htmlspecialchars($clave . ' - ' . $desc); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Uso del CFDI</label>
+                                        <select class="form-select" name="uso_cfdi" id="uso_cfdi">
+                                            <option value="">— Selecciona —</option>
+                                            <?php foreach ($usos_cfdi as $clave => $desc): ?>
+                                                <option value="<?php echo htmlspecialchars($clave); ?>">
+                                                    <?php echo htmlspecialchars($clave . ' - ' . $desc); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <hr class="my-2">
+                                <h6 class="text-muted mb-3"><i class="fas fa-map-marker-alt me-2"></i>Domicilio Fiscal</h6>
+
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <label class="form-label">Calle y Número</label>
+                                        <input type="text" class="form-control" name="calle_numero" id="calle_numero">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Número Interior</label>
+                                        <input type="text" class="form-control" name="numero_interior" id="numero_interior">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Colonia</label>
+                                        <input type="text" class="form-control" name="colonia" id="colonia">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Delegación / Municipio</label>
+                                        <input type="text" class="form-control" name="delegacion_municipio" id="delegacion_municipio">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Ciudad</label>
+                                        <input type="text" class="form-control" name="ciudad" id="ciudad">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Estado</label>
+                                        <input type="text" class="form-control" name="estado_direccion" id="estado_direccion">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">País</label>
+                                        <input type="text" class="form-control" name="pais" id="pais" value="México">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success">Guardar Cliente</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i>Guardar Cliente
+                        </button>
                     </div>
                 </form>
             </div>
@@ -986,7 +1234,7 @@ function eliminarCliente($conn)
 
     <!-- Modal para Ver Detalles (CON BOTONES DE ACCIÓN) -->
     <div class="modal fade" id="detallesModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Detalles del Cliente</h5>
@@ -1013,11 +1261,22 @@ function eliminarCliente($conn)
             con_compras: <?php echo json_encode($clientes_con_compras); ?>
         };
 
+        // Catálogos SAT para usar en JS
+        const regimenesFiscales = <?php echo json_encode($regimenes_fiscales, JSON_UNESCAPED_UNICODE); ?>;
+        const usosCfdi = <?php echo json_encode($usos_cfdi, JSON_UNESCAPED_UNICODE); ?>;
+
+        // Lista de campos fiscales para copiar desde data-* attributes
+        const camposFiscales = [
+            'razon_social', 'calle_numero', 'numero_interior', 'colonia',
+            'delegacion_municipio', 'ciudad', 'estado_direccion', 'pais',
+            'codigo_postal', 'regimen_fiscal', 'uso_cfdi'
+        ];
+
         // Función para generar el HTML de la lista de clientes
         function generarListaClientes(tipo) {
             let clientes = [];
             let titulo = '';
-            
+
             switch(tipo) {
                 case 'total':
                     clientes = clientesData.total;
@@ -1035,9 +1294,9 @@ function eliminarCliente($conn)
                     clientes = [];
                     titulo = 'Clientes';
             }
-            
+
             document.getElementById('modalListaClientesLabel').textContent = titulo;
-            
+
             if (!clientes || clientes.length === 0) {
                 return `
                     <div class="text-center text-muted py-5">
@@ -1046,7 +1305,7 @@ function eliminarCliente($conn)
                     </div>
                 `;
             }
-            
+
             let html = '<div class="list-group list-group-flush">';
             clientes.forEach(cliente => {
                 let contactoHtml = '';
@@ -1056,19 +1315,19 @@ function eliminarCliente($conn)
                     if (cliente.telefono) contactoHtml += '<i class="fas fa-phone me-1"></i>' + escapeHtml(cliente.telefono);
                     contactoHtml += '</div>';
                 }
-                
+
                 let comprasHtml = '';
                 if (cliente.total_compras) {
                     comprasHtml = `<span class="client-list-badge ms-2">${cliente.total_compras} compras</span>`;
                 }
-                
+
                 let estadoHtml = '';
                 if (tipo === 'total' && cliente.activo !== undefined) {
                     const estadoClass = cliente.activo ? 'status-active' : 'status-inactive';
                     const estadoText = cliente.activo ? 'Activo' : 'Inactivo';
                     estadoHtml = `<span class="status-badge ${estadoClass} ms-2" style="font-size: 0.7rem; padding: 2px 8px;">${estadoText}</span>`;
                 }
-                
+
                 html += `
                     <div class="client-list-item">
                         <div class="client-list-avatar">
@@ -1088,17 +1347,18 @@ function eliminarCliente($conn)
             html += '</div>';
             return html;
         }
-        
+
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
+            return String(str).replace(/[&<>"]/g, function(m) {
                 if (m === '&') return '&amp;';
                 if (m === '<') return '&lt;';
                 if (m === '>') return '&gt;';
+                if (m === '"') return '&quot;';
                 return m;
             });
         }
-        
+
         // Agregar evento a las tarjetas de estadísticas
         document.querySelectorAll('.stat-card').forEach(card => {
             card.addEventListener('click', function(e) {
@@ -1126,11 +1386,33 @@ function eliminarCliente($conn)
         function mostrarDetallesCliente(clienteData) {
             const detallesContent = document.getElementById('detallesContent');
             const detallesFooter = document.getElementById('detallesFooter');
-            
+
             const estadoText = clienteData.activo == 1 ? 'Activo' : 'Inactivo';
             const estadoClass = clienteData.activo == 1 ? 'status-active' : 'status-inactive';
             const montoTotal = parseFloat(clienteData.monto_total || 0);
-            
+
+            // Dirección fiscal formateada
+            const dirFiscal = [
+                clienteData.calle_numero,
+                clienteData.numero_interior,
+                clienteData.colonia,
+                clienteData.delegacion_municipio,
+                clienteData.ciudad,
+                clienteData.estado_direccion,
+                clienteData.pais,
+                clienteData.codigo_postal
+            ].filter(Boolean).join(', ');
+
+            const regimenDesc = clienteData.regimen_fiscal
+                ? (regimenesFiscales[clienteData.regimen_fiscal] || '')
+                : '';
+            const usoDesc = clienteData.uso_cfdi
+                ? (usosCfdi[clienteData.uso_cfdi] || '')
+                : '';
+
+            const tieneDatosFiscales = clienteData.rfc || clienteData.razon_social ||
+                                       clienteData.regimen_fiscal || clienteData.uso_cfdi || dirFiscal;
+
             detallesContent.innerHTML = `
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -1185,14 +1467,44 @@ function eliminarCliente($conn)
                         ` : '<p class="text-muted mt-2">Este cliente no ha realizado compras.</p>'}
                     </div>
                 </div>
+
+                ${tieneDatosFiscales ? `
+                <hr>
+                <h6 class="border-bottom pb-2"><i class="fas fa-file-invoice me-2"></i>Datos Fiscales (CFDI)</h6>
+                <div class="row mt-2">
+                    <div class="col-md-6 mb-2">
+                        <strong>Razón Social:</strong>
+                        <p>${escapeHtml(clienteData.razon_social || '—')}</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>CP Fiscal:</strong>
+                        <p>${escapeHtml(clienteData.codigo_postal || '—')}</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Régimen Fiscal:</strong>
+                        <p>${clienteData.regimen_fiscal
+                            ? escapeHtml(clienteData.regimen_fiscal) + ' - ' + escapeHtml(regimenDesc)
+                            : '—'}</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Uso del CFDI:</strong>
+                        <p>${clienteData.uso_cfdi
+                            ? escapeHtml(clienteData.uso_cfdi) + ' - ' + escapeHtml(usoDesc)
+                            : '—'}</p>
+                    </div>
+                    <div class="col-12 mb-2">
+                        <strong>Dirección Fiscal:</strong>
+                        <p>${dirFiscal ? escapeHtml(dirFiscal) : '—'}</p>
+                    </div>
+                </div>` : ''}
             `;
-            
+
             // Agregar botones de acción al footer
             const nuevoEstado = clienteData.activo == 1 ? 0 : 1;
             const estadoBotonTexto = clienteData.activo == 1 ? 'Desactivar Cliente' : 'Activar Cliente';
             const estadoBotonColor = clienteData.activo == 1 ? 'warning' : 'success';
             const estadoBotonIcono = clienteData.activo == 1 ? 'ban' : 'check';
-            
+
             detallesFooter.innerHTML = `
                 <div class="d-flex justify-content-between w-100 flex-wrap gap-2">
                     <button type="button" class="btn btn-success" id="editarDesdeDetallesBtn">
@@ -1214,11 +1526,11 @@ function eliminarCliente($conn)
                     </button>
                 </div>
             `;
-            
+
             // Mostrar el modal
             const modal = new bootstrap.Modal(document.getElementById('detallesModal'));
             modal.show();
-            
+
             // Evento para editar desde detalles
             document.getElementById('editarDesdeDetallesBtn').addEventListener('click', function() {
                 modal.hide();
@@ -1226,28 +1538,47 @@ function eliminarCliente($conn)
                 document.getElementById('modalTitle').textContent = 'Editar Cliente';
                 document.getElementById('formAction').value = 'editar';
                 document.getElementById('clienteId').value = clienteData.id;
-                document.getElementById('nombre').value = clienteData.nombre;
+                document.getElementById('nombre').value = clienteData.nombre || '';
                 document.getElementById('rfc').value = clienteData.rfc || '';
                 document.getElementById('email').value = clienteData.email || '';
                 document.getElementById('telefono').value = clienteData.telefono || '';
                 document.getElementById('direccion').value = clienteData.direccion || '';
-                
+
+                // Cargar campos fiscales
+                camposFiscales.forEach(function(f) {
+                    const el = document.getElementById(f);
+                    if (el) {
+                        if (f === 'pais') {
+                            el.value = clienteData[f] || 'México';
+                        } else {
+                            el.value = clienteData[f] || '';
+                        }
+                    }
+                });
+
+                // Siempre iniciar en la pestaña "Datos Generales" al editar
+                const tabGeneralBtn = document.getElementById('tab-general-btn');
+                if (tabGeneralBtn) {
+                    const tab = new bootstrap.Tab(tabGeneralBtn);
+                    tab.show();
+                }
+
                 const modalEditar = new bootstrap.Modal(document.getElementById('clienteModal'));
                 modalEditar.show();
             });
-            
+
             // Evento para eliminar desde detalles
             document.getElementById('eliminarDesdeDetallesBtn').addEventListener('click', function() {
                 modal.hide();
                 deleteCliente(clienteData.id, clienteData.nombre);
             });
         }
-        
+
         // Función de eliminación con SweetAlert2
         function deleteCliente(clienteId, clienteNombre) {
             Swal.fire({
                 title: '¿Eliminar cliente?',
-                html: `¿Estás seguro de que deseas eliminar a <strong>${clienteNombre}</strong>?<br><br><span class="text-danger">Esta acción no se puede deshacer.</span>`,
+                html: `¿Estás seguro de que deseas eliminar a <strong>${escapeHtml(clienteNombre)}</strong>?<br><br><span class="text-danger">Esta acción no se puede deshacer.</span>`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',
@@ -1260,17 +1591,17 @@ function eliminarCliente($conn)
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = 'Clientes';
-                    
+
                     const inputAccion = document.createElement('input');
                     inputAccion.type = 'hidden';
                     inputAccion.name = 'accion';
                     inputAccion.value = 'eliminar';
-                    
+
                     const inputId = document.createElement('input');
                     inputId.type = 'hidden';
                     inputId.name = 'id';
                     inputId.value = clienteId;
-                    
+
                     form.appendChild(inputAccion);
                     form.appendChild(inputId);
                     document.body.appendChild(form);
@@ -1278,52 +1609,44 @@ function eliminarCliente($conn)
                 }
             });
         }
-        
+
+        // Helper para extraer datos de un elemento clickable
+        function extraerClienteData(el) {
+            const clienteData = {
+                id: el.getAttribute('data-id'),
+                nombre: el.getAttribute('data-nombre'),
+                email: el.getAttribute('data-email'),
+                telefono: el.getAttribute('data-telefono'),
+                direccion: el.getAttribute('data-direccion'),
+                rfc: el.getAttribute('data-rfc'),
+                activo: el.getAttribute('data-activo'),
+                fecha_creacion: el.getAttribute('data-fecha_creacion'),
+                total_ventas: el.getAttribute('data-total_ventas'),
+                monto_total: el.getAttribute('data-monto_total')
+            };
+            camposFiscales.forEach(function(f) {
+                clienteData[f] = el.getAttribute('data-' + f) || '';
+            });
+            return clienteData;
+        }
+
         // Evento para filas clickeables (escritorio)
         document.querySelectorAll('.clickable-row').forEach(row => {
             row.addEventListener('click', function(e) {
                 if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('a') || e.target.closest('button')) {
                     return;
                 }
-                
-                const clienteData = {
-                    id: this.getAttribute('data-id'),
-                    nombre: this.getAttribute('data-nombre'),
-                    email: this.getAttribute('data-email'),
-                    telefono: this.getAttribute('data-telefono'),
-                    direccion: this.getAttribute('data-direccion'),
-                    rfc: this.getAttribute('data-rfc'),
-                    activo: this.getAttribute('data-activo'),
-                    fecha_creacion: this.getAttribute('data-fecha_creacion'),
-                    total_ventas: this.getAttribute('data-total_ventas'),
-                    monto_total: this.getAttribute('data-monto_total')
-                };
-                
-                mostrarDetallesCliente(clienteData);
+                mostrarDetallesCliente(extraerClienteData(this));
             });
         });
-        
+
         // Evento para tarjetas clickeables (móvil)
         document.querySelectorAll('.clickable-card').forEach(card => {
             card.addEventListener('click', function(e) {
                 if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
                     return;
                 }
-                
-                const clienteData = {
-                    id: this.getAttribute('data-id'),
-                    nombre: this.getAttribute('data-nombre'),
-                    email: this.getAttribute('data-email'),
-                    telefono: this.getAttribute('data-telefono'),
-                    direccion: this.getAttribute('data-direccion'),
-                    rfc: this.getAttribute('data-rfc'),
-                    activo: this.getAttribute('data-activo'),
-                    fecha_creacion: this.getAttribute('data-fecha_creacion'),
-                    total_ventas: this.getAttribute('data-total_ventas'),
-                    monto_total: this.getAttribute('data-monto_total')
-                };
-                
-                mostrarDetallesCliente(clienteData);
+                mostrarDetallesCliente(extraerClienteData(this));
             });
         });
 
@@ -1332,7 +1655,7 @@ function eliminarCliente($conn)
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebarBackdrop = document.getElementById('sidebarBackdrop');
 
-            // Funciones de apertura/cierre del sidebar (se usan también en el swipe)
+            // Funciones de apertura/cierre del sidebar
             function openSidebarAuto() {
                 if (sidebar && sidebarBackdrop) {
                     sidebar.classList.add('show');
@@ -1429,9 +1752,7 @@ function eliminarCliente($conn)
                 }
             });
 
-            // Búsqueda: se manda al servidor (con debounce) para que
-            // encuentre clientes aunque estén en otra página del listado,
-            // no sólo los que ya están cargados en esta pantalla.
+            // Búsqueda con debounce
             const searchInput = document.getElementById('searchInput');
             if (searchInput) {
                 let searchTimer = null;
@@ -1445,7 +1766,7 @@ function eliminarCliente($conn)
                         } else {
                             params.set('buscar', valor);
                         }
-                        params.set('pagina', '1'); // toda búsqueda nueva arranca en la página 1
+                        params.set('pagina', '1');
                         window.location.search = params.toString();
                     }, 450);
                 });
@@ -1457,6 +1778,14 @@ function eliminarCliente($conn)
                 document.getElementById('modalTitle').textContent = 'Nuevo Cliente';
                 document.getElementById('formAction').value = 'crear';
                 document.getElementById('clienteId').value = '';
+                const paisEl = document.getElementById('pais');
+                if (paisEl) paisEl.value = 'México';
+                // Siempre iniciar en la pestaña "Datos Generales"
+                const tabGeneralBtn = document.getElementById('tab-general-btn');
+                if (tabGeneralBtn) {
+                    const tab = new bootstrap.Tab(tabGeneralBtn);
+                    tab.show();
+                }
             });
 
             // Resetear cuando se abre el modal sin datos de edición
@@ -1466,6 +1795,14 @@ function eliminarCliente($conn)
                     document.getElementById('modalTitle').textContent = 'Nuevo Cliente';
                     document.getElementById('formAction').value = 'crear';
                     document.getElementById('clienteId').value = '';
+                    const paisEl = document.getElementById('pais');
+                    if (paisEl) paisEl.value = 'México';
+                }
+                // Siempre iniciar en la pestaña "Datos Generales" al abrir
+                const tabGeneralBtn = document.getElementById('tab-general-btn');
+                if (tabGeneralBtn) {
+                    const tab = new bootstrap.Tab(tabGeneralBtn);
+                    tab.show();
                 }
             });
 
@@ -1476,7 +1813,8 @@ function eliminarCliente($conn)
 
                 const rows = document.querySelectorAll('#clientesTable tbody tr');
                 rows.forEach(row => {
-                    const isActive = row.querySelector('.status-badge').textContent.trim() === 'Activo';
+                    const statusEl = row.querySelector('.status-badge');
+                    const isActive = statusEl ? statusEl.textContent.trim() === 'Activo' : false;
                     const hasPurchases = row.querySelector('.ventas-badge') !== null;
 
                     let show = true;
@@ -1495,7 +1833,8 @@ function eliminarCliente($conn)
 
                 const cards = document.querySelectorAll('#mobileClientes .col-12');
                 cards.forEach(card => {
-                    const isActive = card.querySelector('.status-badge').textContent.trim() === 'Activo';
+                    const statusEl = card.querySelector('.status-badge');
+                    const isActive = statusEl ? statusEl.textContent.trim() === 'Activo' : false;
                     const hasPurchases = card.querySelector('.ventas-badge') !== null;
 
                     let show = true;
